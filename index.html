@@ -210,6 +210,7 @@ body{margin:0}
 [hidden]{display:none!important}
 img{max-width:100%}
 .newbox{margin-top:10px;border-top:1px solid var(--line,rgba(128,128,128,.3));padding-top:10px;display:flex;flex-direction:column;gap:10px}.newbox summary{cursor:pointer;font-weight:600;padding:6px 0}
+.subd{margin-top:8px}.subd[open]>summary{margin-bottom:8px}textarea.input{min-height:110px;padding:10px 14px;resize:vertical;font:inherit;line-height:1.4}
 </style>
 </head>
 <body>
@@ -363,7 +364,7 @@ var P={G:null,i:0,q:null,qShown:-1,typed:'',lock:false,flash:'',fbText:'',fbKind
 var GV=null,curKey=null,curView=null,hostTO=null,connTO=null;
 
 /* ---------- profile: a short code opens the same profile on any device (kept on the game server, never in the browser) ---------- */
-var PF={data:null,sb:null,dbState:'connecting',code:'',state:'none',busy:false,msg:'',q:Promise.resolve()};
+var PF={link:undefined,data:null,sb:null,dbState:'connecting',code:'',state:'none',busy:false,msg:'',q:Promise.resolve()};
 function blankProfile(){return {name:'',color:0,rounds:0,right:0,wrong:0,bestStreak:0,bestScore:0,best:{},facts:{},recent:[],created:Date.now(),updated:0}}
 PF.data=blankProfile();
 function sanitizeProfile(o){
@@ -419,7 +420,7 @@ async function openProfile(code){
     PF.code=(isLegacy(typed)&&nameKey(PF.data.name)!==nameKey(typed))?normCode(typed):(cleanName(PF.data.name)||typed);
     PF.state='ready';PF.msg='';
     lsSet('tts-code',PF.code);
-    setTimeout(loadLeaderboard,0);
+    setTimeout(loadLeaderboard,0);setTimeout(loadLink,0);
     S.name=cleanName(PF.data.name)||S.name;S.color=PF.data.color;S.nameTouched=false;
     return 'ok';
   }catch(e){return 'error'}
@@ -433,11 +434,17 @@ async function createProfile(){
     if(!r.data)return 'error';
     PF.code=String(r.data);PF.data=blankProfile();PF.data.name=S.name;PF.data.color=S.color;PF.state='ready';PF.msg='';
     lsSet('tts-code',PF.code);
-    setTimeout(loadLeaderboard,0);
+    setTimeout(loadLeaderboard,0);PF.link=null;
     return 'ok';
   }catch(e){return 'error'}
 }
-function closeProfile(){setTimeout(loadLeaderboard,0);PF.data=blankProfile();PF.code='';PF.state='none';PF.msg='';lsSet('tts-code','')}
+async function loadLink(){
+  var code=PF.code;PF.link=undefined;
+  if(!PF.sb||PF.state!=='ready')return;
+  try{var r=await PF.sb.rpc('tts_class_mine',{p_code:code});PF.link=r.error?'off':(r.data||null)}catch(e){PF.link='off'}
+  if(PF.code===code)refreshProfileUI();
+}
+function closeProfile(){PF.link=undefined;setTimeout(loadLeaderboard,0);PF.data=blankProfile();PF.code='';PF.state='none';PF.msg='';lsSet('tts-code','')}
 /* one request at a time; the server adds each round to the stored profile, so two devices never overwrite each other */
 function callProfile(fn,args){
   if(!PF.code)return Promise.resolve();
@@ -721,43 +728,86 @@ function liveItems(ps){
 /* ---------- views ---------- */
 var VIEWS={};
 /* ---------- teacher tools: only the teacher profile + its PIN can list or remove profiles (checked on the server) ---------- */
+function weakFacts(facts,n){
+  return Object.keys(facts||{}).map(function(k){var p=k.split('x'),f=facts[k],t=f[0]+f[1];return {a:+p[0],b:+p[1],t:t,acc:t?f[0]/t:1}})
+    .filter(function(x){return x.t>1&&x.acc<0.8}).sort(function(x,y){return x.acc-y.acc||y.t-x.t}).slice(0,3)
+    .map(function(x){return x.a+'×'+x.b}).join(', ');
+}
 function teacherPanel(){
-  var T={open:false,pin:'',list:null,msg:'',busy:false,confirm:''};
+  var T={open:false,pin:'',list:null,roster:null,msg:'',busy:false,confirm:'',label:'',names:'',profOpen:false};
   var box=h('details',{class:'panel tpanel'});
   box.addEventListener('toggle',function(){T.open=box.open});
   function err(e){var m=String(e&&e.message||'');return /not_allowed/.test(m)?'That PIN does not work for this profile. Open the teacher profile first, then enter its PIN.':'Could not reach the game server. Try again.'}
+  async function fetchAll(){
+    var r=await PF.sb.rpc('tts_admin_list',{p_code:PF.code,p_pin:T.pin});if(r.error)throw r.error;T.list=r.data||[];
+    var r2=await PF.sb.rpc('tts_admin_roster',{p_code:PF.code,p_pin:T.pin});
+    T.roster=r2.error?null:r2.data;T.rosterOff=!!r2.error;
+  }
   async function load(){
     if(!PF.sb||PF.state!=='ready'){T.msg='Open the teacher profile first (type its name above), then enter the PIN.';draw();return}
     T.busy=true;T.msg='';draw();
-    try{var r=await PF.sb.rpc('tts_admin_list',{p_code:PF.code,p_pin:T.pin});if(r.error)throw r.error;T.list=r.data||[]}
-    catch(e){T.list=null;T.msg=err(e)}
+    try{await fetchAll()}catch(e){T.list=null;T.msg=err(e)}
     T.busy=false;draw();
   }
-  async function del(it){
-    if(T.confirm!==it.handle){T.confirm=it.handle;draw();setTimeout(function(){if(T.confirm===it.handle){T.confirm='';draw()}},4000);return}
-    T.confirm='';T.busy=true;draw();
-    try{
-      var r=await PF.sb.rpc('tts_admin_delete',{p_code:PF.code,p_pin:T.pin,p_handle:it.handle});if(r.error)throw r.error;
-      T.msg='Removed "'+it.name+'".';
-      var r2=await PF.sb.rpc('tts_admin_list',{p_code:PF.code,p_pin:T.pin});if(!r2.error)T.list=r2.data||[];
-      loadLeaderboard();
-    }catch(e){T.msg=/not_allowed/.test(String(e&&e.message))?err(e):'Could not remove it. The delete switch may not be installed on the server yet.'}
+  async function act(fn,args,okMsg){
+    T.busy=true;T.confirm='';draw();
+    try{var r=await PF.sb.rpc(fn,Object.assign({p_code:PF.code,p_pin:T.pin},args));if(r.error)throw r.error;T.msg=typeof okMsg==='function'?okMsg(r.data):okMsg;await fetchAll();loadLeaderboard()}
+    catch(e){T.msg=/not_allowed/.test(String(e&&e.message))?err(e):/bad_label/.test(String(e&&e.message))?'Give the class a name first, like 8B.':/too_many/.test(String(e&&e.message))?'That is too many names at once. Add up to 80 at a time.':'That did not work. Check the database update has been run.'}
     T.busy=false;draw();
+  }
+  function ask(key,fn){
+    if(T.confirm!==key){T.confirm=key;draw();setTimeout(function(){if(T.confirm===key){T.confirm='';draw()}},4000);return}
+    fn();
+  }
+  function del(it){ask(it.handle,function(){act('tts_admin_delete',{p_handle:it.handle},'Removed "'+it.name+'".')})}
+  function importNames(){
+    var names=T.names.split(/\r?\n/).map(function(x){return x.replace(/\t.*$/,'').trim()}).filter(function(x){return x.length>1});
+    if(!names.length){T.msg='Paste the names first, one per line.';draw();return}
+    act('tts_admin_import',{p_label:T.label,p_names:names},function(d){T.names='';return 'Added '+d.added+' name'+(d.added===1?'':'s')+' to '+d.class+'. Class code: '+d.code})
+  }
+  function rosterView(){
+    var out=[h('div',{class:'label',style:'margin-top:6px'},'Class lists')];
+    if(T.rosterOff||!T.roster){out.push(h('p',{class:'note'},'Class lists are not installed yet. Run database/4_class_lists.sql in Supabase.'));return out}
+    var R=T.roster;
+    out.push(h('p',{class:'note'},'Students enter their class code, then tap their own name. Give them the code for their class.'));
+    if(R.classes.length)out.push(h('div',{class:'lblist'},R.classes.map(function(c){return h('div',{class:'lbrow',style:'grid-template-columns:minmax(0,1fr) auto'},h('div',{class:'nmtxt'},c.label),h('span',{class:'sc'},c.code))})));
+    var label=h('input',{class:'input',type:'text',maxlength:'20','aria-label':'Class name',placeholder:'Class name, e.g. 8B',value:T.label,style:'padding-left:14px',oninput:function(){T.label=label.value}});
+    var names=h('textarea',{class:'input',rows:'5','aria-label':'Student names','aria-describedby':'nm-help',placeholder:'One name per line, e.g.\nAnna S.\nThabo M.',oninput:function(){T.names=names.value}});names.value=T.names;
+    out.push(h('div',{class:'stack'},label,names,h('p',{class:'note',id:'nm-help'},'Tip: use first name and last initial. Anyone with the class code can see the names that are still free.'),
+      h('button',{class:'btn',type:'button',disabled:T.busy,onclick:importNames},'Add names to class')));
+    if(R.rows.length){
+      out.push(h('div',{class:'label',style:'margin-top:6px'},'Progress'));
+      out.push(h('div',{class:'lblist'},R.rows.map(function(r){
+        var tot=(r.right||0)+(r.wrong||0),acc=tot?Math.round(r.right/tot*100)+'%':'–';
+        var weak=weakFacts(r.facts);
+        var sub=r.user?(r.user+' · '+(r.rounds||0)+' rounds · '+acc+' right · best '+(r.best||0)+(weak?' · weak: '+weak:'')):'Has not picked this name yet';
+        return h('div',{class:'lbrow',style:'grid-template-columns:minmax(0,1fr) auto'},
+          h('div',null,h('div',{class:'nmtxt'},r.real+' ('+r.class+')'),h('div',{class:'sub'},sub)),
+          h('div',{class:'actions',style:'justify-content:flex-end'},
+            r.user?h('button',{class:'btn small',type:'button',disabled:T.busy,onclick:function(){ask('u'+r.rid,function(){act('tts_admin_unlink',{p_rid:r.rid},'Unlinked '+r.real+'. They can pick a name again.')})}},T.confirm==='u'+r.rid?'Tap again':'Unlink'):null,
+            h('button',{class:'btn small danger',type:'button',disabled:T.busy,onclick:function(){ask('r'+r.rid,function(){act('tts_admin_roster_remove',{p_rid:r.rid},'Removed '+r.real+' from the list.')})}},T.confirm==='r'+r.rid?'Tap again':'Remove')));
+      })));
+    }
+    return out;
   }
   function draw(){
     var pin=h('input',{class:'input',type:'password',autocomplete:'off',spellcheck:'false','aria-label':'Teacher PIN',placeholder:'Teacher PIN',value:T.pin,style:'padding-left:14px',
       oninput:function(){T.pin=pin.value},onkeydown:function(e){if(e.key==='Enter')load()}});
     var kids=[h('summary',{class:'label',style:'cursor:pointer'},'Teacher tools')];
     if(T.list===null){
-      kids.push(h('p',{class:'note'},'For the teacher only. Open the teacher profile, enter the PIN, and you can remove profiles.'),
+      kids.push(h('p',{class:'note'},'For the teacher only. Open the teacher profile and enter the PIN to manage class lists and remove profiles.'),
         h('div',{class:'joinrow'},pin,h('button',{class:'btn',type:'button',disabled:T.busy,onclick:load},'Unlock')));
     }else{
-      kids.push(h('div',{class:'lblist'},T.list.map(function(it){
-        return h('div',{class:'lbrow',style:'grid-template-columns:minmax(0,1fr) auto'},
-          h('div',null,h('div',{class:'nmtxt'},it.name+(it.me?' (you)':'')),h('div',{class:'sub'},it.rounds+' rounds, best '+it.best)),
-          h('div',{class:'actions',style:'justify-content:flex-end'},
-            it.me?null:h('button',{class:'btn small danger',type:'button',disabled:T.busy,onclick:function(){del(it)}},T.confirm===it.handle?'Tap again to remove':'Remove')));
-      })),h('div',{class:'actions'},h('button',{class:'btn small',type:'button',onclick:function(){T.list=null;T.pin='';T.msg='';draw()}},'Lock')));
+      rosterView().forEach(function(x){kids.push(x)});
+      var prof=h('details',{class:'subd'},h('summary',{class:'label',style:'cursor:pointer'},'All profiles (remove)'),
+        h('div',{class:'lblist'},T.list.map(function(it){
+          return h('div',{class:'lbrow',style:'grid-template-columns:minmax(0,1fr) auto'},
+            h('div',null,h('div',{class:'nmtxt'},it.name+(it.me?' (you)':'')),h('div',{class:'sub'},it.rounds+' rounds, best '+it.best)),
+            h('div',{class:'actions',style:'justify-content:flex-end'},
+              it.me?null:h('button',{class:'btn small danger',type:'button',disabled:T.busy,onclick:function(){del(it)}},T.confirm===it.handle?'Tap again to remove':'Remove')));
+        })));
+      prof.open=T.profOpen;prof.addEventListener('toggle',function(){T.profOpen=prof.open});
+      kids.push(prof,h('div',{class:'actions'},h('button',{class:'btn small',type:'button',onclick:function(){T.list=null;T.roster=null;T.pin='';T.msg='';draw()}},'Lock')));
     }
     if(T.msg)kids.push(h('p',{class:'note',role:'status'},T.msg));
     fill(box,kids);box.open=T.open;
@@ -832,11 +882,11 @@ VIEWS.home=function(){
     hostBtn.disabled=!ready;joinBtn.disabled=!ready||codeIn.value.length!==4;
     msg.textContent=S.err||(S.roomState==='connecting'?'Connecting…':S.roomState==='unavailable'?'Could not reach the game server. Check your internet and reload. Practising on your own still works.':'');
     var isReady=PF.state==='ready',dbOk=PF.dbState==='ready';
-    paint();
+    paint();paintClass();
     /* only rebuild the box when what it shows changes, so typing never loses focus */
     var d=PF.data,tot=d.right+d.wrong;
     var legacy=isReady&&isLegacy(PF.code)&&nameKey(PF.code)!==nameKey(d.name);
-    var sig=isReady?JSON.stringify(['in',d.name,d.rounds,d.right,d.wrong,d.bestScore,renaming,legacy,PF.msg||'',PF.code]):'out';
+    var sig=isReady?JSON.stringify(['in',d.name,d.rounds,d.right,d.wrong,d.bestScore,renaming,legacy,PF.msg||'',PF.code,PF.link&&PF.link.class||'']):'out';
     if(sig!==meSig){
       meSig=sig;
       if(!isReady){
@@ -860,6 +910,7 @@ VIEWS.home=function(){
                 h('button',{class:'btn small',type:'button',onclick:function(){closeProfile();S.pfErr='';S.nameTouched=false;S.name='';nameIn.value='';upd()}},'Not you?')),
           d.rounds>0?h('div',{class:'statgrid',style:'grid-template-columns:repeat(3,minmax(0,1fr))'},statTile('Rounds',d.rounds),statTile('Accuracy',Math.round(d.right/Math.max(1,tot)*100)+'%'),statTile('Best score',d.bestScore)):null,
           legacy?h('p',{class:'note'},'Your old code is '+displayCode(PF.code)+'. Change your name and the name becomes your code.'):null,
+          PF.link&&PF.link.class?h('p',{class:'note'},'In class '+PF.link.class+' ✓'):null,
           PF.msg?h('p',{class:'note',role:'status'},PF.msg):null);
       }
     }
@@ -868,6 +919,47 @@ VIEWS.home=function(){
       openBtn.disabled=!dbOk||PF.busy||nameKey(pCode.value).length<3;
       pfMsg.textContent=S.pfErr||(!dbOk&&PF.dbState!=='connecting'?'Saving needs the internet. You can still play.':'');
       if(document.activeElement!==nameIn&&!S.nameTouched)nameIn.value=S.name;
+    }
+  }
+  /* ---- join my class (so the teacher can see my progress) ---- */
+  var classBox=h('section',{class:'panel'});
+  var C={code:'',names:null,label:'',msg:'',busy:false,sel:0,sig:''};
+  var cIn=h('input',{class:'input code',type:'text',maxlength:'5',autocomplete:'off',autocapitalize:'characters',spellcheck:'false','aria-label':'Class code',placeholder:'CLASS CODE',
+    oninput:function(){cIn.value=cIn.value.toUpperCase().replace(/[^A-Z]/g,'');C.code=cIn.value;cFind.disabled=C.busy||C.code.length<5},onkeydown:function(e){if(e.key==='Enter'&&C.code.length===5)findClass()}});
+  var cFind=h('button',{class:'btn',type:'button',onclick:findClass},'Find');
+  function cErr(e){var m=String(e&&e.message||'');return /no_class/.test(m)?'That class code is not right. Check it with your teacher.':/name_taken/.test(m)?'Someone just picked that name. Ask your teacher.':/already_linked/.test(m)?'You already picked a name.':'Could not reach the game server. Try again.'}
+  async function findClass(){
+    if(C.busy)return;C.busy=true;C.msg='';paintClass();
+    try{var r=await PF.sb.rpc('tts_class_open',{p_class:C.code,p_code:PF.code});if(r.error)throw r.error;C.names=r.data.names||[];C.label=r.data.label;C.sel=0}
+    catch(e){C.msg=cErr(e)}
+    C.busy=false;paintClass();
+  }
+  async function claim(n){
+    if(C.sel!==n.rid){C.sel=n.rid;paintClass();return}
+    if(C.busy)return;C.busy=true;paintClass();
+    try{var r=await PF.sb.rpc('tts_class_claim',{p_class:C.code,p_code:PF.code,p_rid:n.rid});if(r.error)throw r.error;PF.link={class:r.data.class};C.names=null;C.code='';cIn.value='';C.busy=false;loadLeaderboard();refreshProfileUI();return}
+    catch(e){C.msg=cErr(e);if(/name_taken/.test(String(e&&e.message)))findClass()}
+    C.busy=false;paintClass();
+  }
+  function paintClass(){
+    var show=PF.state==='ready'&&PF.link===null;
+    var sig=JSON.stringify([show,C.names&&C.names.length,C.label,C.msg,C.busy,C.sel]);
+    if(sig===C.sig)return;C.sig=sig;
+    classBox.hidden=!show;
+    if(!show){fill(classBox);return}
+    cFind.disabled=C.busy||C.code.length<5;
+    if(!C.names){
+      fill(classBox,h('div',{class:'label'},'Join your class'),
+        h('p',{class:'note'},'Your teacher gave you a class code. Enter it and pick your own name, so your teacher can see your progress. Your username stays as it is in games.'),
+        h('div',{class:'joinrow'},cIn,cFind),
+        C.msg?h('p',{class:'note',role:'status'},C.msg):null);
+    }else{
+      fill(classBox,h('div',{class:'label'},'Class '+C.label),
+        h('p',{class:'note'},C.names.length?'Tap your own name. Then tap it again to confirm.':'No names are left. Ask your teacher.'),
+        h('div',{class:'lblist'},C.names.map(function(n){
+          return h('button',{class:'btn'+(C.sel===n.rid?' primary':''),type:'button',style:'width:100%;justify-content:flex-start',disabled:C.busy,onclick:function(){claim(n)}},C.sel===n.rid?'Yes, I am '+n.name:n.name)})),
+        h('div',{class:'actions'},h('button',{class:'btn small',type:'button',onclick:function(){C.names=null;C.msg='';paintClass()}},'Back')),
+        C.msg?h('p',{class:'note',role:'status'},C.msg):null);
     }
   }
   /* ---- leaderboard ---- */
@@ -897,6 +989,7 @@ VIEWS.home=function(){
   el.append(
     h('div',{class:'hero'},h('h1',null,'Race through the times tables.'),h('p',null,'60-second rounds, up to the 12s. Fall behind and you get easier questions to help you catch up.')),
     meBox,
+    classBox,
     playBox,
     lbBox,
     teacherPanel());
