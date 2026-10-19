@@ -925,7 +925,8 @@ VIEWS.profile=function(){
       var weak=Object.keys(d.facts).map(function(k){var p=k.split('x'),f=d.facts[k],t=f[0]+f[1];return {a:+p[0],b:+p[1],t:t,acc:t?f[0]/t:1}})
         .filter(function(x){return x.t>0&&x.acc<0.8}).sort(function(x,y){return x.acc-y.acc||y.t-x.t}).slice(0,12);
       out.push(h('section',{class:'panel'},
-        h('h2',null,'Your times table map'),
+        h('h2',null,'Your all-time map'),
+        h('p',{class:'note'},'Every question you have answered, across all rounds. Rows are the table, columns are the number you multiplied by.'),
         h('div',{class:'mapwrap'},h('div',{class:'map'},rows)),
         h('div',{class:'legend'},h('span',{class:'l-ok'},'Solid'),h('span',{class:'l-mid'},'Getting there'),h('span',{class:'l-miss'},'Needs work'),h('span',null,'Not seen yet')),
         h('div',{class:'label'},'Work on these next'),
@@ -1146,7 +1147,8 @@ VIEWS.results=function(){
       }
       var miss=Array.from(P.missed.values()).sort(function(x,y){return y.n-x.n}).slice(0,14);
       out.push(h('section',{class:'panel'},
-        h('h2',null,'Your times table map'),
+        h('h2',null,"This round's map"),
+        h('p',{class:'note'},'Only the questions from the round you just played.'),
         h('div',{class:'mapwrap'},h('div',{class:'map'},rows)),
         h('div',{class:'legend'},h('span',{class:'l-ok'},'Right'),h('span',{class:'l-miss'},'Missed'),h('span',null,'Not asked')),
         h('div',{class:'label'},'Tricky ones to practise'),
