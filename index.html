@@ -987,8 +987,8 @@ VIEWS.lobby=function(){
     }
     settingsBox.replaceChildren(h('p',null,'Every round is 60 seconds, with all the tables up to 12.'));
     if(isHost){
-      startBox.replaceChildren(h('button',{class:'btn primary big',type:'button',style:'width:100%',onclick:startRound},solo?'Start practice':'Start round'),
-        solo?null:h('p',{class:'note',style:'margin-top:8px'},'Wait until everyone shows up in the player list, then start.'));
+      startBox.replaceChildren.apply(startBox,[h('button',{class:'btn primary big',type:'button',style:'width:100%',onclick:startRound},solo?'Start practice':'Start round'),
+        solo?null:h('p',{class:'note',style:'margin-top:8px'},'Wait until everyone shows up in the player list, then start.')].filter(Boolean));
     }else{
       startBox.replaceChildren(h('p',{class:'waiting'},'Waiting for the host to start…'));
     }
