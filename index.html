@@ -101,6 +101,7 @@ button.chip{cursor:pointer;font-family:var(--font-mono)}
 .lbrow .rk{font-family:var(--font-mono);font-weight:800;text-align:center}
 .lbrow .sub{font-size:.8rem;color:var(--muted)}
 .lbrow .sc{font-family:var(--font-mono);font-weight:800;font-size:1.1rem}
+.bigname{font-size:clamp(20px,6vw,26px);font-weight:800;min-width:0;overflow-wrap:anywhere}
 .input:disabled{opacity:.6;cursor:not-allowed}
 .lblist{display:flex;flex-direction:column;gap:6px;margin-top:8px}
 .track{position:relative;border:1px solid var(--line);border-radius:14px;background:var(--surface);padding:8px 14px 8px 8px;display:flex;flex-direction:column;gap:4px;overflow:hidden}
@@ -117,7 +118,7 @@ button.chip{cursor:pointer;font-family:var(--font-mono)}
 .prow{display:flex;align-items:center;gap:10px;min-width:0}
 .settings{display:grid;gap:14px}
 .settings .field{display:grid;gap:6px}
-.rules ul{margin:6px 0 0;padding-left:18px;display:grid;gap:6px;font-size:14px;color:var(--muted)}
+.rules{margin:6px 0 4px;padding-left:18px;display:grid;gap:6px;font-size:14px;color:var(--muted)}
 .waiting{color:var(--muted);font-size:15px}
 
 /* leaderboard */
@@ -180,7 +181,7 @@ button.chip{cursor:pointer;font-family:var(--font-mono)}
 .award{padding:10px 12px;border:1px solid var(--line);border-radius:12px;background:var(--surface);font-size:14px;display:grid;gap:2px}
 .award b{font-family:var(--font-display);font-size:16px}
 .mapwrap{overflow-x:auto}
-.map{display:grid;grid-template-columns:22px repeat(12,minmax(22px,1fr));gap:3px;min-width:330px;font-family:var(--font-mono);font-size:11px;color:var(--muted)}
+.map{display:grid;grid-template-columns:18px repeat(12,minmax(0,1fr));gap:2px;font-family:var(--font-mono);font-size:10px;color:var(--muted)}
 .map .lab{display:grid;place-items:center}
 .cell{aspect-ratio:1;border-radius:4px;background:var(--surface2)}
 .cell.ok{background:var(--good)} .cell.miss{background:var(--bad)} .cell.mid{background:var(--boost)}
@@ -256,6 +257,7 @@ function avatar(n,c,s){
   var ch=Array.from(n||'?')[0]||'?';
   return h('span',{class:'avatar',style:'--s:'+s+'px;--pc:var(--p'+c+')','aria-hidden':'true'},ch.toUpperCase());
 }
+function fill(el){var kids=[];for(var i=1;i<arguments.length;i++)[].concat(arguments[i]).forEach(function(k){if(k!=null&&k!==false)kids.push(k)});el.replaceChildren.apply(el,kids);return el}
 function tag(t,cls){return h('span',{class:'tag'+(cls?' '+cls:'')},t)}
 var toastTO;
 function toast(msg){var t=document.getElementById('toast');t.textContent=msg;t.hidden=false;clearTimeout(toastTO);toastTO=setTimeout(function(){t.hidden=true},1900)}
@@ -478,7 +480,6 @@ function syncIdentityToProfile(){
   }
   callProfile('tts_profile_set_identity',{p_name:S.name,p_color:S.color});
 }
-function profileLine(){return PF.state==='ready'?'Profile "'+displayCode(PF.code)+'". Type this name on any device to open it.':'Playing without a profile. Scores are not saved.'}
 function recordRound(){
   var g=P.G;
   if(!g||P.recorded||me.r+me.w===0)return;
@@ -689,7 +690,7 @@ function leaveRoom(msg){
 function startSolo(){
   resetMe();S.mode='solo';S.seen=true;S.lastG=0;S.err='';
   S.soloGame={hostIsMe:true,ph:'lobby',g:0,sd:0,du:60,mx:12};
-  curKey=null;render();
+  curKey=null;startRound();
 }
 function exitSolo(){abortRound();S.mode='home';S.soloGame=null;resetMe();curKey=null;render()}
 function becomeHost(){setPresence({h:1,ph:'lobby',g:S.lastG,sd:0,du:60,mx:12})}
@@ -714,11 +715,6 @@ function lbList(items,showFin){
 }
 function liveItems(ps){
   return ps.map(function(p){return {isMe:p.isMe,n:p.n,c:p.c,lv:p.lv,fin:p.fin,pts:p.sc,meta:p.r+' right · '+p.w+' wrong'}});
-}
-function seg(options,value,onPick,label){
-  return h('div',{class:'seg',role:'group','aria-label':label},options.map(function(o){
-    return h('button',{type:'button',class:'segbtn','aria-pressed':String(o.v===value),onclick:function(){onPick(o.v)}},o.t);
-  }));
 }
 
 /* ---------- views ---------- */
@@ -763,137 +759,137 @@ function teacherPanel(){
       })),h('div',{class:'actions'},h('button',{class:'btn small',type:'button',onclick:function(){T.list=null;T.pin='';T.msg='';draw()}},'Lock')));
     }
     if(T.msg)kids.push(h('p',{class:'note',role:'status'},T.msg));
-    box.replaceChildren.apply(box,kids);box.open=T.open;
+    fill(box,kids);box.open=T.open;
   }
   draw();
   return box;
 }
 VIEWS.home=function(){
   var el=h('div',{class:'home'});
-  var avatarBtn=h('button',{class:'avatar-btn',type:'button','aria-label':'Change your colour',onclick:function(){S.color=(S.color+1)%COLORS;paint();saveIdentity()}});
-  var nameIn=h('input',{class:'input',id:'player-name',type:'text',maxlength:'20',autocomplete:'off',spellcheck:'false','aria-label':'Your username',value:S.name,
-    oninput:function(){S.nameTouched=true;paint()},onchange:function(){saveIdentity()}});
-  var dice=h('button',{class:'btn',type:'button',onclick:function(){nameIn.value=randomName();paint();saveIdentity()}},'Surprise me');
-  var pCode=h('input',{class:'input code',id:'profile-code',type:'text',maxlength:'20',autocomplete:'off',spellcheck:'false','aria-label':'Profile name',placeholder:'Your profile name',style:'padding-left:14px',
+  var renaming=false;
+  /* ---- who is playing ---- */
+  var avatarBtn=h('button',{class:'avatar-btn',type:'button','aria-label':'Change your colour',title:'Tap to change colour',onclick:function(){S.color=(S.color+1)%COLORS;paint();syncIdentityToProfile()}});
+  var nameIn=h('input',{class:'input',id:'player-name',type:'text',maxlength:'20',autocomplete:'off',spellcheck:'false','aria-label':'Your name',placeholder:'Type your name',value:S.name,
+    oninput:function(){S.nameTouched=true;S.name=cleanName(nameIn.value);paint();upd()},onkeydown:function(e){if(e.key==='Enter')doCreate()}});
+  var dice=h('button',{class:'btn small',type:'button',onclick:function(){nameIn.value=randomName();S.nameTouched=true;S.name=nameIn.value;paint();upd()}},'Surprise me');
+  var createBtn=h('button',{class:'btn primary',type:'button',style:'width:100%',onclick:doCreate},'Save my progress');
+  var pCode=h('input',{class:'input',id:'profile-code',type:'text',maxlength:'20',autocomplete:'off',spellcheck:'false','aria-label':'Your name from before',placeholder:'Your name from before',
     oninput:function(){upd()},onkeydown:function(e){if(e.key==='Enter')doOpen()}});
-  var createBtn=h('button',{class:'btn primary',type:'button',onclick:doCreate},'Create my profile');
   var openBtn=h('button',{class:'btn',type:'button',onclick:doOpen},'Open');
   var pfMsg=h('p',{class:'note',role:'status'});
-  var pfNone=h('div',{class:'pfblock'},
-    h('div',{class:'label'},'Save your progress'),
-    h('p',{class:'note'},'Make a profile to keep your scores, streaks and tricky facts. Your name is your profile code, so pick a name no one else has. Type it on any device to get your profile back.'),
-    createBtn,
-    h('div',{class:'label'},'Already have a profile? Type your name'),
-    h('div',{class:'joinrow'},pCode,openBtn),
-    pfMsg);
-  var pfReady=h('div',{class:'pfblock'});
-  var nameNote=h('p',{class:'note'});
-  var pfBox=h('section',{class:'panel'},
-    h('div',{class:'label'},'Your name'),
-    h('div',{class:'namerow'},avatarBtn,nameIn),
-    dice,nameNote,
-    h('hr',{style:'border:0;border-top:1px solid var(--line);margin:14px 0 4px'}),
-    pfNone,pfReady);
+  var renameIn=h('input',{class:'input',id:'rename-input',type:'text',maxlength:'20',autocomplete:'off',spellcheck:'false','aria-label':'New name',
+    onkeydown:function(e){if(e.key==='Enter')saveRename();if(e.key==='Escape'){renaming=false;upd()}}});
+  var meBox=h('section',{class:'panel'});
   async function doCreate(){
-    if(PF.busy)return;commit();PF.busy=true;S.pfErr='';upd();
+    if(PF.busy||PF.state==='ready')return;
+    S.name=cleanName(nameIn.value);
+    if(nameKey(S.name).length<3){S.pfErr='Type your name first (at least 3 letters).';upd();nameIn.focus();return}
+    PF.busy=true;S.pfErr='';upd();
     var r=await createProfile();PF.busy=false;
-    S.justCreated=(r==='ok');
-    S.pfErr=r==='ok'?'':r==='taken'?'That name is already taken. Pick another one. The dice button suggests a funny one.':r==='bad'?'Names need at least 3 letters or numbers.':'Could not create a profile. Try again in a moment.';
-    if(r==='ok')nameIn.value=S.name;
+    S.pfErr=r==='ok'?'':r==='taken'?'Someone already has that name. Add a letter or try "Surprise me".':r==='bad'?'Names need at least 3 letters or numbers.':'Could not save right now. Check your internet and try again.';
     upd();
   }
   async function doOpen(){
     if(PF.busy)return;PF.busy=true;S.pfErr='';upd();
-    var r=await openProfile(pCode.value);PF.busy=false;S.justCreated=false;
-    S.pfErr=r==='ok'?'':r==='invalid'?'Type your name (at least 3 letters or numbers).':r==='notfound'?'No profile with that name. Check the spelling, or make a new profile.':'Could not open profiles right now. Try again.';
+    var r=await openProfile(pCode.value);PF.busy=false;
+    S.pfErr=r==='ok'?'':r==='invalid'?'Type your name (at least 3 letters).':r==='notfound'?'No one has played with that name yet. Check the spelling.':'Could not reach the game server. Try again.';
     if(r==='ok'){pCode.value='';nameIn.value=S.name;paint()}
     upd();
   }
-  function saveIdentity(){
-    S.nameTouched=true;
-    var n=cleanName(nameIn.value);if(!n)return;
-    S.name=n;syncIdentityToProfile();upd();
+  function saveRename(){
+    var n=cleanName(renameIn.value);renaming=false;
+    if(n&&n!==PF.data.name){S.name=n;syncIdentityToProfile()}
+    upd();
   }
+  function paint(){fill(avatarBtn,avatar(S.name||'?',S.color,48))}
+  /* make sure there is a name before playing */
+  function commit(){
+    if(PF.state==='ready'){S.name=cleanName(PF.data.name)||S.name;return}
+    S.name=cleanName(nameIn.value)||randomName();nameIn.value=S.name;paint();
+  }
+  /* ---- play ---- */
   var codeIn=h('input',{class:'input code',id:'room-code',type:'text',maxlength:'4',autocomplete:'off',autocapitalize:'characters',spellcheck:'false','aria-label':'Room code',placeholder:'CODE',
     oninput:function(){codeIn.value=codeIn.value.toUpperCase().replace(/[^A-Z]/g,'');upd()},
     onkeydown:function(e){if(e.key==='Enter')doJoin()}});
   var hostBtn=h('button',{class:'btn primary big',type:'button',onclick:function(){commit();createRoom()}},'Host a game');
   var joinBtn=h('button',{class:'btn big',type:'button',onclick:doJoin},'Join');
-  var soloBtn=h('button',{class:'btn',type:'button',onclick:function(){commit();startSolo()}},'Practice solo');
+  var soloBtn=h('button',{class:'btn big',type:'button',onclick:function(){commit();startSolo()}},'Practice on my own');
   var msg=h('p',{class:'note',role:'status'});
-  function commit(){S.name=cleanName(nameIn.value)||randomName();nameIn.value=S.name;paint();syncIdentityToProfile()}
   function doJoin(){commit();joinRoom(codeIn.value)}
-  function paint(){S.name=cleanName(nameIn.value);avatarBtn.replaceChildren(avatar(S.name||'?',S.color,48))}
+  var playBox=h('section',{class:'panel'},
+    h('div',{class:'label'},'Play'),
+    hostBtn,
+    h('div',{class:'joinrow'},codeIn,joinBtn),
+    soloBtn,
+    msg);
   function upd(){
     var ready=S.roomState==='ready'&&!S.busy;
     hostBtn.disabled=!ready;joinBtn.disabled=!ready||codeIn.value.length!==4;
-    msg.textContent=S.err||(S.roomState==='connecting'?'Connecting to live rooms…':S.roomState==='unavailable'?'Could not reach the game server. Check your internet and reload. Solo practice still works.':'');
+    msg.textContent=S.err||(S.roomState==='connecting'?'Connecting…':S.roomState==='unavailable'?'Could not reach the game server. Check your internet and reload. Practising on your own still works.':'');
     var isReady=PF.state==='ready',dbOk=PF.dbState==='ready';
-    nameNote.textContent=isReady?'This is your player name and your profile name. Changes save to your profile.':'Make a profile below to keep this name for next time.';
-    pfNone.hidden=isReady;pfReady.hidden=!isReady;
-    createBtn.disabled=!dbOk||PF.busy;
-    openBtn.disabled=!dbOk||PF.busy||nameKey(pCode.value).length<3;
-    pfMsg.textContent=S.pfErr||(PF.dbState==='connecting'?'Connecting…':!dbOk?'Profiles need a connection to the game server. Check your internet and reload.':'');
-    if(isReady){
+    paint();
+    if(!isReady){
+      createBtn.disabled=!dbOk||PF.busy;
+      openBtn.disabled=!dbOk||PF.busy||nameKey(pCode.value).length<3;
+      pfMsg.textContent=S.pfErr||(!dbOk&&PF.dbState!=='connecting'?'Saving needs the internet. You can still play.':'');
+      if(document.activeElement!==nameIn&&!S.nameTouched)nameIn.value=S.name;
+      fill(meBox,
+        h('div',{class:'label'},'Your name'),
+        h('div',{class:'namerow'},avatarBtn,nameIn),
+        h('div',{class:'actions'},dice),
+        createBtn,
+        h('p',{class:'note'},'Saving keeps your scores. Next time, type the same name on any device to carry on.'),
+        h('div',{class:'label',style:'margin-top:6px'},'Played before?'),
+        h('div',{class:'joinrow'},pCode,openBtn),
+        pfMsg);
+    }else{
       var d=PF.data,tot=d.right+d.wrong;
-      pfReady.replaceChildren(
-        h('div',{class:'label'},'Your profile'),
-        isLegacy(PF.code)&&nameKey(PF.code)!==nameKey(S.name)
-          ?h('div',null,h('div',{class:'pfline'},h('span',{class:'codebig'},displayCode(PF.code)),h('button',{class:'btn small',type:'button',onclick:copyProfileCode},'Copy')),
-              h('p',{class:'note'},'This older profile opens with the code above. Change your name above to a name no one else has and the name becomes the code.'))
-          :h('p',{class:'note'},'Your name is your code. Type "'+PF.code+'" on any device to open this profile. Anyone who types it can open it, so only share it with people you trust.'),
-        d.rounds>0?h('div',{class:'statgrid'},statTile('Rounds',d.rounds),statTile('Accuracy',Math.round(d.right/Math.max(1,tot)*100)+'%'),statTile('Best score',d.bestScore)):null,
-        PF.msg?h('p',{class:'note',role:'status'},PF.msg):null,
-        h('div',{class:'actions'},
-          d.rounds>0?h('button',{class:'btn small',type:'button',onclick:function(){S.sub='profile';render()}},'See my stats'):null,
-          h('button',{class:'btn small',type:'button',onclick:function(){closeProfile();S.justCreated=false;S.pfErr='';upd()}},'Switch profile')));
+      var legacy=isLegacy(PF.code)&&nameKey(PF.code)!==nameKey(d.name);
+      fill(meBox,
+        h('div',{class:'label'},'Playing as'),
+        renaming
+          ?h('div',{class:'namerow'},avatarBtn,renameIn)
+          :h('div',{class:'namerow'},avatarBtn,h('div',{class:'bigname'},d.name||S.name)),
+        renaming
+          ?h('div',{class:'actions'},h('button',{class:'btn small primary',type:'button',onclick:saveRename},'Save name'),h('button',{class:'btn small',type:'button',onclick:function(){renaming=false;upd()}},'Cancel'))
+          :h('div',{class:'actions'},
+              h('button',{class:'btn small',type:'button',onclick:function(){renaming=true;renameIn.value=d.name||S.name;upd();renameIn.focus();renameIn.select()}},'Change name'),
+              d.rounds>0?h('button',{class:'btn small',type:'button',onclick:function(){S.sub='profile';render()}},'My stats'):null,
+              h('button',{class:'btn small',type:'button',onclick:function(){closeProfile();S.pfErr='';S.nameTouched=false;S.name='';nameIn.value='';upd()}},'Not you?')),
+        d.rounds>0?h('div',{class:'statgrid',style:'grid-template-columns:repeat(3,minmax(0,1fr))'},statTile('Rounds',d.rounds),statTile('Accuracy',Math.round(d.right/Math.max(1,tot)*100)+'%'),statTile('Best score',d.bestScore)):null,
+        legacy?h('p',{class:'note'},'Your old code is '+displayCode(PF.code)+'. Change your name and the name becomes your code.'):null,
+        PF.msg?h('p',{class:'note',role:'status'},PF.msg):null);
     }
   }
+  /* ---- leaderboard ---- */
   var lbBox=h('section',{class:'panel'});
   function paintLB(){
-    var kids=[h('div',{class:'pfline'},h('div',{class:'label'},'Leaderboard: best round score'),
+    var kids=[h('div',{class:'pfline'},h('div',{class:'label'},'Leaderboard'),
       h('button',{class:'btn small',type:'button',onclick:loadLeaderboard},'Refresh'))];
     if(LB.state==='loading'&&!LB.data)kids.push(h('p',{class:'note'},'Loading…'));
-    else if(LB.state==='error'&&!LB.data)kids.push(h('p',{class:'note'},'Could not load the leaderboard. Check your internet and press Refresh.'));
+    else if(LB.state==='error'&&!LB.data)kids.push(h('p',{class:'note'},'Could not load the leaderboard. Press Refresh.'));
     else if(LB.data){
-      var d=LB.data,top=d.top||[];
-      if(!top.length)kids.push(h('p',{class:'note'},'No scores yet. Finish a round with a profile and you will be first on the board.'));
+      var d=LB.data,top=d.top||[],mine=d.me&&d.me.rank;
+      if(!top.length)kids.push(h('p',{class:'note'},'No scores yet. Save your progress and finish a round to be first.'));
       else{
-        var mine=d.me&&d.me.rank;
-        if(PF.state==='ready'&&PF.data.rounds>0&&mine){
-          var pd=PF.data,acc=Math.round(pd.right/Math.max(1,pd.right+pd.wrong)*100);
-          kids.push(h('p',{class:'note'},'You are #'+mine+' of '+d.total+' players. Your best: '+pd.bestScore+' points. Top score: '+top[0].best+'. Your accuracy: '+acc+'%.'));
-        }else if(PF.state==='ready')kids.push(h('p',{class:'note'},'Play a round to get your place on the board.'));
-        else kids.push(h('p',{class:'note'},'Open or create a profile to see where you rank.'));
+        kids.push(h('p',{class:'note'},mine?'You are number '+mine+' of '+d.total+'. Best round scores:':'Best round scores:'));
         kids.push(h('div',{class:'lblist'},top.map(function(t){
-          var isMe=mine&&t.rank===mine;
-          return h('div',{class:'lbrow'+(isMe?' me':'')},h('span',{class:'rk'},String(t.rank)),
-            h('div',{class:'prow'},avatar(t.name,t.color,32),h('div',{style:'min-width:0'},h('div',{class:'nmtxt'},t.name),h('div',{class:'sub'},t.acc+'% right, best streak '+t.streak+', '+t.rounds+(t.rounds===1?' round':' rounds')))),
+          return h('div',{class:'lbrow'+(mine&&t.rank===mine?' me':'')},h('span',{class:'rk'},String(t.rank)),
+            h('div',{class:'prow'},avatar(t.name,t.color,32),h('div',{style:'min-width:0'},h('div',{class:'nmtxt'},t.name),h('div',{class:'sub'},t.acc+'% right · '+t.rounds+(t.rounds===1?' round':' rounds')))),
             h('span',{class:'sc'},String(t.best)));
         })));
       }
     }
-    lbBox.replaceChildren.apply(lbBox,kids);
+    fill(lbBox,kids);
   }
   LB.cb=paintLB;paintLB();loadLeaderboard();
-  function pull(){if(S.nameTouched)return;nameIn.value=S.name;paint()}
-  paint();
+  function pull(){if(!S.nameTouched)nameIn.value=S.name;upd()}
+  upd();
   el.append(
-    h('div',{class:'hero'},h('h1',null,'Race through the times tables.'),h('p',null,'Up to the 12s. Everyone answers the same questions on their own device. Fall behind and easier tables unlock so you can fight back.')),
-    pfBox,
+    h('div',{class:'hero'},h('h1',null,'Race through the times tables.'),h('p',null,'60-second rounds, up to the 12s. Fall behind and you get easier questions to help you catch up.')),
+    meBox,
+    playBox,
     lbBox,
-    h('section',{class:'panel'},
-      h('div',{class:'label'},'Play with friends'),
-      hostBtn,
-      h('div',{class:'joinrow'},codeIn,joinBtn),
-      msg),
-    h('section',{class:'panel'},
-      h('div',{class:'label'},'How a round works'),
-      h('ol',{class:'steps'},
-        h('li',null,'The host starts a round and everyone gets a 3 second countdown.'),
-        h('li',null,'Answer as many as you can. Right is 10 points plus a streak bonus. Wrong breaks your streak.'),
-        h('li',null,'The leaderboard updates live. When time is up you see your 12×12 map of right and wrong.')),
-      soloBtn),
     teacherPanel());
   return {el:el,update:upd,pull:pull};
 };
@@ -902,21 +898,12 @@ function factClass(f){if(!f)return '';var t=f[0]+f[1];if(!t)return '';var a=f[0]
 
 VIEWS.profile=function(){
   var el=h('div',{class:'stack'});
-  var pAv=h('button',{class:'avatar-btn',type:'button','aria-label':'Change your colour',onclick:function(){S.color=(S.color+1)%COLORS;S.nameTouched=true;paintAv();syncIdentityToProfile()}});
-  var pName=h('input',{class:'input',id:'profile-name',type:'text',maxlength:'20',autocomplete:'off',spellcheck:'false','aria-label':'Your username',
-    onchange:function(){var n=cleanName(pName.value);if(!n){pName.value=S.name;return}S.name=n;S.nameTouched=true;paintAv();syncIdentityToProfile()}});
-  function paintAv(){pAv.replaceChildren(avatar(S.name,S.color,56))}
   function upd(){
-    if(document.activeElement!==pName)pName.value=S.name;
-    paintAv();
     var d=PF.data,tot=d.right+d.wrong;
     var out=[h('div',{class:'actions'},h('button',{class:'btn',type:'button',onclick:function(){S.sub='';render()}},'Back'))];
     out.push(h('section',{class:'panel'},
-      h('div',{class:'label'},'Your name and colour'),
-      h('div',{class:'namerow'},pAv,pName),
-      h('p',{class:'note'},'Change your name, then tap outside the box to save it. Tap the circle to change colour. '+profileLine()),
-      h('div',null,h('button',{class:'btn small',type:'button',onclick:copyProfileCode},'Copy my code')),
-      h('div',{class:'statgrid'},statTile('Rounds',d.rounds),statTile('Accuracy',tot?Math.round(d.right/tot*100)+'%':'–'),statTile('Best score',d.bestScore),statTile('Best streak',d.bestStreak),statTile('Answered',tot))));
+      h('div',{class:'namerow'},avatar(d.name||S.name,S.color,56),h('div',{class:'bigname'},d.name||S.name)),
+      h('div',{class:'statgrid',style:'grid-template-columns:repeat(2,minmax(0,1fr))'},statTile('Rounds',d.rounds),statTile('Accuracy',tot?Math.round(d.right/tot*100)+'%':'–'),statTile('Best score',d.bestScore),statTile('Best streak',d.bestStreak))));
     if(d.rounds===0){
       out.push(h('section',{class:'panel'},h('p',{class:'note'},'Play a round and your results will show up here.')));
     }else{
@@ -929,19 +916,17 @@ VIEWS.profile=function(){
       var weak=Object.keys(d.facts).map(function(k){var p=k.split('x'),f=d.facts[k],t=f[0]+f[1];return {a:+p[0],b:+p[1],t:t,acc:t?f[0]/t:1}})
         .filter(function(x){return x.t>0&&x.acc<0.8}).sort(function(x,y){return x.acc-y.acc||y.t-x.t}).slice(0,12);
       out.push(h('section',{class:'panel'},
-        h('h2',null,'Everything you have practised'),
+        h('h2',null,'Your times table map'),
         h('div',{class:'mapwrap'},h('div',{class:'map'},rows)),
         h('div',{class:'legend'},h('span',{class:'l-ok'},'Solid'),h('span',{class:'l-mid'},'Getting there'),h('span',{class:'l-miss'},'Needs work'),h('span',null,'Not seen yet')),
         h('div',{class:'label'},'Work on these next'),
         weak.length?h('div',{class:'mchips'},weak.map(function(x){return h('span',{class:'mchip'},x.a+' × '+x.b+' = '+(x.a*x.b),h('i',null,Math.round(x.acc*100)+'%'))})):h('p',{class:'note'},'Nothing is wobbling right now.')));
-      var bests=Object.keys(d.best).sort().map(function(k){var p=k.split('-');return h('div',{class:'hrow'},h('span',null,p[0]+' seconds, tables up to '+p[1]),h('span',null,String(d.best[k])))});
-      if(bests.length)out.push(h('section',{class:'panel'},h('h2',null,'Personal bests'),h('div',null,bests)));
       out.push(h('section',{class:'panel'},h('h2',null,'Recent rounds'),h('div',null,d.recent.map(function(r){
         var when=r.t?new Date(r.t).toLocaleDateString(undefined,{month:'short',day:'numeric'}):'';
-        return h('div',{class:'hrow'},h('span',null,when+' · '+(r.m==='solo'?'Solo':'Room')+' · '+r.du+'s up to '+r.mx),h('span',null,r.sc+' pts · '+r.r+' right · '+r.w+' wrong'));
+        return h('div',{class:'hrow'},h('span',null,when+' · '+(r.m==='solo'?'On my own':'With friends')),h('span',null,r.sc+' pts · '+r.r+' right · '+r.w+' wrong'));
       }))));
     }
-    el.replaceChildren.apply(el,out);
+    fill(el,out);
   }
   return {el:el,update:upd};
 };
@@ -959,38 +944,30 @@ VIEWS.nohost=function(){
 };
 
 VIEWS.lobby=function(){
-  var solo=S.mode==='solo';
-  var playersBox=h('div',{class:'plist'}),settingsBox=h('div',{class:'settings'}),startBox=h('div',null);
-  var left=h('section',{class:'panel'});
-  if(!solo){
-    left.append(
-      h('div',null,h('div',{class:'label'},'Room code'),h('div',{class:'codetiles','aria-label':'Room code '+S.code.split('').join(' ')},S.code.split('').map(function(ch){return h('span',{class:'tile'},ch)}))),
-      h('p',{class:'note'},'Friends open this page on their own device, pick a username and type this code.'),
-      h('div',null,h('button',{class:'btn small',type:'button',onclick:copyCode},'Copy code')),
-      h('div',{class:'label'},'Players'),playersBox);
-  }else{
-    left.append(h('h2',null,'Solo practice'),h('p',{class:'note'},'Beat your own best score. Same questions and scoring, nobody to race.'));
-  }
-  var rules=h('div',{class:'rules'},h('div',{class:'label'},'Scoring'),h('ul',null,
-    h('li',null,'Right answer: 10 points, plus a streak bonus that grows to 20.'),
-    h('li',null,'Wrong answer: no points, your streak resets and the right answer flashes up.'),
-    solo?null:h('li',null,'Fall 40 points behind the leader and easier tables unlock for you. At 100 behind you get the easiest set. Points per answer stay the same, so you can catch up.')));
-  var right=h('section',{class:'panel'},h('h2',null,'Round rules'),settingsBox,rules,startBox);
+  var playersBox=h('div',{class:'plist'}),startBox=h('div',null);
+  var left=h('section',{class:'panel'},
+    h('div',null,h('div',{class:'label'},'Room code'),h('div',{class:'codetiles','aria-label':'Room code '+S.code.split('').join(' ')},S.code.split('').map(function(ch){return h('span',{class:'tile'},ch)}))),
+    h('p',{class:'note'},'Friends open this game, type this code and tap Join.'),
+    h('div',null,h('button',{class:'btn small',type:'button',onclick:copyCode},'Copy code')),
+    h('div',{class:'label'},'Players'),playersBox);
+  var right=h('section',{class:'panel'},h('h2',null,'How it works'),
+    h('ul',{class:'rules'},
+      h('li',null,'60 seconds, all the tables up to 12.'),
+      h('li',null,'Right answer: 10 points, more for a streak.'),
+      h('li',null,'Wrong answer: you see the right one and your streak resets.'),
+      h('li',null,'Falling behind? You get easier questions so you can catch up.')),
+    startBox);
   var el=h('div',{class:'lobby'},left,right);
   function upd(){
     var g=game();if(!g)return;
-    var isHost=g.hostIsMe;
-    if(!solo){
-      playersBox.replaceChildren.apply(playersBox,players().map(function(p){
-        return h('div',{class:'prow'},avatar(p.n,p.c,36),h('span',{class:'nmtxt'},p.n),p.isMe?tag('You'):null,p.h?tag('Host'):null);
-      }));
-    }
-    settingsBox.replaceChildren(h('p',null,'Every round is 60 seconds, with all the tables up to 12.'));
-    if(isHost){
-      startBox.replaceChildren.apply(startBox,[h('button',{class:'btn primary big',type:'button',style:'width:100%',onclick:startRound},solo?'Start practice':'Start round'),
-        solo?null:h('p',{class:'note',style:'margin-top:8px'},'Wait until everyone shows up in the player list, then start.')].filter(Boolean));
+    fill(playersBox,players().map(function(p){
+      return h('div',{class:'prow'},avatar(p.n,p.c,36),h('span',{class:'nmtxt'},p.n),p.isMe?tag('You'):null,p.h?tag('Host'):null);
+    }));
+    if(g.hostIsMe){
+      fill(startBox,h('button',{class:'btn primary big',type:'button',style:'width:100%',onclick:startRound},'Start round'),
+        h('p',{class:'note',style:'margin-top:8px'},'Start when everyone is in the player list.'));
     }else{
-      startBox.replaceChildren(h('p',{class:'waiting'},'Waiting for the host to start…'));
+      fill(startBox,h('p',{class:'waiting'},'Waiting for the host to start…'));
     }
   }
   return {el:el,update:upd};
@@ -1031,7 +1008,7 @@ function updateTimer(now){
   var E=GV;if(!E||!P.G)return;
   var rem=Math.max(0,P.roundEnd-(now||Date.now()));
   var secs=Math.ceil(rem/1000);
-  E.timer.replaceChildren(String(secs),h('small',null,'s'));
+  fill(E.timer,String(secs),h('small',null,'s'));
   E.barFill.style.transform='scaleX('+(rem/(P.G.du*1000))+')';
   E.bar.classList.toggle('low',secs<=10);
 }
@@ -1043,7 +1020,7 @@ function drawGame(){
   if(counting)E.count.textContent=String(Math.max(1,Math.ceil((P.countEnd-Date.now())/1000)));
   if(P.q&&!counting&&P.qShown!==P.i){
     var x=P.q.flip?P.q.b:P.q.a,y=P.q.flip?P.q.a:P.q.b;
-    E.q.replaceChildren(String(x),h('span',{class:'x'},'×'),String(y));
+    fill(E.q,String(x),h('span',{class:'x'},'×'),String(y));
     P.qShown=P.i;
   }
   E.ansText.textContent=P.typed;
@@ -1054,13 +1031,14 @@ function drawGame(){
   var ps=roundPlayers(P.G);
   var i=ps.findIndex(function(p){return p.isMe});
   var line='';
-  if(S.mode==='solo')line=P.best?'Your best at this setting: '+P.best:'Set your first score.';
+  if(S.mode==='solo')line=P.best?'Your best: '+P.best+'. Can you beat it?':'Answer as many as you can.';
   else if(i===0&&ps.length>1){var gp=ps[0].sc-ps[1].sc;line=gp>0?'You lead by '+gp+'.':'You are tied for the lead.'}
   else if(i>0)line=ordinal(i+1)+' place. '+(ps[0].sc-ps[i].sc)+' behind '+ps[0].n+'.';
   E.rank.textContent=line;
   E.boost.hidden=me.lv===0;
   E.boost.textContent=me.lv===2?'Turbo comeback. Only the friendliest tables now, same points per answer.':'Comeback boost on. Easier tables, same points per answer. Use it to catch up.';
-  E.lb.replaceChildren(lbList(liveItems(ps),true));
+  fill(E.lb,lbList(liveItems(ps),true));
+  E.track.hidden=S.mode==='solo'&&!P.best;
   drawTrack(E,ps);
   if(S.mode==='solo')E.lb.parentNode.hidden=true;
 }
@@ -1103,7 +1081,7 @@ function standingsView(watching){
     var left=ps.filter(function(p){return !p.fin}).length;
     if(watching){title.textContent='Round in progress';sub.textContent='You joined mid-round, so you will play the next one. Watch the standings in the meantime.'}
     else{title.textContent='Time is up';sub.textContent='You got '+me.r+' right and '+me.w+' wrong for '+me.sc+' points. '+(left>0?left+' still playing…':'Waiting for the host to show results…')}
-    box.replaceChildren(lbList(liveItems(ps),true));
+    fill(box,lbList(liveItems(ps),true));
   }
   return {el:el,update:upd};
 }
@@ -1134,14 +1112,14 @@ VIEWS.results=function(){
       var tie=round.length>1&&round[1].sc===top.sc&&round[1].w===top.w;
       out.push(h('div',{class:'winner'},avatar(top.n,top.c,56),h('div',null,
         h('h2',null,solo?(P.newBest?'New personal best':'Round complete'):(tie?'It is a tie at the top':top.n+' wins the round')),
-        h('p',null,solo?me.sc+' points. '+me.r+' right, '+me.w+' wrong.'+(P.best?' Best at this setting: '+P.best+'.':''):top.sc+' points'+(tie?' for '+top.n+' and '+round[1].n+'.':'.')))));
+        h('p',null,solo?me.sc+' points. '+me.r+' right, '+me.w+' wrong.'+(P.best?' Your best: '+P.best+'.':''):top.sc+' points'+(tie?' for '+top.n+' and '+round[1].n+'.':'.')))));
     }
     if(showSession){
       out.push(h('div',{class:'seg',role:'group','aria-label':'Choose standings'},[['round','This round'],['session','Session total']].map(function(o){
         return h('button',{type:'button',class:'segbtn',style:'min-width:110px','aria-pressed':String(tab===o[0]),onclick:function(){S.resTab=o[0];lastSig='';upd()}},o[1]);
       })));
     }
-    out.push(lbList(items,false));
+    if(!solo)out.push(lbList(items,false));
     var played=round.filter(function(p){return p.r+p.w>0});
     if(!solo&&played.length>1){
       var mc=played.slice().sort(function(a,b){return b.r-a.r})[0];
@@ -1173,7 +1151,7 @@ VIEWS.results=function(){
     }else{
       out.push(h('p',{class:'waiting'},'Waiting for the host to start the next round…'));
     }
-    el.replaceChildren.apply(el,out);
+    fill(el,out);
   }
   return {el:el,update:upd};
 };
@@ -1196,9 +1174,9 @@ function renderTop(){
     chips.append(h('button',{class:'chip',type:'button','aria-label':'Copy room code',onclick:copyCode},'Room ',h('b',null,S.code)),
       h('button',{class:'btn small',type:'button',onclick:function(){leaveRoom()}},'Leave'));
   }else if(S.mode==='solo'){
-    chips.append(h('span',{class:'chip'},'Solo practice'),h('button',{class:'btn small',type:'button',onclick:exitSolo},'Exit'));
+    chips.append(h('span',{class:'chip'},'Practice'),h('button',{class:'btn small',type:'button',onclick:exitSolo},'Exit'));
   }
-  t.replaceChildren(h('div',{class:'brand'},h('span',{class:'brand-mark','aria-hidden':'true'},'×'),h('span',null,'Math Mayhem')),chips);
+  fill(t,h('div',{class:'brand'},h('span',{class:'brand-mark','aria-hidden':'true'},'×'),h('span',null,'Math Mayhem')),chips);
 }
 function render(){
   var k=viewKey();
