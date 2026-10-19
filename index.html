@@ -209,6 +209,7 @@ html{color-scheme:light}
 body{margin:0}
 [hidden]{display:none!important}
 img{max-width:100%}
+.newbox{margin-top:10px;border-top:1px solid var(--line,rgba(128,128,128,.3));padding-top:10px;display:flex;flex-direction:column;gap:10px}.newbox summary{cursor:pointer;font-weight:600;padding:6px 0}
 </style>
 </head>
 <body>
@@ -773,17 +774,21 @@ VIEWS.home=function(){
     oninput:function(){S.nameTouched=true;S.name=cleanName(nameIn.value);paint();upd()},onkeydown:function(e){if(e.key==='Enter')doCreate()}});
   var dice=h('button',{class:'btn small',type:'button',onclick:function(){nameIn.value=randomName();S.nameTouched=true;S.name=nameIn.value;paint();upd()}},'Surprise me');
   var createBtn=h('button',{class:'btn primary',type:'button',style:'width:100%',onclick:doCreate},'Save my progress');
-  var pCode=h('input',{class:'input',id:'profile-code',type:'text',maxlength:'20',autocomplete:'off',spellcheck:'false','aria-label':'Your name from before',placeholder:'Your name from before',
+  var pCode=h('input',{class:'input',id:'profile-code',type:'text',maxlength:'20',autocomplete:'off',spellcheck:'false','aria-label':'Your name from before',placeholder:'Your name',
     oninput:function(){upd()},onkeydown:function(e){if(e.key==='Enter')doOpen()}});
   var openBtn=h('button',{class:'btn',type:'button',onclick:doOpen},'Open');
   var pfMsg=h('p',{class:'note',role:'status'});
   var renameIn=h('input',{class:'input',id:'rename-input',type:'text',maxlength:'20',autocomplete:'off',spellcheck:'false','aria-label':'New name',
     onkeydown:function(e){if(e.key==='Enter')saveRename();if(e.key==='Escape'){renaming=false;upd()}}});
   var meBox=h('section',{class:'panel'});
+  var meSig='';
+  var newBox=h('details',{class:'newbox'},h('summary',null,'First time here? Make your name'),
+    h('div',{class:'namerow'},avatarBtn,nameIn),h('div',{class:'actions'},dice),createBtn,
+    h('p',{class:'note'},'Saving keeps your scores. Next time, type the same name on any device to carry on.'));
   async function doCreate(){
     if(PF.busy||PF.state==='ready')return;
     S.name=cleanName(nameIn.value);
-    if(nameKey(S.name).length<3){S.pfErr='Type your name first (at least 3 letters).';upd();nameIn.focus();return}
+    if(nameKey(S.name).length<3){S.pfErr='Type your name first (at least 3 letters).';newBox.open=true;upd();nameIn.focus();return}
     PF.busy=true;S.pfErr='';upd();
     var r=await createProfile();PF.busy=false;
     S.pfErr=r==='ok'?'':r==='taken'?'Someone already has that name. Add a letter or try "Surprise me".':r==='bad'?'Names need at least 3 letters or numbers.':'Could not save right now. Check your internet and try again.';
@@ -828,37 +833,41 @@ VIEWS.home=function(){
     msg.textContent=S.err||(S.roomState==='connecting'?'Connecting…':S.roomState==='unavailable'?'Could not reach the game server. Check your internet and reload. Practising on your own still works.':'');
     var isReady=PF.state==='ready',dbOk=PF.dbState==='ready';
     paint();
+    /* only rebuild the box when what it shows changes, so typing never loses focus */
+    var d=PF.data,tot=d.right+d.wrong;
+    var legacy=isReady&&isLegacy(PF.code)&&nameKey(PF.code)!==nameKey(d.name);
+    var sig=isReady?JSON.stringify(['in',d.name,d.rounds,d.right,d.wrong,d.bestScore,renaming,legacy,PF.msg||'',PF.code]):'out';
+    if(sig!==meSig){
+      meSig=sig;
+      if(!isReady){
+        fill(meBox,
+          h('div',{class:'label'},'Played before?'),
+          h('p',{class:'note'},'Type your name to carry on.'),
+          h('div',{class:'joinrow'},pCode,openBtn),
+          newBox,
+          pfMsg);
+      }else{
+        fill(meBox,
+          h('div',{class:'label'},'Playing as'),
+          renaming
+            ?h('div',{class:'namerow'},avatarBtn,renameIn)
+            :h('div',{class:'namerow'},avatarBtn,h('div',{class:'bigname'},d.name||S.name)),
+          renaming
+            ?h('div',{class:'actions'},h('button',{class:'btn small primary',type:'button',onclick:saveRename},'Save name'),h('button',{class:'btn small',type:'button',onclick:function(){renaming=false;upd()}},'Cancel'))
+            :h('div',{class:'actions'},
+                h('button',{class:'btn small',type:'button',onclick:function(){renaming=true;renameIn.value=d.name||S.name;upd();renameIn.focus();renameIn.select()}},'Change name'),
+                d.rounds>0?h('button',{class:'btn small',type:'button',onclick:function(){S.sub='profile';render()}},'My stats'):null,
+                h('button',{class:'btn small',type:'button',onclick:function(){closeProfile();S.pfErr='';S.nameTouched=false;S.name='';nameIn.value='';upd()}},'Not you?')),
+          d.rounds>0?h('div',{class:'statgrid',style:'grid-template-columns:repeat(3,minmax(0,1fr))'},statTile('Rounds',d.rounds),statTile('Accuracy',Math.round(d.right/Math.max(1,tot)*100)+'%'),statTile('Best score',d.bestScore)):null,
+          legacy?h('p',{class:'note'},'Your old code is '+displayCode(PF.code)+'. Change your name and the name becomes your code.'):null,
+          PF.msg?h('p',{class:'note',role:'status'},PF.msg):null);
+      }
+    }
     if(!isReady){
       createBtn.disabled=!dbOk||PF.busy;
       openBtn.disabled=!dbOk||PF.busy||nameKey(pCode.value).length<3;
       pfMsg.textContent=S.pfErr||(!dbOk&&PF.dbState!=='connecting'?'Saving needs the internet. You can still play.':'');
       if(document.activeElement!==nameIn&&!S.nameTouched)nameIn.value=S.name;
-      fill(meBox,
-        h('div',{class:'label'},'Your name'),
-        h('div',{class:'namerow'},avatarBtn,nameIn),
-        h('div',{class:'actions'},dice),
-        createBtn,
-        h('p',{class:'note'},'Saving keeps your scores. Next time, type the same name on any device to carry on.'),
-        h('div',{class:'label',style:'margin-top:6px'},'Played before?'),
-        h('div',{class:'joinrow'},pCode,openBtn),
-        pfMsg);
-    }else{
-      var d=PF.data,tot=d.right+d.wrong;
-      var legacy=isLegacy(PF.code)&&nameKey(PF.code)!==nameKey(d.name);
-      fill(meBox,
-        h('div',{class:'label'},'Playing as'),
-        renaming
-          ?h('div',{class:'namerow'},avatarBtn,renameIn)
-          :h('div',{class:'namerow'},avatarBtn,h('div',{class:'bigname'},d.name||S.name)),
-        renaming
-          ?h('div',{class:'actions'},h('button',{class:'btn small primary',type:'button',onclick:saveRename},'Save name'),h('button',{class:'btn small',type:'button',onclick:function(){renaming=false;upd()}},'Cancel'))
-          :h('div',{class:'actions'},
-              h('button',{class:'btn small',type:'button',onclick:function(){renaming=true;renameIn.value=d.name||S.name;upd();renameIn.focus();renameIn.select()}},'Change name'),
-              d.rounds>0?h('button',{class:'btn small',type:'button',onclick:function(){S.sub='profile';render()}},'My stats'):null,
-              h('button',{class:'btn small',type:'button',onclick:function(){closeProfile();S.pfErr='';S.nameTouched=false;S.name='';nameIn.value='';upd()}},'Not you?')),
-        d.rounds>0?h('div',{class:'statgrid',style:'grid-template-columns:repeat(3,minmax(0,1fr))'},statTile('Rounds',d.rounds),statTile('Accuracy',Math.round(d.right/Math.max(1,tot)*100)+'%'),statTile('Best score',d.bestScore)):null,
-        legacy?h('p',{class:'note'},'Your old code is '+displayCode(PF.code)+'. Change your name and the name becomes your code.'):null,
-        PF.msg?h('p',{class:'note',role:'status'},PF.msg):null);
     }
   }
   /* ---- leaderboard ---- */
