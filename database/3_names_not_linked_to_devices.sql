@@ -1,4 +1,4 @@
--- Times Table Showdown: names are no longer linked to a device. Anyone who opens a profile can rename it.
+-- Math Mayhem: names are no longer linked to a device. Anyone who opens a profile can rename it.
 -- Paste ALL of this into Supabase > SQL Editor and press Run. Safe to run more than once.
 create or replace function public.tts_profile_rename(p_code text, p_name text, p_color integer, p_token text default null) returns jsonb
 language plpgsql security definer set search_path='' as $f$

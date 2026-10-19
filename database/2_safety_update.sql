@@ -1,4 +1,4 @@
--- Times Table Showdown: safety update. Paste ALL of this into Supabase > SQL Editor and press Run. Safe to run more than once.
+-- Math Mayhem: safety update. Paste ALL of this into Supabase > SQL Editor and press Run. Safe to run more than once.
 
 -- 1) Each profile gets a secret "owner key" kept on the student's device. Only that device can change the name.
 alter table tts.profiles add column if not exists owner_hash text;

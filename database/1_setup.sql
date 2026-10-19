@@ -1,4 +1,4 @@
--- Times Table Showdown: one-time database setup. Paste ALL of this into Supabase > SQL Editor and press Run.
+-- Math Mayhem: one-time database setup. Paste ALL of this into Supabase > SQL Editor and press Run.
 
 create schema if not exists tts;
 revoke all on schema tts from public, anon, authenticated;
