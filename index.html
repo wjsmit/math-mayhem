@@ -975,7 +975,7 @@ VIEWS.lobby=function(){
     h('li',null,'Right answer: 10 points, plus a streak bonus that grows to 20.'),
     h('li',null,'Wrong answer: no points, your streak resets and the right answer flashes up.'),
     solo?null:h('li',null,'Fall 40 points behind the leader and easier tables unlock for you. At 100 behind you get the easiest set. Points per answer stay the same, so you can catch up.')));
-  var right=h('section',{class:'panel'},h('h2',null,solo?'Practice settings':'Game settings'),settingsBox,rules,startBox);
+  var right=h('section',{class:'panel'},h('h2',null,'Round rules'),settingsBox,rules,startBox);
   var el=h('div',{class:'lobby'},left,right);
   function upd(){
     var g=game();if(!g)return;
@@ -1165,11 +1165,11 @@ VIEWS.results=function(){
         h('div',{class:'label'},'Tricky ones to practise'),
         miss.length?h('div',{class:'mchips'},miss.map(function(m){return h('span',{class:'mchip'},m.a+' × '+m.b+' = '+(m.a*m.b),m.n>1?h('i',null,'×'+m.n):null)})):h('p',{class:'note'},'No misses. Clean round.')));
     }
-    if(P.recorded&&me.rd===g.g)out.push(h('p',{class:'note'},PF.code?(P.newBest?'New personal best for this setting. ':'')+'Round saved to your profile.':'Not saved. Make a profile on the home screen to keep your scores.'));
+    if(P.recorded&&me.rd===g.g)out.push(h('p',{class:'note'},PF.code?(P.newBest?'New personal best! ':'')+'Round saved to your profile.':'Not saved. Make a profile on the home screen to keep your scores.'));
     if(g.hostIsMe){
       out.push(h('div',{class:'actions'},
         h('button',{class:'btn primary big',type:'button',onclick:startRound},solo?'Practice again':'Play again'),
-        h('button',{class:'btn big',type:'button',onclick:function(){hostSet({ph:'lobby'})}},solo?'Change settings':'Back to lobby')));
+        h('button',{class:'btn big',type:'button',onclick:function(){if(solo)exitSolo();else hostSet({ph:'lobby'})}},solo?'Back to home':'Back to lobby')));
     }else{
       out.push(h('p',{class:'waiting'},'Waiting for the host to start the next round…'));
     }
