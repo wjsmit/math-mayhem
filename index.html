@@ -544,7 +544,9 @@ var TRACKS=[
   {id:'frac',name:'Fractions and percentages',short:'Fractions',base:16},
   {id:'alg1',name:'Algebra 1: one step',short:'Algebra 1',base:13},
   {id:'alg2',name:'Algebra 2: two steps and substituting',short:'Algebra 2',base:22},
-  {id:'alg3',name:'Algebra 3: brackets and both sides',short:'Algebra 3',base:34}
+  {id:'alg3',name:'Algebra 3: brackets and both sides',short:'Algebra 3',base:34},
+  {id:'alg4',name:'Algebra 4: squares and roots',short:'Algebra 4',base:26},
+  {id:'ineq',name:'Inequalities',short:'Inequalities',base:26}
 ];
 function trackIdx(id){for(var i=0;i<TRACKS.length;i++)if(TRACKS[i].id===id)return i;return 0}
 function myTrack(){return TRACKS[trackIdx(PF.state==='ready'&&PF.link&&PF.link.track)].id}
@@ -605,7 +607,24 @@ function genAlg3(rng,lv){
   if(r<0.7){b=ri(rng,1,x-1);return mk('x² − '+coef(b)+',  when x = '+x,x*x-b*x)}
   p=ri(rng,1,5);q=ri(rng,1,5);return mk('(x + '+p+')(x + '+q+'),  when x = '+x,(x+p)*(x+q));
 }
-var GENS={addsub:genArith,bodmas:genBodmas,frac:genFrac,alg1:genAlg1,alg2:genAlg2,alg3:genAlg3};
+function genAlg4(rng,lv){
+  var k=lv===2?0:lv?rng()*0.45:rng(),x=ri(rng,2,lv===2?6:lv?10:15),a,b;
+  if(k<0.3)return mk('x² = '+x*x+',  x > 0',x,'x =');
+  if(k<0.5){a=ri(rng,2,5);return mk(a+'x² = '+a*x*x+',  x > 0',x,'x =')}
+  if(k<0.7){b=ri(rng,1,30);return mk('x² + '+b+' = '+(x*x+b)+',  x > 0',x,'x =')}
+  if(k<0.85){b=ri(rng,1,Math.min(30,x*x-1));return mk('x² − '+b+' = '+(x*x-b)+',  x > 0',x,'x =')}
+  return mk('√'+x*x,x);
+}
+function genIneq(rng,lv){
+  var ops=lv?['>','<']:['>','≥','<','≤'],op=pk(rng,ops),a,b,c,num,ans,lhs,big=op==='>'||op==='≥';
+  if(rng()<0.25){a=ri(rng,2,9);b=ri(rng,2,12);num=a*b;lhs='x ÷ '+a;c=b}
+  else if(rng()<0.7){a=ri(rng,2,lv?4:9);b=ri(rng,0,20);c=b+ri(rng,a,a*12);num=c-b;lhs=b?coef(a)+' + '+b:coef(a)}
+  else{a=ri(rng,2,lv?4:9);b=ri(rng,1,20);c=ri(rng,Math.max(1,2*a-b),40+a);num=c+b;lhs=coef(a)+' − '+b}
+  var t=lhs.indexOf('÷')>=0?num:num/a;
+  ans=op==='>'?Math.floor(t)+1:op==='≥'?Math.ceil(t):op==='<'?Math.ceil(t)-1:Math.floor(t);
+  return mk(lhs+' '+op+' '+c+',  '+(big?'smallest':'largest')+' whole x',ans,'x =');
+}
+var GENS={addsub:genArith,bodmas:genBodmas,frac:genFrac,alg1:genAlg1,alg2:genAlg2,alg3:genAlg3,alg4:genAlg4,ineq:genIneq};
 function makeQ(g,i,t,lv,tk){
   var rng=mulberry32(hash(g.sd,g.g,i,t,lv));var a,b;
   if(tk&&GENS[tk])return GENS[tk](rng,lv);
