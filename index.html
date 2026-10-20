@@ -197,6 +197,7 @@ html{color-scheme:dark}
 body{margin:0}
 [hidden]{display:none!important}
 img{max-width:100%}
+.savebar{position:sticky;bottom:calc(8px + env(safe-area-inset-bottom,0px));z-index:5;display:grid;gap:8px;padding:10px 12px;background:var(--surface2);border:3px solid var(--boost);border-radius:6px;box-shadow:0 0 14px rgba(255,230,0,.25)}
 .newbox{margin-top:10px;border-top:1px solid var(--line,rgba(128,128,128,.3));padding-top:10px;display:flex;flex-direction:column;gap:10px}.newbox summary{cursor:pointer;font-weight:600;padding:6px 0}
 .subd{margin-top:8px}.subd[open]>summary{margin-bottom:8px}textarea.input{min-height:110px;padding:10px 14px;resize:vertical;font:inherit;line-height:1.4}
 
@@ -991,7 +992,7 @@ function weakFacts(facts,n){
     .map(function(x){return x.a+'×'+x.b}).join(', ');
 }
 function teacherPanel(){
-  var T={open:false,pin:'',list:null,roster:null,msg:'',busy:false,confirm:'',label:'',names:'',profOpen:false};
+  var T={open:false,pin:'',list:null,roster:null,msg:'',busy:false,confirm:'',label:'',names:'',profOpen:false,pending:{},saving:false,bulk:'tables'};
   var box=h('details',{class:'panel tpanel'});
   box.addEventListener('toggle',function(){T.open=box.open});
   function err(e){var m=String(e&&e.message||'');return /not_allowed/.test(m)?'That PIN does not work for this profile. Open the teacher profile first, then enter its PIN.':'Could not reach the game server. Try again.'}
@@ -1022,6 +1023,28 @@ function teacherPanel(){
     if(!names.length){T.msg='Paste the names first, one per line.';draw();return}
     act('tts_admin_import',{p_label:T.label,p_names:names,p_track:T.track||'tables'},function(d){T.names='';return 'Added '+d.added+' name'+(d.added===1?'':'s')+' to '+d.class+'. Class code: '+d.code})
   }
+  var barEl,barMsg,saveBtn,discardBtn;
+  function pendCount(){return Object.keys(T.pending).length}
+  function refreshBar(){
+    if(!barEl)return;var n=pendCount();
+    barEl.hidden=n===0&&!T.saving;
+    barMsg.textContent=T.saving?'Saving…':n+' level change'+(n===1?'':'s')+' not saved yet';
+    saveBtn.disabled=T.saving||n===0;saveBtn.textContent=T.saving?'Saving…':'Save levels';
+    if(discardBtn)discardBtn.disabled=T.saving;
+  }
+  async function saveLevels(){
+    var ids=Object.keys(T.pending);if(!ids.length||T.saving)return;
+    T.saving=true;T.msg='';draw();
+    var ok=0,bad=[];
+    for(var i=0;i<ids.length;i++){
+      var rid=+ids[i],want=T.pending[ids[i]];
+      try{var r=await PF.sb.rpc('tts_admin_set_track',{p_code:PF.code,p_pin:T.pin,p_rid:rid,p_track:want});if(r.error)throw r.error;delete T.pending[ids[i]];ok++}
+      catch(e){var row=(T.roster&&T.roster.rows||[]).filter(function(x){return x.rid===rid})[0];bad.push(row?row.real:'#'+rid)}
+    }
+    try{await fetchAll()}catch(e){}
+    T.msg=(ok?'Saved '+ok+' level'+(ok===1?'':'s')+'.':'')+(bad.length?' Could not save: '+bad.join(', ')+'. Check your internet and press Save again.':'');
+    T.saving=false;draw();
+  }
   function rosterView(){
     var out=[h('div',{class:'label',style:'margin-top:6px'},'Class lists')];
     if(T.rosterOff||!T.roster){out.push(h('p',{class:'note'},'Class lists are not installed yet. Run database/4_class_lists.sql in Supabase.'));return out}
@@ -1035,13 +1058,26 @@ function teacherPanel(){
       h('button',{class:'btn',type:'button',disabled:T.busy,onclick:importNames},'Add names to class')));
     if(R.rows.length){
       out.push(h('div',{class:'label',style:'margin-top:6px'},'Progress'));
+      var bulkSel=h('select',{class:'input','aria-label':'Level for everyone',style:'padding:8px 10px;min-height:0;font-size:.9rem',onchange:function(){T.bulk=bulkSel.value}},TRACKS.map(function(t){return h('option',{value:t.id},t.name)}));bulkSel.value=T.bulk;
+      out.push(h('div',{class:'stack'},h('p',{class:'note'},'Change levels below, then press Save levels. Or set everyone to one level first:'),
+        h('div',{class:'joinrow'},bulkSel,h('button',{class:'btn small',type:'button',disabled:T.saving,onclick:function(){R.rows.forEach(function(r){if(TRACKS[trackIdx(r.track)].id===T.bulk)delete T.pending[r.rid];else T.pending[r.rid]=T.bulk});draw()}},'Set all'))));
+      barMsg=h('span',{class:'nmtxt',style:'white-space:normal'});
+      saveBtn=h('button',{class:'btn primary',type:'button',onclick:saveLevels},'Save levels');
+      discardBtn=h('button',{class:'btn small',type:'button',disabled:T.saving,onclick:function(){T.pending={};T.msg='';draw()}},'Discard');
+      barEl=h('div',{class:'savebar',role:'status'},barMsg,h('div',{class:'actions'},saveBtn,discardBtn));
+      refreshBar();
+      out.push(barEl);
       out.push(h('div',{class:'lblist'},R.rows.map(function(r){
         var tot=(r.right||0)+(r.wrong||0),acc=tot?Math.round(r.right/tot*100)+'%':'–';
         var weak=weakFacts(r.facts);
         var sub=r.user?(r.user+' · '+(r.rounds||0)+' rounds · '+acc+' right · best '+(r.best||0)+(weak?' · weak: '+weak:'')):'Has not picked this name yet';
-        var sel=h('select',{class:'input','aria-label':'Kind of maths for '+r.real,style:'padding:6px 10px;min-height:0;font-size:.85rem',disabled:T.busy,onchange:function(){act('tts_admin_set_track',{p_rid:r.rid,p_track:sel.value},r.real+': '+TRACKS[trackIdx(sel.value)].name)}},TRACKS.map(function(t){return h('option',{value:t.id},t.name)}));sel.value=TRACKS[trackIdx(r.track)].id;
+        var cur=TRACKS[trackIdx(r.track)].id,pend=T.pending[r.rid];
+        var chg=h('div',{class:'sub',style:'color:var(--boost);font-weight:700',hidden:!pend},'Changed. Press Save levels.');
+        var sel=h('select',{class:'input','aria-label':'Kind of maths for '+r.real,style:'padding:6px 10px;min-height:0;font-size:.85rem',disabled:T.saving,onchange:function(){
+          if(sel.value===cur)delete T.pending[r.rid];else T.pending[r.rid]=sel.value;
+          chg.hidden=sel.value===cur;refreshBar()}},TRACKS.map(function(t){return h('option',{value:t.id},t.name)}));sel.value=pend||cur;
         return h('div',{class:'lbrow',style:'grid-template-columns:minmax(0,1fr) auto'},
-          h('div',{style:'min-width:0'},h('div',{class:'nmtxt'},r.real+' ('+r.class+')'),h('div',{class:'sub'},sub),h('div',{class:'sub',style:'margin-top:6px'},'Maths level (tap to change):'),sel),
+          h('div',{style:'min-width:0'},h('div',{class:'nmtxt'},r.real+' ('+r.class+')'),h('div',{class:'sub'},sub),h('div',{class:'sub',style:'margin-top:6px'},'Maths level:'),sel,chg),
           h('div',{class:'actions',style:'justify-content:flex-end'},
             r.user?h('button',{class:'btn small',type:'button',disabled:T.busy,onclick:function(){ask('u'+r.rid,function(){act('tts_admin_unlink',{p_rid:r.rid},'Unlinked '+r.real+'. They can pick a name again.')})}},T.confirm==='u'+r.rid?'Tap again':'Unlink'):null,
             h('button',{class:'btn small danger',type:'button',disabled:T.busy,onclick:function(){ask('r'+r.rid,function(){act('tts_admin_roster_remove',{p_rid:r.rid},'Removed '+r.real+' from the list.')})}},T.confirm==='r'+r.rid?'Tap again':'Remove')));
@@ -1066,7 +1102,7 @@ function teacherPanel(){
               it.me?null:h('button',{class:'btn small danger',type:'button',disabled:T.busy,onclick:function(){del(it)}},T.confirm===it.handle?'Tap again to remove':'Remove')));
         })));
       prof.open=T.profOpen;prof.addEventListener('toggle',function(){T.profOpen=prof.open});
-      kids.push(prof,h('div',{class:'actions'},h('button',{class:'btn small',type:'button',onclick:function(){T.list=null;T.roster=null;T.pin='';T.msg='';draw()}},'Lock')));
+      kids.push(prof,h('div',{class:'actions'},h('button',{class:'btn small',type:'button',onclick:function(){T.list=null;T.roster=null;T.pin='';T.msg='';T.pending={};draw()}},'Lock')));
     }
     if(T.msg)kids.push(h('p',{class:'note',role:'status'},T.msg));
     fill(box,kids);box.open=T.open;
