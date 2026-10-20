@@ -228,7 +228,16 @@ select.input{font-family:var(--font-body);font-size:16px}
 textarea.input{font-family:var(--font-body);font-size:17px}
 .input.code{letter-spacing:.3em}
 .segbtn{border:3px solid var(--line);border-radius:4px;font-family:var(--font-mono);font-size:20px}
-.avatar{border-radius:4px;color:#0B0720;font-family:var(--font-display);font-weight:400;font-size:calc(var(--s,36px)*.4);box-shadow:inset 0 -3px 0 rgba(0,0,0,.25),0 0 0 2px #000}
+.avatar{border-radius:4px;overflow:hidden;box-shadow:inset 0 -3px 0 rgba(0,0,0,.25),0 0 0 2px #000}
+.avatar svg{display:block;width:100%;height:100%}
+.avedit{display:grid;gap:12px}
+.avprev{display:flex;align-items:center;gap:14px}
+.avgrid{display:flex;flex-wrap:wrap;gap:6px}
+.avopt{padding:0;border:3px solid var(--line);border-radius:6px;background:var(--bg);cursor:pointer;line-height:0;touch-action:manipulation}
+.avopt[aria-pressed="true"]{border-color:var(--accent2);box-shadow:0 0 10px rgba(255,61,209,.55)}
+.avopt .avatar{box-shadow:none;border-radius:2px}
+.avcol{width:32px;height:32px;border-radius:4px;border:3px solid var(--line);cursor:pointer;padding:0}
+.avcol[aria-pressed="true"]{border-color:var(--fg);box-shadow:0 0 10px rgba(255,255,255,.5)}
 .bigname{font-family:var(--font-display);font-weight:400;font-size:clamp(14px,4.4vw,18px);line-height:1.5}
 .tile{border:3px solid var(--line);border-bottom-width:6px;border-radius:4px;font-family:var(--font-display);font-size:clamp(20px,7vw,32px);color:var(--accent);text-shadow:0 0 10px rgba(0,229,255,.6)}
 .lbrow,.lb-row,.award,.stat{border:2px solid var(--line);border-radius:4px}
@@ -327,9 +336,72 @@ function h(tag,attrs){
   }
   return e;
 }
-function avatar(n,c,s){
-  var ch=Array.from(n||'?')[0]||'?';
-  return h('span',{class:'avatar',style:'--s:'+s+'px;--pc:var(--p'+c+')','aria-hidden':'true'},ch.toUpperCase());
+/* ---------- avatars: pixel faces built from parts. A face is six digits: head colour, head shape, eyes, mouth, hat, extra ---------- */
+var AV_HEAD=['#FFD9B3','#E8B48A','#B98058','#7A4B2E','#8CF7A0','#8FE9FF','#FF9EDD','#D0D3E6'];
+var AV_COL={I:'#120A33',W:'#FFFFFF',P:'#FF3DD1',G:'#FFE600',C:'#00E5FF',V:'#A678FF'};
+var AV_PARTS={
+  shape:[
+    [[2,3,8,7,'H'],[2,9,8,1,'S']],
+    [[3,2,6,9,'H'],[2,3,8,7,'H'],[3,10,6,1,'S'],[2,9,1,1,'S'],[9,9,1,1,'S']],
+    [[1,4,10,6,'H'],[2,3,8,8,'H'],[2,10,8,1,'S'],[1,9,1,1,'S'],[10,9,1,1,'S']],
+    [[2,3,8,7,'H'],[2,9,8,1,'S'],[1,5,1,3,'S'],[10,5,1,3,'S'],[5,0,2,2,'G'],[5,2,2,1,'I']]
+  ],
+  eyes:[
+    [[4,5,1,2],[7,5,1,2]],
+    [[3,5,2,2,'W'],[7,5,2,2,'W'],[4,6,1,1],[8,6,1,1]],
+    [[3,6,1,1],[4,5,1,1],[5,6,1,1],[6,6,1,1],[7,5,1,1],[8,6,1,1]],
+    [[3,5,6,2],[4,5,1,1,'W'],[7,6,1,1,'W']],
+    [[4,4,4,3,'W'],[5,5,2,2]],
+    [[3,6,2,1],[7,6,2,1]]
+  ],
+  mouth:[
+    [[4,8,1,1],[5,9,2,1],[7,8,1,1]],
+    [[4,8,4,2],[5,8,2,1,'W']],
+    [[4,9,4,1]],
+    [[5,8,2,2]],
+    [[4,8,4,1],[5,9,2,1,'P']]
+  ],
+  hat:[
+    [],
+    [[2,1,8,2,'P'],[1,3,4,1,'P']],
+    [[3,0,1,1,'G'],[5,0,2,1,'G'],[8,0,1,1,'G'],[3,1,6,2,'G']],
+    [[3,1,6,2,'C'],[2,2,8,1,'C'],[5,0,2,1,'W']],
+    [[5,0,2,1,'V'],[4,1,4,1,'V'],[3,2,6,1,'V'],[2,3,8,1,'V'],[6,1,1,1,'G']],
+    [[2,2,8,1,'I'],[1,5,2,3,'P'],[9,5,2,3,'P'],[2,3,1,2,'I'],[9,3,1,2,'I']],
+    [[5,0,2,1,'G'],[4,1,4,1,'P'],[3,2,6,1,'C']]
+  ],
+  extra:[
+    [],
+    [[2,7,1,1,'S'],[3,8,1,1,'S'],[9,7,1,1,'S'],[8,8,1,1,'S']],
+    [[2,7,2,1,'P'],[8,7,2,1,'P']],
+    [[3,7,6,1]],
+    [[8,3,1,3,'G'],[7,4,3,1,'G']]
+  ]
+};
+var AV_ORDER=['head','shape','eyes','mouth','hat','extra'];
+var AV_SIZES=[8,4,6,5,7,5];
+function validAv(a){return typeof a==='string'&&/^[0-7][0-3][0-5][0-4][0-6][0-4]$/.test(a)}
+function defaultAv(n){
+  var x=2166136261,t=String(n||'?');
+  for(var i=0;i<t.length;i++){x^=t.charCodeAt(i);x=Math.imul(x,16777619)>>>0}
+  return [x%8,(x>>>3)%4,(x>>>5)%6,(x>>>8)%5,(x>>>11)%7,0].join('');
+}
+function randomAv(){return AV_SIZES.map(function(n){return Math.floor(Math.random()*n)}).join('')}
+function avShade(hex){var n=parseInt(hex.slice(1),16),r=(n>>16)&255,g=(n>>8)&255,b=n&255;return '#'+[r,g,b].map(function(v){return ('0'+Math.round(v*0.74).toString(16)).slice(-2)}).join('')}
+function avSvg(av){
+  var d=av.split('').map(Number),head=AV_HEAD[d[0]],col={H:head,S:avShade(head)};
+  var NS='http://www.w3.org/2000/svg',svg=document.createElementNS(NS,'svg');
+  svg.setAttribute('viewBox','0 0 12 12');svg.setAttribute('shape-rendering','crispEdges');svg.setAttribute('aria-hidden','true');
+  var order=[['shape',d[1]],['extra',d[5]],['eyes',d[2]],['mouth',d[3]],['hat',d[4]]];
+  order.forEach(function(o){AV_PARTS[o[0]][o[1]].forEach(function(r){
+    var e=document.createElementNS(NS,'rect');e.setAttribute('x',r[0]);e.setAttribute('y',r[1]);e.setAttribute('width',r[2]);e.setAttribute('height',r[3]);
+    e.setAttribute('fill',col[r[4]]||AV_COL[r[4]]||AV_COL.I);svg.appendChild(e)})});
+  return svg;
+}
+var AVC={};
+function avatar(n,c,s,av){
+  var a=validAv(av)?av:(AVC[nameKey(n)]||defaultAv(n));
+  return h('span',{class:'avatar',style:'--s:'+s+'px;--pc:var(--p'+c+')','aria-hidden':'true'},avSvg(a));
 }
 function fill(el){var kids=[];for(var i=1;i<arguments.length;i++)[].concat(arguments[i]).forEach(function(k){if(k!=null&&k!==false)kids.push(k)});el.replaceChildren.apply(el,kids);return el}
 function tag(t,cls){return h('span',{class:'tag'+(cls?' '+cls:'')},t)}
@@ -437,12 +509,12 @@ var GV=null,curKey=null,curView=null,hostTO=null,connTO=null;
 
 /* ---------- profile: a short code opens the same profile on any device (kept on the game server, never in the browser) ---------- */
 var PF={link:undefined,data:null,sb:null,dbState:'connecting',code:'',state:'none',busy:false,msg:'',q:Promise.resolve()};
-function blankProfile(){return {name:'',color:0,rounds:0,right:0,wrong:0,bestStreak:0,bestScore:0,best:{},facts:{},recent:[],created:Date.now(),updated:0}}
+function blankProfile(){return {name:'',color:0,rounds:0,right:0,wrong:0,bestStreak:0,bestScore:0,best:{},facts:{},recent:[],av:'',created:Date.now(),updated:0}}
 PF.data=blankProfile();
 function sanitizeProfile(o){
   var b=blankProfile();if(!o||typeof o!=='object')return b;
   var n=function(v,hi){return clampN(v,0,hi)};
-  b.name=cleanName(o.name);b.color=n(o.color,COLORS-1);b.rounds=n(o.rounds,1e6);b.right=n(o.right,1e8);b.wrong=n(o.wrong,1e8);
+  b.name=cleanName(o.name);b.color=n(o.color,COLORS-1);b.av=validAv(o.av)?o.av:'';b.rounds=n(o.rounds,1e6);b.right=n(o.right,1e8);b.wrong=n(o.wrong,1e8);
   b.bestStreak=n(o.bestStreak,1e5);b.bestScore=n(o.bestScore,1e6);b.created=n(o.created,8.64e15)||Date.now();b.updated=n(o.updated,8.64e15);
   if(o.best&&typeof o.best==='object')Object.keys(o.best).slice(0,40).forEach(function(k){if(/^\d{2,3}-(\d{1,2}|[a-z0-9]{3,8})$/.test(k))b.best[k]=n(o.best[k],1e6)});
   if(o.facts&&typeof o.facts==='object')Object.keys(o.facts).slice(0,200).forEach(function(k){var v=o.facts[k];if(/^\d{1,2}x\d{1,2}$/.test(k)&&Array.isArray(v))b.facts[k]=[n(v[0],1e6),n(v[1],1e6)]});
@@ -494,6 +566,7 @@ async function openProfile(code){
     lsSet('tts-code',PF.code);
     setTimeout(loadLeaderboard,0);setTimeout(loadLink,0);
     S.name=cleanName(PF.data.name)||S.name;S.color=PF.data.color;S.nameTouched=false;
+    S.av=PF.data.av||defaultAv(PF.data.name);
     return 'ok';
   }catch(e){return 'error'}
 }
@@ -516,7 +589,8 @@ async function loadLink(){
   try{var r=await PF.sb.rpc('tts_class_mine',{p_code:code});PF.link=r.error?'off':(r.data||null)}catch(e){PF.link='off'}
   if(PF.code===code)refreshProfileUI();
 }
-function closeProfile(){PF.link=undefined;setTimeout(loadLeaderboard,0);PF.data=blankProfile();PF.code='';PF.state='none';PF.msg='';lsSet('tts-code','')}
+function saveAvatar(){if(PF.state==='ready'&&PF.code&&validAv(S.av)&&PF.data.av!==S.av)callProfile('tts_profile_set_avatar',{p_av:S.av})}
+function closeProfile(){S.av=randomAv();PF.link=undefined;setTimeout(loadLeaderboard,0);PF.data=blankProfile();PF.code='';PF.state='none';PF.msg='';lsSet('tts-code','')}
 /* one request at a time; the server adds each round to the stored profile, so two devices never overwrite each other */
 function callProfile(fn,args){
   if(!PF.code)return Promise.resolve();
@@ -579,14 +653,14 @@ function resetMe(){Object.assign(me,{rd:0,base:0,br:0,bw:0,sc:0,r:0,w:0,st:0,bs:
 
 /* ---------- room data ---------- */
 function players(){
-  if(S.mode==='solo')return [{id:'me',isMe:true,h:true,n:S.name,c:S.color,rd:me.rd,sc:me.sc,r:me.r,w:me.w,st:me.st,bs:me.bs,lv:me.lv,fin:me.fin,tk:me.tk,base:me.base,br:me.br,bw:me.bw}];
+  if(S.mode==='solo')return [{id:'me',isMe:true,h:true,n:S.name,c:S.color,rd:me.rd,sc:me.sc,r:me.r,w:me.w,st:me.st,bs:me.bs,lv:me.lv,fin:me.fin,tk:me.tk,av:S.av,base:me.base,br:me.br,bw:me.bw}];
   if(!S.nr)return [];
   return S.nr.peers().filter(function(p){return p.kind==='viewer'&&p.presence&&p.presence.n!=null}).map(function(p){
     var x=p.presence;
     return {id:p.peer,isMe:!!p.sameTab,h:x.h===1,n:cleanName(x.n)||'Mystery player',c:clampN(x.c,0,COLORS-1),
       rd:clampN(x.rd,0,9999),sc:clampN(x.sc,0,99999),r:clampN(x.r,0,9999),w:clampN(x.w,0,9999),st:clampN(x.st,0,9999),bs:clampN(x.bs,0,9999),
-      lv:clampN(x.lv,0,2),tk:clampN(x.tk,0,TRACKS.length-1),fin:x.fin?1:0,base:clampN(x.base,0,999999),br:clampN(x.br,0,99999),bw:clampN(x.bw,0,99999)};
-  });
+      lv:clampN(x.lv,0,2),tk:clampN(x.tk,0,TRACKS.length-1),fin:x.fin?1:0,base:clampN(x.base,0,999999),br:clampN(x.br,0,99999),bw:clampN(x.bw,0,99999),av:validAv(x.av)?x.av:''};
+  }).map(function(p){if(p.av)AVC[nameKey(p.n)]=p.av;return p});
 }
 function game(){
   if(S.mode==='solo')return S.soloGame;
@@ -598,7 +672,7 @@ function game(){
     du:[45,60,90].indexOf(x.du)>=0?x.du:60,mx:clampN(x.mx,6,12)};
 }
 function setPresence(patch){if(S.nr)S.nr.presence(patch).catch(function(){})}
-function pushMe(){setPresence({rd:me.rd,base:me.base,br:me.br,bw:me.bw,sc:me.sc,r:me.r,w:me.w,st:me.st,bs:me.bs,lv:me.lv,tk:me.tk,fin:me.fin})}
+function pushMe(){setPresence({rd:me.rd,base:me.base,br:me.br,bw:me.bw,sc:me.sc,r:me.r,w:me.w,st:me.st,bs:me.bs,lv:me.lv,tk:me.tk,fin:me.fin,av:S.av})}
 function hostSet(patch){if(S.mode==='solo'){Object.assign(S.soloGame,patch);sync()}else setPresence(patch)}
 var cmp=function(a,b){return b.sc-a.sc||a.w-b.w||(a.n<b.n?-1:a.n>b.n?1:0)||(a.id<b.id?-1:1)};
 function roundPlayers(g){
@@ -834,7 +908,7 @@ function enterRoom(nr,code,asHost){
       if(c){S.conn=true;renderTop()}else connTO=setTimeout(function(){S.conn=nr.connected();renderTop()},2000);
     })
   ];
-  var base={n:S.name,c:S.color,rd:0,sc:0,r:0,w:0,st:0,bs:0,lv:0,tk:trackIdx(myTrack()),fin:0,base:0,br:0,bw:0};
+  var base={n:S.name,c:S.color,av:S.av,rd:0,sc:0,r:0,w:0,st:0,bs:0,lv:0,tk:trackIdx(myTrack()),fin:0,base:0,br:0,bw:0};
   if(asHost)Object.assign(base,{h:1,ph:'lobby',g:0,sd:0,du:60,mx:12});
   setPresence(base);
   curKey=null;render();
@@ -1004,7 +1078,31 @@ VIEWS.home=function(){
   var el=h('div',{class:'home'});
   var renaming=false;
   /* ---- who is playing ---- */
-  var avatarBtn=h('button',{class:'avatar-btn',type:'button','aria-label':'Change your colour',title:'Tap to change colour',onclick:function(){S.color=(S.color+1)%COLORS;paint();syncIdentityToProfile()}});
+  var avOpen=false,avTO;
+  var avBox=h('section',{class:'panel',hidden:true});
+  var avatarBtn=h('button',{class:'avatar-btn',type:'button','aria-label':'Make your avatar',title:'Tap to make your avatar',onclick:toggleAv});
+  function toggleAv(){avOpen=!avOpen;paintAv();if(avOpen&&avBox.scrollIntoView)avBox.scrollIntoView({block:'nearest'})}
+  function avChanged(){AVC[nameKey(S.name)]=S.av;paint();paintAv();clearTimeout(avTO);avTO=setTimeout(saveAvatar,500)}
+  function setAvPart(i,v){var a=S.av.split('');a[i]=String(v);S.av=a.join('');avChanged()}
+  function paintAv(){
+    avBox.hidden=!avOpen;
+    if(!avOpen)return;
+    var cats=[['Head colour',0],['Face shape',1],['Eyes',2],['Mouth',3],['Hat',4],['Extra',5]];
+    var rows=[h('div',{class:'pfline'},h('div',{class:'label'},'Your avatar'),h('div',{class:'actions'},
+        h('button',{class:'btn small',type:'button',onclick:function(){S.av=randomAv();avChanged()}},'Surprise me'),
+        h('button',{class:'btn small primary',type:'button',onclick:function(){avOpen=false;paintAv()}},'Done'))),
+      h('div',{class:'avprev'},avatar('x',S.color,96,S.av),h('p',{class:'note'},PF.state==='ready'?'Pick the parts you like. It saves to your profile.':'Pick the parts you like. Save your name to keep it.'))];
+    cats.forEach(function(c){
+      rows.push(h('div',{class:'label'},c[0]),h('div',{class:'avgrid'},Array.from({length:AV_SIZES[c[1]]},function(_,v){
+        var a=S.av.split('');a[c[1]]=String(v);
+        return h('button',{class:'avopt',type:'button','aria-label':c[0]+' '+(v+1),'aria-pressed':String(Number(S.av[c[1]])===v),onclick:function(){setAvPart(c[1],v)}},avatar('x',S.color,40,a.join('')));
+      })));
+    });
+    rows.push(h('div',{class:'label'},'Background'),h('div',{class:'avgrid'},Array.from({length:COLORS},function(_,v){
+      return h('button',{class:'avcol',type:'button','aria-label':'Background '+(v+1),'aria-pressed':String(S.color===v),style:'background:var(--p'+v+')',onclick:function(){S.color=v;paint();paintAv();syncIdentityToProfile()}});
+    })));
+    fill(avBox,h('div',{class:'avedit'},rows));
+  }
   var nameIn=h('input',{class:'input',id:'player-name',type:'text',maxlength:'20',autocomplete:'off',spellcheck:'false','aria-label':'Your name',placeholder:'Type your name',value:S.name,
     oninput:function(){S.nameTouched=true;S.name=cleanName(nameIn.value);paint();upd()},onkeydown:function(e){if(e.key==='Enter')doCreate()}});
   var dice=h('button',{class:'btn small',type:'button',onclick:function(){nameIn.value=randomName();S.nameTouched=true;S.name=nameIn.value;paint();upd()}},'Surprise me');
@@ -1018,7 +1116,7 @@ VIEWS.home=function(){
   var meBox=h('section',{class:'panel'});
   var meSig='';
   var newBox=h('details',{class:'newbox'},h('summary',null,'First time here? Make your name'),
-    h('div',{class:'namerow'},avatarBtn,nameIn),h('div',{class:'actions'},dice),createBtn,
+    h('div',{class:'namerow'},avatarBtn,nameIn),h('div',{class:'actions'},dice,h('button',{class:'btn small',type:'button',onclick:toggleAv},'Make avatar')),createBtn,
     h('p',{class:'note'},'Saving keeps your scores. Next time, type the same name on any device to carry on.'));
   async function doCreate(){
     if(PF.busy||PF.state==='ready')return;
@@ -1026,6 +1124,7 @@ VIEWS.home=function(){
     if(nameKey(S.name).length<3){S.pfErr='Type your name first (at least 3 letters).';newBox.open=true;upd();nameIn.focus();return}
     PF.busy=true;S.pfErr='';upd();
     var r=await createProfile();PF.busy=false;
+    if(r==='ok')saveAvatar();
     S.pfErr=r==='ok'?'':r==='taken'?'Someone already has that name. Add a letter or try "Surprise me".':r==='bad'?'Names need at least 3 letters or numbers.':'Could not save right now. Check your internet and try again.';
     upd();
   }
@@ -1041,7 +1140,7 @@ VIEWS.home=function(){
     if(n&&n!==PF.data.name){S.name=n;syncIdentityToProfile()}
     upd();
   }
-  function paint(){fill(avatarBtn,avatar(S.name||'?',S.color,48))}
+  function paint(){fill(avatarBtn,avatar(S.name||'?',S.color,48,S.av))}
   /* make sure there is a name before playing */
   function commit(){
     if(PF.state==='ready'){S.name=cleanName(PF.data.name)||S.name;return}
@@ -1090,6 +1189,7 @@ VIEWS.home=function(){
           renaming
             ?h('div',{class:'actions'},h('button',{class:'btn small primary',type:'button',onclick:saveRename},'Save name'),h('button',{class:'btn small',type:'button',onclick:function(){renaming=false;upd()}},'Cancel'))
             :h('div',{class:'actions'},
+                h('button',{class:'btn small',type:'button',onclick:toggleAv},'Avatar'),
                 h('button',{class:'btn small',type:'button',onclick:function(){renaming=true;renameIn.value=d.name||S.name;upd();renameIn.focus();renameIn.select()}},'Change name'),
                 d.rounds>0?h('button',{class:'btn small',type:'button',onclick:function(){S.sub='profile';render()}},'My stats'):null,
                 h('button',{class:'btn small',type:'button',onclick:function(){closeProfile();S.pfErr='';S.nameTouched=false;S.name='';nameIn.value='';upd()}},'Not you?')),
@@ -1161,7 +1261,7 @@ VIEWS.home=function(){
         kids.push(h('p',{class:'note'},mine?'You are number '+mine+' of '+d.total+'. Best round scores:':'Best round scores:'));
         kids.push(h('div',{class:'lblist'},top.map(function(t){
           return h('div',{class:'lbrow'+(mine&&t.rank===mine?' me':'')},h('span',{class:'rk'},String(t.rank)),
-            h('div',{class:'prow'},avatar(t.name,t.color,32),h('div',{style:'min-width:0'},h('div',{class:'nmtxt'},t.name),h('div',{class:'sub'},t.acc+'% right · '+t.rounds+(t.rounds===1?' round':' rounds')))),
+            h('div',{class:'prow'},avatar(t.name,t.color,32,t.av),h('div',{style:'min-width:0'},h('div',{class:'nmtxt'},t.name),h('div',{class:'sub'},t.acc+'% right · '+t.rounds+(t.rounds===1?' round':' rounds')))),
             h('span',{class:'sc'},String(t.best)));
         })));
       }
@@ -1174,6 +1274,7 @@ VIEWS.home=function(){
   el.append(
     h('div',{class:'hero'},h('h1',null,'Race your friends at maths.'),h('p',null,'60-second rounds. Everyone gets maths at their own level, and harder questions earn more points, so anyone can win. Fall behind and you get easier questions to catch up.')),
     meBox,
+    avBox,
     classBox,
     playBox,
     lbBox,
@@ -1470,6 +1571,7 @@ function renderTop(){
   fill(t,h('div',{class:'brand'},h('span',{class:'brand-mark','aria-hidden':'true'},'×'),h('span',null,'Math Mayhem')),chips);
 }
 function render(){
+  AVC[nameKey(S.name)]=S.av;
   var k=viewKey();
   renderTop();
   if(k!==curKey){
@@ -1490,6 +1592,7 @@ document.addEventListener('keydown',function(e){
 /* ---------- boot ---------- */
 S.name=randomName();
 S.color=rint(COLORS);
+S.av=randomAv();
 var SB=null;
 try{
   if(window.supabase&&SUPABASE_URL)SB=window.supabase.createClient(SUPABASE_URL,SUPABASE_KEY,{

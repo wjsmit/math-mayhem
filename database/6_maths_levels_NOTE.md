@@ -7,3 +7,4 @@ Later migration `maths_tracks_alg4_ineq` added two more kinds of maths, `alg4` (
 to the allowed list inside `tts_admin_import`, `tts_admin_set_track` and `tts_profile_apply_round`.
 Migration `maths_tracks_muldiv_fracs` added `muldiv` (multiply and divide, mixed) and `fracs` (fractions) to the same allowed list.
 Migration `maths_tracks_mixed` added `mixed` (a bit of everything) to the same allowed list.
+Migration `avatars` added `tts_profile_set_avatar(p_code, p_av)` (six digits, validated) and put each profile's `av` in `tts_leaderboard`.
