@@ -878,7 +878,7 @@ function teacherPanel(){
         var sub=r.user?(r.user+' · '+(r.rounds||0)+' rounds · '+acc+' right · best '+(r.best||0)+(weak?' · weak: '+weak:'')):'Has not picked this name yet';
         var sel=h('select',{class:'input','aria-label':'Kind of maths for '+r.real,style:'padding:6px 10px;min-height:0;font-size:.85rem',disabled:T.busy,onchange:function(){act('tts_admin_set_track',{p_rid:r.rid,p_track:sel.value},r.real+': '+TRACKS[trackIdx(sel.value)].name)}},TRACKS.map(function(t){return h('option',{value:t.id},t.name)}));sel.value=TRACKS[trackIdx(r.track)].id;
         return h('div',{class:'lbrow',style:'grid-template-columns:minmax(0,1fr) auto'},
-          h('div',{style:'min-width:0'},h('div',{class:'nmtxt'},r.real+' ('+r.class+')'),h('div',{class:'sub'},sub),sel),
+          h('div',{style:'min-width:0'},h('div',{class:'nmtxt'},r.real+' ('+r.class+')'),h('div',{class:'sub'},sub),h('div',{class:'sub',style:'margin-top:6px'},'Maths level (tap to change):'),sel),
           h('div',{class:'actions',style:'justify-content:flex-end'},
             r.user?h('button',{class:'btn small',type:'button',disabled:T.busy,onclick:function(){ask('u'+r.rid,function(){act('tts_admin_unlink',{p_rid:r.rid},'Unlinked '+r.real+'. They can pick a name again.')})}},T.confirm==='u'+r.rid?'Tap again':'Unlink'):null,
             h('button',{class:'btn small danger',type:'button',disabled:T.busy,onclick:function(){ask('r'+r.rid,function(){act('tts_admin_roster_remove',{p_rid:r.rid},'Removed '+r.real+' from the list.')})}},T.confirm==='r'+r.rid?'Tap again':'Remove')));
