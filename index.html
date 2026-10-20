@@ -1568,7 +1568,7 @@ function renderTop(){
   }else if(S.mode==='solo'){
     chips.append(h('span',{class:'chip'},'Practice'),h('button',{class:'btn small',type:'button',onclick:exitSolo},'Exit'));
   }
-  fill(t,h('div',{class:'brand'},h('span',{class:'brand-mark','aria-hidden':'true'},'×'),h('span',null,'Math Mayhem')),chips);
+  fill(t,h('div',{class:'brand'},h('span',null,'Math Mayhem')),chips);
 }
 function render(){
   AVC[nameKey(S.name)]=S.av;
