@@ -538,10 +538,12 @@ function roundPlayers(g){
 /* ---------- game logic ---------- */
 /* ---------- kinds of maths: the teacher gives each student one; harder kinds are worth more points per answer ---------- */
 var TRACKS=[
-  {id:'tables',name:'Times tables',short:'Tables',base:10},
+  {id:'tables',name:'Times tables',short:'Tables',base:10,grid:true},
+  {id:'muldiv',name:'Multiply and divide (mixed)',short:'Mult + div',base:12,grid:true},
   {id:'addsub',name:'Add, subtract, divide',short:'Arithmetic',base:12},
   {id:'bodmas',name:'BODMAS',short:'BODMAS',base:16},
-  {id:'frac',name:'Fractions and percentages',short:'Fractions',base:16},
+  {id:'fracs',name:'Fractions: equivalent, adding, subtracting',short:'Fractions',base:15},
+  {id:'frac',name:'Percentages and fractions of amounts',short:'Percent',base:16},
   {id:'alg1',name:'Algebra 1: one step',short:'Algebra 1',base:13},
   {id:'alg2',name:'Algebra 2: two steps and substituting',short:'Algebra 2',base:22},
   {id:'alg3',name:'Algebra 3: brackets and both sides',short:'Algebra 3',base:34},
@@ -624,7 +626,17 @@ function genIneq(rng,lv){
   ans=op==='>'?Math.floor(t)+1:op==='≥'?Math.ceil(t):op==='<'?Math.ceil(t)-1:Math.floor(t);
   return mk(lhs+' '+op+' '+c+',  '+(big?'smallest':'largest')+' whole x',ans,'x =');
 }
-var GENS={addsub:genArith,bodmas:genBodmas,frac:genFrac,alg1:genAlg1,alg2:genAlg2,alg3:genAlg3,alg4:genAlg4,ineq:genIneq};
+function genFracs(rng,lv){
+  var ds=lv===2?[2,4]:lv===1?[2,3,4,5,10]:[2,3,4,5,6,8,10],b=pk(rng,ds),a=ri(rng,1,b-1),m=ri(rng,2,lv?3:6),d,c,k=rng();
+  var kinds=lv===2?1:lv===1?3:6,j=Math.floor(rng()*kinds);
+  if(j===0)return mk(a+'/'+b+' = ?/'+(b*m),a*m,'? =');
+  if(j===1){d=lv?pk(rng,[4,5,6,8,10]):ri(rng,4,12);a=ri(rng,1,d-1);c=ri(rng,1,d-1);return mk(a+'/'+d+' + '+c+'/'+d+' = ?/'+d,a+c,'? =')}
+  if(j===2){d=lv?pk(rng,[5,6,8,10]):ri(rng,4,12);a=ri(rng,2,d-1);c=ri(rng,1,a-1);return mk(a+'/'+d+' − '+c+'/'+d+' = ?/'+d,a-c,'? =')}
+  if(j===3)return mk(a+'/'+b+' = '+(a*m)+'/?',b*m,'? =');
+  if(j===4)return mk((a*m)+'/'+(b*m)+' = '+a+'/?',b,'? =');
+  d=b*m;c=ri(rng,1,d-1);return mk(a+'/'+b+' + '+c+'/'+d+' = ?/'+d,a*m+c,'? =');
+}
+var GENS={fracs:genFracs,addsub:genArith,bodmas:genBodmas,frac:genFrac,alg1:genAlg1,alg2:genAlg2,alg3:genAlg3,alg4:genAlg4,ineq:genIneq};
 function makeQ(g,i,t,lv,tk){
   var rng=mulberry32(hash(g.sd,g.g,i,t,lv));var a,b;
   if(tk&&GENS[tk])return GENS[tk](rng,lv);
@@ -633,6 +645,7 @@ function makeQ(g,i,t,lv,tk){
     if(!pool.length)pool=[2];
     a=pool[Math.floor(rng()*pool.length)];b=1+Math.floor(rng()*10);
   }else{a=2+Math.floor(rng()*(g.mx-1));b=1+Math.floor(rng()*12)}
+  if(tk==='muldiv'&&rng()<0.5){b=Math.max(2,b);var dq=mk((a*b)+' ÷ '+a,b);dq.a=a;dq.b=b;return dq}
   return {a:a,b:b,flip:rng()<0.5,ans:a*b,full:a+' × '+b+' = '+(a*b)};
 }
 function updateLevel(){
@@ -1337,7 +1350,7 @@ VIEWS.results=function(){
       }
       var miss=Array.from(P.missed.values()).sort(function(x,y){return y.n-x.n}).slice(0,14);
       var missChips=miss.length?h('div',{class:'mchips'},miss.map(function(m){return h('span',{class:'mchip'},m.full,m.n>1?h('i',null,'×'+m.n):null)})):h('p',{class:'note'},'No misses. Clean round.');
-      if(P.tk.id==='tables')out.push(h('section',{class:'panel'},
+      if(P.tk.grid)out.push(h('section',{class:'panel'},
         h('h2',null,"This round's map"),
         h('p',{class:'note'},'Only the questions from the round you just played.'),
         h('div',{class:'mapwrap'},h('div',{class:'map'},rows)),
