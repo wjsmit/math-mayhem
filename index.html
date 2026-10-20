@@ -590,6 +590,15 @@ async function loadLink(){
   try{var r=await PF.sb.rpc('tts_class_mine',{p_code:code});PF.link=r.error?'off':(r.data||null)}catch(e){PF.link='off'}
   if(PF.code===code)refreshProfileUI();
 }
+async function refreshLink(){
+  if(!PF.sb||PF.state!=='ready'||!PF.code||PF.link==='off'||PF.link===undefined)return;
+  var code=PF.code,old=PF.link&&PF.link.track;
+  try{var r=await PF.sb.rpc('tts_class_mine',{p_code:code});if(r.error||PF.code!==code)return;
+    var nl=r.data||null,nt=nl&&nl.track;if(nt!==old||(!!nl)!==(!!PF.link)){PF.link=nl;refreshProfileUI()}}catch(e){}
+}
+setInterval(function(){if(!document.hidden)refreshLink()},20000);
+document.addEventListener('visibilitychange',function(){if(!document.hidden)refreshLink()});
+window.addEventListener('focus',refreshLink);
 function saveAvatar(){if(PF.state==='ready'&&PF.code&&validAv(S.av)&&PF.data.av!==S.av)callProfile('tts_profile_set_avatar',{p_av:S.av})}
 function closeProfile(){S.av=randomAv();PF.link=undefined;setTimeout(loadLeaderboard,0);PF.data=blankProfile();PF.code='';PF.state='none';PF.msg='';lsSet('tts-code','')}
 /* one request at a time; the server adds each round to the stored profile, so two devices never overwrite each other */
@@ -1037,7 +1046,7 @@ function teacherPanel(){
     var ok=0,bad=[];
     for(var i=0;i<ids.length;i++){
       var rid=+ids[i],want=T.pending[ids[i]];
-      try{var r=await PF.sb.rpc('tts_admin_set_track',{p_code:PF.code,p_pin:T.pin,p_rid:rid,p_track:want});if(r.error)throw r.error;delete T.pending[ids[i]];ok++}
+      try{var r=await PF.sb.rpc('tts_admin_set_track',{p_code:PF.code,p_pin:T.pin,p_rid:rid,p_track:want});if(r.error)throw r.error;if(!(r.data>0))throw new Error('no row');delete T.pending[ids[i]];ok++}
       catch(e){var row=(T.roster&&T.roster.rows||[]).filter(function(x){return x.rid===rid})[0];bad.push(row?row.real:'#'+rid)}
     }
     try{await fetchAll()}catch(e){}
@@ -1058,7 +1067,7 @@ function teacherPanel(){
     if(R.rows.length){
       out.push(h('div',{class:'label',style:'margin-top:6px'},'Progress'));
       var bulkSel=h('select',{class:'input','aria-label':'Level for everyone',style:'padding:8px 10px;min-height:0;font-size:.9rem',onchange:function(){T.bulk=bulkSel.value}},TRACKS.map(function(t){return h('option',{value:t.id},t.name)}));bulkSel.value=T.bulk;
-      out.push(h('div',{class:'stack'},h('p',{class:'note'},'Change levels below, then press Save levels (version 3). Or set everyone to one level first:'),
+      out.push(h('div',{class:'stack'},h('p',{class:'note'},'Change levels below, then press Save levels (version 4). Or set everyone to one level first:'),
         h('div',{class:'joinrow'},bulkSel,h('button',{class:'btn small',type:'button',disabled:T.saving,onclick:function(){R.rows.forEach(function(r){if(TRACKS[trackIdx(r.track)].id===T.bulk)delete T.pending[r.rid];else T.pending[r.rid]=T.bulk});draw()}},'Set all'))));
       barMsg=h('span',{class:'nmtxt',style:'white-space:normal'});
       saveBtn=h('button',{class:'btn primary',type:'button',onclick:function(){saveLevels()}},'Save levels');
