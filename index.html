@@ -3,38 +3,24 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
-<meta name="theme-color" content="#2D5BFF">
+<meta name="theme-color" content="#0B0720">
 <title>Math Mayhem</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:wght@600;800&family=Figtree:wght@400;500;700&family=DM+Mono:wght@400;500&display=swap">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Chakra+Petch:wght@400;500;700&family=Press+Start+2P&family=VT323&display=swap">
 <style>
 /* Layout: one calm column on phones; on wide screens the live standings sit beside the question.
    Graph-paper ground, and the 12x12 multiplication chart is the recurring motif (results map). */
 :root{
-  --bg:#EEF2FA; --surface:#FFFFFF; --surface2:#E3E9F6; --fg:#121B33; --muted:#535E82; --line:#C9D3EA;
-  --accent:#2D5BFF; --accent-fg:#FFFFFF; --grid:rgba(45,91,255,.07);
-  --good:#0F9D58; --good-bg:#DDF5E7; --bad:#D92D3A; --bad-bg:#FDE3E5;
-  --boost:#E09600; --boost-bg:#FFF1CC; --boost-fg:#5E3C00;
-  --p0:#2D5BFF; --p1:#D6336C; --p2:#0B7A7C; --p3:#7B3FE4; --p4:#C2410C; --p5:#2B8A3E; --p6:#6D4C41; --p7:#37474F;
-  --font-display:"Bricolage Grotesque","Avenir Next","Segoe UI",system-ui,sans-serif;
-  --font-body:"Figtree","Segoe UI",system-ui,-apple-system,sans-serif;
-  --font-mono:"DM Mono",ui-monospace,Menlo,Consolas,monospace;
-}
-@media (prefers-color-scheme:dark){
-  :root:not([data-theme="light"]){
-    --bg:#0C1224; --surface:#151E38; --surface2:#1F2B4F; --fg:#E9EEFF; --muted:#9AA6D0; --line:#2A3760;
-    --accent:#7C97FF; --accent-fg:#0A1030; --grid:rgba(124,151,255,.08);
-    --good:#3DD68C; --good-bg:#12382A; --bad:#FF6B76; --bad-bg:#40181D;
-    --boost:#FFC24D; --boost-bg:#3B2C06; --boost-fg:#FFE0A0;
-    color-scheme:dark;
-  }
-}
-:root[data-theme="dark"]{
-  --bg:#0C1224; --surface:#151E38; --surface2:#1F2B4F; --fg:#E9EEFF; --muted:#9AA6D0; --line:#2A3760;
-  --accent:#7C97FF; --accent-fg:#0A1030; --grid:rgba(124,151,255,.08);
-  --good:#3DD68C; --good-bg:#12382A; --bad:#FF6B76; --bad-bg:#40181D;
-  --boost:#FFC24D; --boost-bg:#3B2C06; --boost-fg:#FFE0A0;
+  /* Retro arcade: one deliberate look, a night-time cabinet screen with neon colours */
+  --bg:#0B0720; --surface:#150F33; --surface2:#241A55; --fg:#F4F0FF; --muted:#A99CD9; --line:#3F3189;
+  --accent:#00E5FF; --accent-fg:#06041A; --accent2:#FF3DD1; --grid:rgba(0,229,255,.06);
+  --good:#39FF88; --good-bg:#0C3322; --bad:#FF4D79; --bad-bg:#3D1026;
+  --boost:#FFE600; --boost-bg:#3A3200; --boost-fg:#FFF3A0;
+  --p0:#00E5FF; --p1:#FF3DD1; --p2:#39FF88; --p3:#FFE600; --p4:#FF8A00; --p5:#A678FF; --p6:#FF5C5C; --p7:#7DF9C4;
+  --font-display:"Press Start 2P","Courier New",monospace;
+  --font-body:"Chakra Petch","Segoe UI",system-ui,sans-serif;
+  --font-mono:"VT323","Courier New",ui-monospace,monospace;
   color-scheme:dark;
 }
 *{box-sizing:border-box}
@@ -207,12 +193,96 @@ button.chip{cursor:pointer;font-family:var(--font-mono)}
 .toast{position:fixed;left:50%;transform:translateX(-50%);bottom:calc(16px + env(safe-area-inset-bottom,0px));background:var(--fg);color:var(--bg);padding:10px 16px;border-radius:999px;font-weight:600;z-index:20;max-width:90vw}
 @media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
 
-html{color-scheme:light}
+html{color-scheme:dark}
 body{margin:0}
 [hidden]{display:none!important}
 img{max-width:100%}
 .newbox{margin-top:10px;border-top:1px solid var(--line,rgba(128,128,128,.3));padding-top:10px;display:flex;flex-direction:column;gap:10px}.newbox summary{cursor:pointer;font-weight:600;padding:6px 0}
 .subd{margin-top:8px}.subd[open]>summary{margin-bottom:8px}textarea.input{min-height:110px;padding:10px 14px;resize:vertical;font:inherit;line-height:1.4}
+
+/* ===== retro arcade layer ===== */
+body{font-size:17px;background-size:32px 32px}
+body::after{content:"";position:fixed;inset:0;pointer-events:none;z-index:50;background:repeating-linear-gradient(0deg,rgba(0,0,0,.09) 0 1px,transparent 1px 3px);mix-blend-mode:multiply}
+h1,h2,h3{letter-spacing:0;line-height:1.4}
+h1{font-size:clamp(18px,5.4vw,28px);font-weight:400;color:var(--accent);text-shadow:0 0 12px rgba(0,229,255,.55),3px 3px 0 var(--accent2)}
+h2{font-size:14px;font-weight:400;color:var(--fg)}
+.hero p{font-size:18px}
+.label{font-family:var(--font-display);font-size:10px;font-weight:400;letter-spacing:.08em;color:var(--accent2)}
+.note{font-size:16px}
+.brand{font-weight:400;font-size:13px;letter-spacing:0}
+.brand-mark{border-radius:4px;box-shadow:0 0 0 3px var(--accent2),0 0 14px rgba(255,61,209,.6);font-family:var(--font-display);font-size:16px}
+.chip{border-width:2px;border-radius:4px;font-size:18px}
+.panel{border:3px solid var(--line);border-radius:6px;box-shadow:0 0 0 1px #000,6px 6px 0 rgba(0,0,0,.45)}
+.btn{border:3px solid var(--line);border-radius:4px;text-transform:uppercase;letter-spacing:.05em;font-size:15px;box-shadow:0 4px 0 #000;transition:none}
+.btn:hover:not([disabled]){border-color:var(--accent);color:var(--accent)}
+.btn:active:not([disabled]){transform:translateY(3px);box-shadow:0 1px 0 #000}
+.btn.primary{background:var(--accent);color:var(--accent-fg);border-color:var(--accent);box-shadow:0 4px 0 #007585,0 0 16px rgba(0,229,255,.35)}
+.btn.primary:hover:not([disabled]){color:var(--accent-fg);background:#7DF4FF}
+.btn.primary:active:not([disabled]){box-shadow:0 1px 0 #007585}
+.btn.big{font-family:var(--font-display);font-weight:400;font-size:13px;min-height:60px;line-height:1.5}
+.btn.small{font-size:13px}
+.btn.danger{border-color:var(--bad);color:var(--bad)}
+.input{border:3px solid var(--line);border-radius:4px;background:#080519;font-family:var(--font-mono);font-size:24px}
+.input:focus-visible,.btn:focus-visible,.key:focus-visible,.segbtn:focus-visible,.chip:focus-visible,.avatar-btn:focus-visible{outline:3px solid var(--accent2);outline-offset:2px}
+select.input{font-family:var(--font-body);font-size:16px}
+textarea.input{font-family:var(--font-body);font-size:17px}
+.input.code{letter-spacing:.3em}
+.segbtn{border:3px solid var(--line);border-radius:4px;font-family:var(--font-mono);font-size:20px}
+.avatar{border-radius:4px;color:#0B0720;font-family:var(--font-display);font-weight:400;font-size:calc(var(--s,36px)*.4);box-shadow:inset 0 -3px 0 rgba(0,0,0,.25),0 0 0 2px #000}
+.bigname{font-family:var(--font-display);font-weight:400;font-size:clamp(14px,4.4vw,18px);line-height:1.5}
+.tile{border:3px solid var(--line);border-bottom-width:6px;border-radius:4px;font-family:var(--font-display);font-size:clamp(20px,7vw,32px);color:var(--accent);text-shadow:0 0 10px rgba(0,229,255,.6)}
+.lbrow,.lb-row,.award,.stat{border:2px solid var(--line);border-radius:4px}
+.lbrow.me,.lb-row.me{border-color:var(--accent2);box-shadow:inset 0 0 0 1px var(--accent2),0 0 12px rgba(255,61,209,.3)}
+.lbrow .sc,.pts{font-family:var(--font-mono);font-weight:400;font-size:26px;color:var(--boost);text-shadow:0 0 8px rgba(255,230,0,.4)}
+.lbrow .rk,.rank{font-family:var(--font-display);font-size:11px;font-weight:400}
+.lb-row:first-child .rank,.lbrow:first-child .rk{color:var(--boost)}
+.nmtxt{font-weight:700}
+.tag{border-radius:3px;font-family:var(--font-display);font-size:8px;letter-spacing:.04em;padding:4px 6px;background:var(--surface2);color:var(--accent)}
+.tag.boost{background:var(--boost);color:#1A1500}
+.meta,.lbrow .sub{font-size:15px}
+.stat b{font-family:var(--font-display);font-weight:400;font-size:16px;color:var(--accent)}
+.stat span{font-family:var(--font-display);font-size:8px;line-height:1.6}
+.track{border:3px solid var(--line);border-radius:4px;background:#080519}
+.lane{border-bottom:2px dashed var(--line)}
+.lane.me{background:linear-gradient(90deg,transparent,rgba(255,61,209,.14))}
+.lane .runner .pt{font:400 18px var(--font-mono)}
+.track-cap{font-family:var(--font-display);font-size:8px;line-height:1.6;color:var(--accent2)}
+.timer{font-size:60px;font-weight:400;color:var(--accent);text-shadow:0 0 12px rgba(0,229,255,.6)}
+.timer small{font-size:22px}
+.scorebox .pts{font-size:46px}
+.bar{height:14px;border-radius:2px;border:2px solid var(--line);background:#080519}
+.bar>i{background:repeating-linear-gradient(90deg,var(--accent) 0 8px,transparent 8px 10px)}
+.bar.low>i{background:repeating-linear-gradient(90deg,var(--bad) 0 8px,transparent 8px 10px)}
+.statrow{font-size:16px}.statrow b{font-size:22px;font-weight:400}
+.rankline{font-family:var(--font-body);font-size:16px;font-weight:700;color:var(--accent2)}
+.boostbar{border:3px solid var(--boost);border-radius:4px;font-size:15px}
+.qcard{border:3px solid var(--line);border-radius:8px;background:#0E0829;box-shadow:inset 0 0 0 2px #000,0 0 22px rgba(0,229,255,.12)}
+.qcard.good{background:var(--good-bg);border-color:var(--good);box-shadow:0 0 26px rgba(57,255,136,.45)}
+.qcard.bad{background:var(--bad-bg);border-color:var(--bad);box-shadow:0 0 26px rgba(255,77,121,.45)}
+.q{font-family:var(--font-display);font-weight:400;font-size:clamp(26px,9.4vw,46px);line-height:1.3;letter-spacing:0;color:var(--fg);text-shadow:3px 3px 0 var(--accent2)}
+.q .x{color:var(--accent);padding:0 .3em}
+.q.txt{font-family:var(--font-mono);font-weight:400;font-size:clamp(38px,12vw,60px);line-height:1.1;text-shadow:2px 2px 0 var(--accent2)}
+.ans{font-family:var(--font-mono);font-size:56px;min-height:68px;border-bottom:4px solid var(--accent);color:var(--accent);text-shadow:0 0 10px rgba(0,229,255,.5)}
+.ans .pre{opacity:.6}
+.caret{width:.4em;height:.12em;margin-top:.7em;background:var(--accent2)}
+.fb{font-family:var(--font-mono);font-size:26px;font-weight:400}
+.countnum{font-family:var(--font-display);font-weight:400;font-size:clamp(72px,24vw,120px);color:var(--accent2);text-shadow:0 0 20px rgba(255,61,209,.7),5px 5px 0 #000}
+.key{font-family:var(--font-display);font-weight:400;font-size:20px;border:3px solid var(--line);border-radius:6px;box-shadow:0 5px 0 #000;background:#1B1342}
+.key:active{transform:translateY(4px);box-shadow:0 1px 0 #000}
+.key.fn{font-size:12px;color:var(--muted)}
+.key.go{background:var(--accent);color:var(--accent-fg);border-color:var(--accent);box-shadow:0 5px 0 #007585,0 0 16px rgba(0,229,255,.4);font-size:14px}
+.winner{border-radius:6px;border:3px solid var(--fg);background:var(--accent2);color:#14041A;box-shadow:0 0 24px rgba(255,61,209,.5),6px 6px 0 rgba(0,0,0,.5)}
+.winner h2{font-size:clamp(13px,4vw,18px);color:#14041A}
+.winner .avatar{box-shadow:0 0 0 3px #14041A}
+.award b{font-family:var(--font-display);font-weight:400;font-size:11px;line-height:1.5}
+.cell{border-radius:2px}
+.mchip{border-radius:3px;font-size:19px}
+.hrow span:last-child{font-size:18px}
+.toast{border-radius:4px;border:3px solid var(--accent2);background:var(--surface);color:var(--fg);font-family:var(--font-mono);font-size:20px;font-weight:400}
+.codebig{border-radius:4px}
+.newbox{border-top:2px dashed var(--line)}
+.newbox summary,.tpanel summary{font-family:var(--font-display);font-size:10px;font-weight:400;color:var(--accent2)}
+@media (prefers-reduced-motion:reduce){.caret{animation:none}}
 </style>
 </head>
 <body>
@@ -1170,8 +1240,8 @@ VIEWS.lobby=function(){
     h('div',{class:'label'},'Players'),playersBox);
   var right=h('section',{class:'panel'},h('h2',null,'How it works'),
     h('ul',{class:'rules'},
-      h('li',null,'60 seconds, all the tables up to 12.'),
-      h('li',null,'Right answer: 10 points, more for a streak.'),
+      h('li',null,'60 seconds of maths at your own level.'),
+      h('li',null,'Right answer: points, more for a streak. Harder maths is worth more.'),
       h('li',null,'Wrong answer: you see the right one and your streak resets.'),
       h('li',null,'Falling behind? You get easier questions so you can catch up.')),
     startBox);
