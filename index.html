@@ -1027,13 +1027,12 @@ function teacherPanel(){
   function pendCount(){return Object.keys(T.pending).length}
   function refreshBar(){
     if(!barEl)return;var n=pendCount();
-    barEl.hidden=n===0&&!T.saving;
-    barMsg.textContent=T.saving?'Saving…':n+' level change'+(n===1?'':'s')+' not saved yet';
+    barMsg.textContent=T.saving?'Saving…':n?n+' level change'+(n===1?'':'s')+' not saved yet':'Pick a new level for a student, then press Save levels.';
     saveBtn.disabled=T.saving||n===0;saveBtn.textContent=T.saving?'Saving…':'Save levels';
     if(discardBtn)discardBtn.disabled=T.saving;
   }
-  async function saveLevels(){
-    var ids=Object.keys(T.pending);if(!ids.length||T.saving)return;
+  async function saveLevels(only){
+    var ids=Object.keys(T.pending);if(only!=null)ids=ids.filter(function(k){return k===String(only)});if(!ids.length||T.saving)return;
     T.saving=true;T.msg='';draw();
     var ok=0,bad=[];
     for(var i=0;i<ids.length;i++){
@@ -1059,10 +1058,10 @@ function teacherPanel(){
     if(R.rows.length){
       out.push(h('div',{class:'label',style:'margin-top:6px'},'Progress'));
       var bulkSel=h('select',{class:'input','aria-label':'Level for everyone',style:'padding:8px 10px;min-height:0;font-size:.9rem',onchange:function(){T.bulk=bulkSel.value}},TRACKS.map(function(t){return h('option',{value:t.id},t.name)}));bulkSel.value=T.bulk;
-      out.push(h('div',{class:'stack'},h('p',{class:'note'},'Change levels below, then press Save levels. Or set everyone to one level first:'),
+      out.push(h('div',{class:'stack'},h('p',{class:'note'},'Change levels below, then press Save levels (version 3). Or set everyone to one level first:'),
         h('div',{class:'joinrow'},bulkSel,h('button',{class:'btn small',type:'button',disabled:T.saving,onclick:function(){R.rows.forEach(function(r){if(TRACKS[trackIdx(r.track)].id===T.bulk)delete T.pending[r.rid];else T.pending[r.rid]=T.bulk});draw()}},'Set all'))));
       barMsg=h('span',{class:'nmtxt',style:'white-space:normal'});
-      saveBtn=h('button',{class:'btn primary',type:'button',onclick:saveLevels},'Save levels');
+      saveBtn=h('button',{class:'btn primary',type:'button',onclick:function(){saveLevels()}},'Save levels');
       discardBtn=h('button',{class:'btn small',type:'button',disabled:T.saving,onclick:function(){T.pending={};T.msg='';draw()}},'Discard');
       barEl=h('div',{class:'savebar',role:'status'},barMsg,h('div',{class:'actions'},saveBtn,discardBtn));
       refreshBar();
@@ -1072,7 +1071,7 @@ function teacherPanel(){
         var weak=weakFacts(r.facts);
         var sub=r.user?(r.user+' · '+(r.rounds||0)+' rounds · '+acc+' right · best '+(r.best||0)+(weak?' · weak: '+weak:'')):'Has not picked this name yet';
         var cur=TRACKS[trackIdx(r.track)].id,pend=T.pending[r.rid];
-        var chg=h('div',{class:'sub',style:'color:var(--boost);font-weight:700',hidden:!pend},'Changed. Press Save levels.');
+        var chg=h('div',{class:'actions',style:'align-items:center',hidden:!pend},h('span',{class:'sub',style:'color:var(--boost);font-weight:700'},'Changed.'),h('button',{class:'btn small primary',type:'button',onclick:function(){saveLevels(r.rid)}},'Save this level'));
         var sel=h('select',{class:'input','aria-label':'Kind of maths for '+r.real,style:'padding:6px 10px;min-height:0;font-size:.85rem',disabled:T.saving,onchange:function(){
           if(sel.value===cur)delete T.pending[r.rid];else T.pending[r.rid]=sel.value;
           chg.hidden=sel.value===cur;refreshBar()}},TRACKS.map(function(t){return h('option',{value:t.id},t.name)}));sel.value=pend||cur;
