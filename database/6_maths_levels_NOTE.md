@@ -6,3 +6,4 @@ Maths levels were installed directly into the Supabase project as a migration na
 Later migration `maths_tracks_alg4_ineq` added two more kinds of maths, `alg4` (squares and roots) and `ineq` (inequalities),
 to the allowed list inside `tts_admin_import`, `tts_admin_set_track` and `tts_profile_apply_round`.
 Migration `maths_tracks_muldiv_fracs` added `muldiv` (multiply and divide, mixed) and `fracs` (fractions) to the same allowed list.
+Migration `maths_tracks_mixed` added `mixed` (a bit of everything) to the same allowed list.

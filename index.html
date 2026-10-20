@@ -548,7 +548,8 @@ var TRACKS=[
   {id:'alg2',name:'Algebra 2: two steps and substituting',short:'Algebra 2',base:22},
   {id:'alg3',name:'Algebra 3: brackets and both sides',short:'Algebra 3',base:34},
   {id:'alg4',name:'Algebra 4: squares and roots',short:'Algebra 4',base:26},
-  {id:'ineq',name:'Inequalities',short:'Inequalities',base:26}
+  {id:'ineq',name:'Inequalities',short:'Inequalities',base:26},
+  {id:'mixed',name:'Mixed: a bit of everything',short:'Mixed',base:16}
 ];
 function trackIdx(id){for(var i=0;i<TRACKS.length;i++)if(TRACKS[i].id===id)return i;return 0}
 function myTrack(){return TRACKS[trackIdx(PF.state==='ready'&&PF.link&&PF.link.track)].id}
@@ -637,7 +638,12 @@ function genFracs(rng,lv){
   d=b*m;c=ri(rng,1,d-1);return mk(a+'/'+b+' + '+c+'/'+d+' = ?/'+d,a*m+c,'? =');
 }
 var GENS={fracs:genFracs,addsub:genArith,bodmas:genBodmas,frac:genFrac,alg1:genAlg1,alg2:genAlg2,alg3:genAlg3,alg4:genAlg4,ineq:genIneq};
+var MIXED=['muldiv','muldiv','addsub','addsub','bodmas','fracs','frac','alg1','alg2','alg3','alg4','ineq'];
 function makeQ(g,i,t,lv,tk){
+  if(tk==='mixed'){
+    var kind=MIXED[Math.floor(mulberry32(hash(g.sd,g.g,i,t,lv,99))()*MIXED.length)];
+    var mq=makeQ(g,i,t,lv,kind);mq.base=TRACKS[trackIdx(kind)].base;return mq;
+  }
   var rng=mulberry32(hash(g.sd,g.g,i,t,lv));var a,b;
   if(tk&&GENS[tk])return GENS[tk](rng,lv);
   if(lv>0){
@@ -716,7 +722,7 @@ function submit(){
   recordGrid(q,ok);P.lock=true;
   var qi=P.i;
   if(ok){
-    var pts=Math.round(P.tk.base*(1+Math.min(me.st,5)*0.2));
+    var pts=Math.round((q.base||P.tk.base)*(1+Math.min(me.st,5)*0.2));
     me.st++;me.bs=Math.max(me.bs,me.st);me.sc+=pts;me.r++;
     P.flash='good';P.fbKind='good';P.fbText='+'+pts;
     setTimeout(function(){P.lock=false;if(P.i===qi){nextQuestion();drawGame()}},220);
