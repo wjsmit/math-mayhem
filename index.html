@@ -157,6 +157,8 @@ button.chip{cursor:pointer;font-family:var(--font-mono)}
 .qcard.bad{background:var(--bad-bg);border-color:var(--bad)}
 .q{font-family:var(--font-display);font-weight:800;font-size:clamp(56px,18vw,96px);line-height:1;letter-spacing:-.02em;font-variant-numeric:tabular-nums;white-space:nowrap}
 .q .x{color:var(--accent);padding:0 .14em}
+.q.txt{font-size:clamp(30px,9vw,54px);white-space:normal;line-height:1.15;text-align:center;letter-spacing:0;font-weight:700}
+.ans .pre{opacity:.55;margin-right:.35em}
 .ans{min-height:62px;min-width:170px;font-family:var(--font-mono);font-size:44px;display:flex;justify-content:center;align-items:center;gap:3px;border-bottom:3px solid var(--line)}
 .caret{width:3px;height:1em;background:var(--accent);animation:blink 1s steps(1) infinite}
 @keyframes blink{50%{opacity:0}}
@@ -372,9 +374,9 @@ function sanitizeProfile(o){
   var n=function(v,hi){return clampN(v,0,hi)};
   b.name=cleanName(o.name);b.color=n(o.color,COLORS-1);b.rounds=n(o.rounds,1e6);b.right=n(o.right,1e8);b.wrong=n(o.wrong,1e8);
   b.bestStreak=n(o.bestStreak,1e5);b.bestScore=n(o.bestScore,1e6);b.created=n(o.created,8.64e15)||Date.now();b.updated=n(o.updated,8.64e15);
-  if(o.best&&typeof o.best==='object')Object.keys(o.best).slice(0,40).forEach(function(k){if(/^\d{2,3}-\d{1,2}$/.test(k))b.best[k]=n(o.best[k],1e6)});
+  if(o.best&&typeof o.best==='object')Object.keys(o.best).slice(0,40).forEach(function(k){if(/^\d{2,3}-(\d{1,2}|[a-z0-9]{3,8})$/.test(k))b.best[k]=n(o.best[k],1e6)});
   if(o.facts&&typeof o.facts==='object')Object.keys(o.facts).slice(0,200).forEach(function(k){var v=o.facts[k];if(/^\d{1,2}x\d{1,2}$/.test(k)&&Array.isArray(v))b.facts[k]=[n(v[0],1e6),n(v[1],1e6)]});
-  if(Array.isArray(o.recent))b.recent=o.recent.slice(0,10).map(function(r){r=r||{};return {t:n(r.t,8.64e15),sc:n(r.sc,1e5),r:n(r.r,1e4),w:n(r.w,1e4),du:[45,60,90].indexOf(r.du)>=0?r.du:60,mx:clampN(r.mx,6,12),m:r.m==='solo'?'solo':'room'}});
+  if(Array.isArray(o.recent))b.recent=o.recent.slice(0,10).map(function(r){r=r||{};return {t:n(r.t,8.64e15),sc:n(r.sc,1e5),r:n(r.r,1e4),w:n(r.w,1e4),du:[45,60,90].indexOf(r.du)>=0?r.du:60,mx:clampN(r.mx,6,12),m:r.m==='solo'?'solo':'room',tk:TRACKS[trackIdx(r.tk)].id}});
   return b;
 }
 var LB={state:'idle',data:null,cb:null};
@@ -492,28 +494,28 @@ function recordRound(){
   var g=P.G;
   if(!g||P.recorded||me.r+me.w===0)return;
   P.recorded=true;
-  var key=g.du+'-'+g.mx,prev=PF.data.best[key]||0;
+  var key=bestKey(g,P.tk),prev=PF.data.best[key]||0;
   P.newBest=prev>0&&me.sc>prev;P.best=Math.max(prev,me.sc);
   if(!PF.code)return;
   var fr={};P.fr.forEach(function(v,k){fr[k]=[v[0],v[1]]});
-  callProfile('tts_profile_apply_round',{p_delta:{r:me.r,w:me.w,bs:me.bs,sc:me.sc,du:g.du,mx:g.mx,m:S.mode==='solo'?'solo':'room',fr:fr,name:S.name,color:S.color}});
+  callProfile('tts_profile_apply_round',{p_delta:{r:me.r,w:me.w,bs:me.bs,sc:me.sc,du:g.du,mx:g.mx,tk:P.tk.id,m:S.mode==='solo'?'solo':'room',fr:fr,name:S.name,color:S.color}});
 }
 function copyProfileCode(){
   var p;try{p=navigator.clipboard.writeText(displayCode(PF.code))}catch(e){p=Promise.reject(e)}
   p.then(function(){toast('Profile code copied')},function(){toast('Your code: '+displayCode(PF.code))});
 }
 function refreshProfileUI(){if(curView&&curView.pull)curView.pull();render()}
-function resetMe(){Object.assign(me,{rd:0,base:0,br:0,bw:0,sc:0,r:0,w:0,st:0,bs:0,lv:0,fin:0,phase:'idle'});P.G=null;clearInterval(P.timer)}
+function resetMe(){Object.assign(me,{rd:0,base:0,br:0,bw:0,sc:0,r:0,w:0,st:0,bs:0,lv:0,fin:0,tk:trackIdx(myTrack()),phase:'idle'});P.G=null;clearInterval(P.timer)}
 
 /* ---------- room data ---------- */
 function players(){
-  if(S.mode==='solo')return [{id:'me',isMe:true,h:true,n:S.name,c:S.color,rd:me.rd,sc:me.sc,r:me.r,w:me.w,st:me.st,bs:me.bs,lv:me.lv,fin:me.fin,base:me.base,br:me.br,bw:me.bw}];
+  if(S.mode==='solo')return [{id:'me',isMe:true,h:true,n:S.name,c:S.color,rd:me.rd,sc:me.sc,r:me.r,w:me.w,st:me.st,bs:me.bs,lv:me.lv,fin:me.fin,tk:me.tk,base:me.base,br:me.br,bw:me.bw}];
   if(!S.nr)return [];
   return S.nr.peers().filter(function(p){return p.kind==='viewer'&&p.presence&&p.presence.n!=null}).map(function(p){
     var x=p.presence;
     return {id:p.peer,isMe:!!p.sameTab,h:x.h===1,n:cleanName(x.n)||'Mystery player',c:clampN(x.c,0,COLORS-1),
       rd:clampN(x.rd,0,9999),sc:clampN(x.sc,0,99999),r:clampN(x.r,0,9999),w:clampN(x.w,0,9999),st:clampN(x.st,0,9999),bs:clampN(x.bs,0,9999),
-      lv:clampN(x.lv,0,2),fin:x.fin?1:0,base:clampN(x.base,0,999999),br:clampN(x.br,0,99999),bw:clampN(x.bw,0,99999)};
+      lv:clampN(x.lv,0,2),tk:clampN(x.tk,0,TRACKS.length-1),fin:x.fin?1:0,base:clampN(x.base,0,999999),br:clampN(x.br,0,99999),bw:clampN(x.bw,0,99999)};
   });
 }
 function game(){
@@ -526,7 +528,7 @@ function game(){
     du:[45,60,90].indexOf(x.du)>=0?x.du:60,mx:clampN(x.mx,6,12)};
 }
 function setPresence(patch){if(S.nr)S.nr.presence(patch).catch(function(){})}
-function pushMe(){setPresence({rd:me.rd,base:me.base,br:me.br,bw:me.bw,sc:me.sc,r:me.r,w:me.w,st:me.st,bs:me.bs,lv:me.lv,fin:me.fin})}
+function pushMe(){setPresence({rd:me.rd,base:me.base,br:me.br,bw:me.bw,sc:me.sc,r:me.r,w:me.w,st:me.st,bs:me.bs,lv:me.lv,tk:me.tk,fin:me.fin})}
 function hostSet(patch){if(S.mode==='solo'){Object.assign(S.soloGame,patch);sync()}else setPresence(patch)}
 var cmp=function(a,b){return b.sc-a.sc||a.w-b.w||(a.n<b.n?-1:a.n>b.n?1:0)||(a.id<b.id?-1:1)};
 function roundPlayers(g){
@@ -534,14 +536,85 @@ function roundPlayers(g){
 }
 
 /* ---------- game logic ---------- */
-function makeQ(g,i,t,lv){
+/* ---------- kinds of maths: the teacher gives each student one; harder kinds are worth more points per answer ---------- */
+var TRACKS=[
+  {id:'tables',name:'Times tables',short:'Tables',base:10},
+  {id:'addsub',name:'Add, subtract, divide',short:'Arithmetic',base:12},
+  {id:'bodmas',name:'BODMAS',short:'BODMAS',base:16},
+  {id:'frac',name:'Fractions and percentages',short:'Fractions',base:16},
+  {id:'alg1',name:'Algebra 1: one step',short:'Algebra 1',base:13},
+  {id:'alg2',name:'Algebra 2: two steps and substituting',short:'Algebra 2',base:22},
+  {id:'alg3',name:'Algebra 3: brackets and both sides',short:'Algebra 3',base:34}
+];
+function trackIdx(id){for(var i=0;i<TRACKS.length;i++)if(TRACKS[i].id===id)return i;return 0}
+function myTrack(){return TRACKS[trackIdx(PF.state==='ready'&&PF.link&&PF.link.track)].id}
+function bestKey(g,tk){return tk.id==='tables'?g.du+'-'+g.mx:g.du+'-'+tk.id}
+function ri(rng,lo,hi){return lo+Math.floor(rng()*(hi-lo+1))}
+function pk(rng,arr){return arr[Math.floor(rng()*arr.length)]}
+function mk(txt,ans,pre){return {txt:txt,ans:ans,pre:pre||'',full:pre?txt+'  →  '+pre+' '+ans:txt+' = '+ans}}
+function coef(c){return c===1?'x':c+'x'}
+function genArith(rng,lv){
+  var k=rng(),a,b,d,q;
+  if(k<0.35){var hi=lv===2?15:lv===1?49:99,lo=lv===2?2:lv===1?5:12;a=ri(rng,lo,hi);b=ri(rng,lo,hi);return mk(a+' + '+b,a+b)}
+  if(k<0.7){a=lv===2?ri(rng,10,30):lv===1?ri(rng,15,80):ri(rng,30,150);b=ri(rng,lv===2?2:11,a-1);return mk(a+' − '+b,a-b)}
+  d=lv===2?pk(rng,[2,5,10]):lv===1?pk(rng,[2,3,4,5,10]):ri(rng,2,12);q=ri(rng,2,lv?10:12);
+  return mk((d*q)+' ÷ '+d,q);
+}
+function genBodmas(rng,lv){
+  var n=lv===2?2:lv===1?3:7,k=Math.floor(rng()*n),cap=lv?5:9,a,b,c,d,m;
+  if(k===0){a=ri(rng,2,20);b=ri(rng,2,cap);c=ri(rng,2,cap);return mk(a+' + '+b+' × '+c,a+b*c)}
+  if(k===1){a=ri(rng,1,12);b=ri(rng,1,12);c=ri(rng,2,cap);return mk('('+a+' + '+b+') × '+c,(a+b)*c)}
+  if(k===2){b=ri(rng,2,cap);c=ri(rng,2,cap);a=b*c+ri(rng,1,20);return mk(a+' − '+b+' × '+c,a-b*c)}
+  if(k===3){a=ri(rng,2,9);b=ri(rng,2,9);c=ri(rng,2,9);d=ri(rng,2,9);return mk(a+' × '+b+' + '+c+' × '+d,a*b+c*d)}
+  if(k===4){a=ri(rng,1,20);b=ri(rng,2,9);return mk(a+' + '+b+'²',a+b*b)}
+  if(k===5){c=ri(rng,2,9);m=ri(rng,2,9);b=ri(rng,1,20);a=b+c*m;return mk('('+a+' − '+b+') ÷ '+c,m)}
+  a=ri(rng,2,9);b=ri(rng,1,9);c=ri(rng,1,9);d=ri(rng,1,a*(b+c)-1);return mk(a+' × ('+b+' + '+c+') − '+d,a*(b+c)-d);
+}
+var PCT={5:20,10:10,20:5,25:4,30:10,40:5,50:2,60:5,70:10,75:4,80:5,90:10};
+function genFrac(rng,lv){
+  var k=rng(),ps=lv===2?[50,10]:lv===1?[10,25,50]:[5,10,20,25,30,40,50,60,70,75,80,90],p,u,m,n,a,b;
+  var mm=function(u){return ri(rng,1,Math.max(1,Math.min(lv?5:10,Math.floor(200/u))))};
+  if(k<0.35){p=pk(rng,ps);u=PCT[p];n=u*mm(u);return mk(p+'% of '+n,n*p/100)}
+  if(k<0.6){b=lv===2?pk(rng,[2,4,10]):lv===1?pk(rng,[2,3,4,5,10]):pk(rng,[2,3,4,5,6,8,10]);a=lv===2?1:ri(rng,1,b-1);n=b*ri(rng,2,lv?6:12);return mk(a+'/'+b+' of '+n,a*n/b)}
+  if(k<0.8){p=pk(rng,lv===2?[10,50]:[10,20,25,50]);u=PCT[p];n=u*mm(u);var up=rng()<0.5;return mk((up?'Increase ':'Decrease ')+n+' by '+p+'%',up?n+n*p/100:n-n*p/100)}
+  p=pk(rng,ps);u=PCT[p];m=mm(u);n=u*m;return mk(p+'% of ? = '+(n*p/100),n,'? =');
+}
+function genAlg1(rng,lv){
+  var k=lv?rng()*0.5:rng(),a,b,x;
+  if(k<0.25){x=ri(rng,2,lv?12:30);a=ri(rng,2,lv===2?9:lv?12:30);return mk('x + '+a+' = '+(x+a),x,'x =')}
+  if(k<0.5){a=ri(rng,2,lv===2?9:20);b=ri(rng,1,lv===2?10:30);return mk('x − '+a+' = '+b,a+b,'x =')}
+  if(k<0.75){a=ri(rng,2,12);x=ri(rng,2,12);return mk(a+'x = '+(a*x),x,'x =')}
+  a=ri(rng,2,9);b=ri(rng,2,12);return mk('x ÷ '+a+' = '+b,a*b,'x =');
+}
+function genAlg2(rng,lv){
+  var k=lv?rng()*0.5:rng(),a,b,x,m;
+  if(k<0.3){a=ri(rng,2,lv===2?3:9);x=ri(rng,1,12);b=ri(rng,1,20);return mk(a+'x + '+b+' = '+(a*x+b),x,'x =')}
+  if(k<0.5){a=ri(rng,2,lv?4:9);x=ri(rng,2,12);b=ri(rng,1,Math.min(20,a*x-1));return mk(a+'x − '+b+' = '+(a*x-b),x,'x =')}
+  if(k<0.7){a=ri(rng,2,9);m=ri(rng,1,12);b=ri(rng,1,15);return mk('x ÷ '+a+' + '+b+' = '+(m+b),a*m,'x =')}
+  x=ri(rng,2,10);a=ri(rng,2,9);b=ri(rng,1,15);
+  if(rng()<0.7)return mk(coef(a)+' + '+b+',  when x = '+x,a*x+b);
+  return mk('x² + '+b+',  when x = '+x,x*x+b);
+}
+function genAlg3(rng,lv){
+  var k=lv?rng()*0.3:rng(),a,b,c,d,x,r,p,q;
+  if(k<0.2){a=ri(rng,2,9);x=ri(rng,1,12);b=ri(rng,1,9);return mk(a+'(x + '+b+') = '+a*(x+b),x,'x =')}
+  if(k<0.4){a=ri(rng,2,9);b=ri(rng,1,9);var j=ri(rng,1,10);return mk(a+'(x − '+b+') = '+a*j,b+j,'x =')}
+  if(k<0.65){x=ri(rng,1,12);c=ri(rng,1,5);a=c+ri(rng,1,5);b=ri(rng,1,20);d=(a-c)*x+b;return mk(coef(a)+' + '+b+' = '+coef(c)+' + '+d,x,'x =')}
+  x=ri(rng,2,9);r=rng();
+  if(r<0.35){a=ri(rng,2,5);b=ri(rng,1,20);return mk(a+'x² + '+b+',  when x = '+x,a*x*x+b)}
+  if(r<0.7){b=ri(rng,1,x-1);return mk('x² − '+coef(b)+',  when x = '+x,x*x-b*x)}
+  p=ri(rng,1,5);q=ri(rng,1,5);return mk('(x + '+p+')(x + '+q+'),  when x = '+x,(x+p)*(x+q));
+}
+var GENS={addsub:genArith,bodmas:genBodmas,frac:genFrac,alg1:genAlg1,alg2:genAlg2,alg3:genAlg3};
+function makeQ(g,i,t,lv,tk){
   var rng=mulberry32(hash(g.sd,g.g,i,t,lv));var a,b;
+  if(tk&&GENS[tk])return GENS[tk](rng,lv);
   if(lv>0){
     var pool=(lv===2?[2,5,10]:[2,3,4,5,10,11]).filter(function(x){return x<=g.mx});
     if(!pool.length)pool=[2];
     a=pool[Math.floor(rng()*pool.length)];b=1+Math.floor(rng()*10);
   }else{a=2+Math.floor(rng()*(g.mx-1));b=1+Math.floor(rng()*12)}
-  return {a:a,b:b,flip:rng()<0.5,ans:a*b};
+  return {a:a,b:b,flip:rng()<0.5,ans:a*b,full:a+' × '+b+' = '+(a*b)};
 }
 function updateLevel(){
   if(S.mode==='solo'){me.lv=0;return}
@@ -555,16 +628,17 @@ function nextQuestion(){
   if(me.phase!=='play')return;
   updateLevel();
   var q;
-  for(var t=0;t<6;t++){q=makeQ(P.G,P.i,t,me.lv);if(!P.q||q.a!==P.q.a||q.b!==P.q.b)break}
+  for(var t=0;t<6;t++){q=makeQ(P.G,P.i,t,me.lv,P.tk.id);if(!P.q||q.full!==P.q.full)break}
   P.i++;P.q=q;P.typed='';P.flash='';P.fbText='';P.fbKind='';
   pushMe();
 }
 function beginRound(g){
   if(me.rd>0&&me.rd<g.g){me.base+=me.sc;me.br+=me.r;me.bw+=me.w}
   Object.assign(me,{rd:g.g,sc:0,r:0,w:0,st:0,bs:0,lv:0,fin:0,phase:'count'});
+  me.tk=trackIdx(myTrack());P.tk=TRACKS[me.tk];
   P.G=g;P.i=0;P.q=null;P.qShown=-1;P.typed='';P.lock=false;P.flash='';P.fbText='';P.fbKind='';
   P.missed=new Map();P.grid=new Map();P.fr=new Map();P.recorded=false;P.newBest=false;
-  P.best=PF.data.best[g.du+'-'+g.mx]||0;
+  P.best=PF.data.best[bestKey(g,P.tk)]||0;
   var now=Date.now();P.countEnd=now+3000;P.roundEnd=P.countEnd+g.du*1000;
   pushMe();
   clearInterval(P.timer);P.timer=setInterval(tick,100);
@@ -593,6 +667,7 @@ function tick(){
   }
 }
 function recordGrid(q,ok){
+  if(q.a===undefined)return;
   var key=q.a+'x'+q.b;var prev=P.grid.get(key);
   P.grid.set(key,(prev==='miss'||!ok)?'miss':'ok');
   var f=P.fr.get(key)||[0,0];f[ok?0:1]++;P.fr.set(key,f);
@@ -609,14 +684,14 @@ function submit(){
   recordGrid(q,ok);P.lock=true;
   var qi=P.i;
   if(ok){
-    var pts=10+Math.min(me.st,5)*2;
+    var pts=Math.round(P.tk.base*(1+Math.min(me.st,5)*0.2));
     me.st++;me.bs=Math.max(me.bs,me.st);me.sc+=pts;me.r++;
     P.flash='good';P.fbKind='good';P.fbText='+'+pts;
     setTimeout(function(){P.lock=false;if(P.i===qi){nextQuestion();drawGame()}},220);
   }else{
     me.w++;me.st=0;
-    var key=q.a+'x'+q.b,m=P.missed.get(key)||{a:q.a,b:q.b,n:0};m.n++;P.missed.set(key,m);
-    P.flash='bad';P.fbKind='bad';P.fbText=q.a+' × '+q.b+' = '+q.ans;
+    var key=q.full,m=P.missed.get(key)||{full:q.full,n:0};m.n++;P.missed.set(key,m);
+    P.flash='bad';P.fbKind='bad';P.fbText=q.full;
     setTimeout(function(){P.lock=false;if(P.i===qi){nextQuestion();drawGame()}},1100);
   }
   pushMe();drawGame();
@@ -651,7 +726,7 @@ function enterRoom(nr,code,asHost){
       if(c){S.conn=true;renderTop()}else connTO=setTimeout(function(){S.conn=nr.connected();renderTop()},2000);
     })
   ];
-  var base={n:S.name,c:S.color,rd:0,sc:0,r:0,w:0,st:0,bs:0,lv:0,fin:0,base:0,br:0,bw:0};
+  var base={n:S.name,c:S.color,rd:0,sc:0,r:0,w:0,st:0,bs:0,lv:0,tk:trackIdx(myTrack()),fin:0,base:0,br:0,bw:0};
   if(asHost)Object.assign(base,{h:1,ph:'lobby',g:0,sd:0,du:60,mx:12});
   setPresence(base);
   curKey=null;render();
@@ -715,14 +790,14 @@ function lbList(items,showFin){
       h('span',{class:'rank'},String(i+1)),
       avatar(p.n,p.c,36),
       h('div',{class:'who'},
-        h('div',{class:'nmrow'},h('span',{class:'nmtxt'},p.n),p.isMe?tag('You'):null,p.lv>0?tag('Boost','boost'):null,(showFin&&p.fin)?tag('Done'):null),
+        h('div',{class:'nmrow'},h('span',{class:'nmtxt'},p.n),p.isMe?tag('You'):null,p.tk!=null?tag(TRACKS[p.tk].short):null,p.lv>0?tag('Boost','boost'):null,(showFin&&p.fin)?tag('Done'):null),
         h('div',{class:'meta'},p.meta)),
       h('span',{class:'pts'},String(p.pts))));
   });
   return ol;
 }
 function liveItems(ps){
-  return ps.map(function(p){return {isMe:p.isMe,n:p.n,c:p.c,lv:p.lv,fin:p.fin,pts:p.sc,meta:p.r+' right · '+p.w+' wrong'}});
+  return ps.map(function(p){return {isMe:p.isMe,n:p.n,c:p.c,lv:p.lv,tk:p.tk,fin:p.fin,pts:p.sc,meta:p.r+' right · '+p.w+' wrong'}});
 }
 
 /* ---------- views ---------- */
@@ -763,7 +838,7 @@ function teacherPanel(){
   function importNames(){
     var names=T.names.split(/\r?\n/).map(function(x){return x.replace(/\t.*$/,'').trim()}).filter(function(x){return x.length>1});
     if(!names.length){T.msg='Paste the names first, one per line.';draw();return}
-    act('tts_admin_import',{p_label:T.label,p_names:names},function(d){T.names='';return 'Added '+d.added+' name'+(d.added===1?'':'s')+' to '+d.class+'. Class code: '+d.code})
+    act('tts_admin_import',{p_label:T.label,p_names:names,p_track:T.track||'tables'},function(d){T.names='';return 'Added '+d.added+' name'+(d.added===1?'':'s')+' to '+d.class+'. Class code: '+d.code})
   }
   function rosterView(){
     var out=[h('div',{class:'label',style:'margin-top:6px'},'Class lists')];
@@ -772,8 +847,9 @@ function teacherPanel(){
     out.push(h('p',{class:'note'},'Students enter their class code, then tap their own name. Give them the code for their class.'));
     if(R.classes.length)out.push(h('div',{class:'lblist'},R.classes.map(function(c){return h('div',{class:'lbrow',style:'grid-template-columns:minmax(0,1fr) auto'},h('div',{class:'nmtxt'},c.label),h('span',{class:'sc'},c.code))})));
     var label=h('input',{class:'input',type:'text',maxlength:'20','aria-label':'Class name',placeholder:'Class name, e.g. 8B',value:T.label,style:'padding-left:14px',oninput:function(){T.label=label.value}});
+    var trackSel=h('select',{class:'input','aria-label':'Kind of maths for these students',style:'padding-left:14px',onchange:function(){T.track=trackSel.value}},TRACKS.map(function(t){return h('option',{value:t.id},t.name)}));trackSel.value=T.track||'tables';
     var names=h('textarea',{class:'input',rows:'5','aria-label':'Student names','aria-describedby':'nm-help',placeholder:'One name per line, e.g.\nAnna S.\nThabo M.',oninput:function(){T.names=names.value}});names.value=T.names;
-    out.push(h('div',{class:'stack'},label,names,h('p',{class:'note',id:'nm-help'},'Tip: use first name and last initial. Anyone with the class code can see the names that are still free.'),
+    out.push(h('div',{class:'stack'},label,names,h('p',{class:'note'},'Kind of maths for these students (you can change each student afterwards):'),trackSel,h('p',{class:'note',id:'nm-help'},'Tip: use first name and last initial. Anyone with the class code can see the names that are still free.'),
       h('button',{class:'btn',type:'button',disabled:T.busy,onclick:importNames},'Add names to class')));
     if(R.rows.length){
       out.push(h('div',{class:'label',style:'margin-top:6px'},'Progress'));
@@ -781,8 +857,9 @@ function teacherPanel(){
         var tot=(r.right||0)+(r.wrong||0),acc=tot?Math.round(r.right/tot*100)+'%':'–';
         var weak=weakFacts(r.facts);
         var sub=r.user?(r.user+' · '+(r.rounds||0)+' rounds · '+acc+' right · best '+(r.best||0)+(weak?' · weak: '+weak:'')):'Has not picked this name yet';
+        var sel=h('select',{class:'input','aria-label':'Kind of maths for '+r.real,style:'padding:6px 10px;min-height:0;font-size:.85rem',disabled:T.busy,onchange:function(){act('tts_admin_set_track',{p_rid:r.rid,p_track:sel.value},r.real+': '+TRACKS[trackIdx(sel.value)].name)}},TRACKS.map(function(t){return h('option',{value:t.id},t.name)}));sel.value=TRACKS[trackIdx(r.track)].id;
         return h('div',{class:'lbrow',style:'grid-template-columns:minmax(0,1fr) auto'},
-          h('div',null,h('div',{class:'nmtxt'},r.real+' ('+r.class+')'),h('div',{class:'sub'},sub)),
+          h('div',{style:'min-width:0'},h('div',{class:'nmtxt'},r.real+' ('+r.class+')'),h('div',{class:'sub'},sub),sel),
           h('div',{class:'actions',style:'justify-content:flex-end'},
             r.user?h('button',{class:'btn small',type:'button',disabled:T.busy,onclick:function(){ask('u'+r.rid,function(){act('tts_admin_unlink',{p_rid:r.rid},'Unlinked '+r.real+'. They can pick a name again.')})}},T.confirm==='u'+r.rid?'Tap again':'Unlink'):null,
             h('button',{class:'btn small danger',type:'button',disabled:T.busy,onclick:function(){ask('r'+r.rid,function(){act('tts_admin_roster_remove',{p_rid:r.rid},'Removed '+r.real+' from the list.')})}},T.confirm==='r'+r.rid?'Tap again':'Remove')));
@@ -886,7 +963,7 @@ VIEWS.home=function(){
     /* only rebuild the box when what it shows changes, so typing never loses focus */
     var d=PF.data,tot=d.right+d.wrong;
     var legacy=isReady&&isLegacy(PF.code)&&nameKey(PF.code)!==nameKey(d.name);
-    var sig=isReady?JSON.stringify(['in',d.name,d.rounds,d.right,d.wrong,d.bestScore,renaming,legacy,PF.msg||'',PF.code,PF.link&&PF.link.class||'']):'out';
+    var sig=isReady?JSON.stringify(['in',d.name,d.rounds,d.right,d.wrong,d.bestScore,renaming,legacy,PF.msg||'',PF.code,(PF.link&&PF.link.class||'')+(PF.link&&PF.link.track||'')]):'out';
     if(sig!==meSig){
       meSig=sig;
       if(!isReady){
@@ -910,7 +987,7 @@ VIEWS.home=function(){
                 h('button',{class:'btn small',type:'button',onclick:function(){closeProfile();S.pfErr='';S.nameTouched=false;S.name='';nameIn.value='';upd()}},'Not you?')),
           d.rounds>0?h('div',{class:'statgrid',style:'grid-template-columns:repeat(3,minmax(0,1fr))'},statTile('Rounds',d.rounds),statTile('Accuracy',Math.round(d.right/Math.max(1,tot)*100)+'%'),statTile('Best score',d.bestScore)):null,
           legacy?h('p',{class:'note'},'Your old code is '+displayCode(PF.code)+'. Change your name and the name becomes your code.'):null,
-          PF.link&&PF.link.class?h('p',{class:'note'},'In class '+PF.link.class+' ✓'):null,
+          PF.link&&PF.link.class?h('p',{class:'note'},'In class '+PF.link.class+' ✓ · Your maths: '+TRACKS[trackIdx(PF.link.track)].name):null,
           PF.msg?h('p',{class:'note',role:'status'},PF.msg):null);
       }
     }
@@ -937,7 +1014,7 @@ VIEWS.home=function(){
   async function claim(n){
     if(C.sel!==n.rid){C.sel=n.rid;paintClass();return}
     if(C.busy)return;C.busy=true;paintClass();
-    try{var r=await PF.sb.rpc('tts_class_claim',{p_class:C.code,p_code:PF.code,p_rid:n.rid});if(r.error)throw r.error;PF.link={class:r.data.class};C.names=null;C.code='';cIn.value='';C.busy=false;loadLeaderboard();refreshProfileUI();return}
+    try{var r=await PF.sb.rpc('tts_class_claim',{p_class:C.code,p_code:PF.code,p_rid:n.rid});if(r.error)throw r.error;PF.link={class:r.data.class,track:r.data.track};C.names=null;C.code='';cIn.value='';C.busy=false;loadLeaderboard();refreshProfileUI();return}
     catch(e){C.msg=cErr(e);if(/name_taken/.test(String(e&&e.message)))findClass()}
     C.busy=false;paintClass();
   }
@@ -987,7 +1064,7 @@ VIEWS.home=function(){
   function pull(){if(!S.nameTouched)nameIn.value=S.name;upd()}
   upd();
   el.append(
-    h('div',{class:'hero'},h('h1',null,'Race through the times tables.'),h('p',null,'60-second rounds, up to the 12s. Fall behind and you get easier questions to help you catch up.')),
+    h('div',{class:'hero'},h('h1',null,'Race your friends at maths.'),h('p',null,'60-second rounds. Everyone gets maths at their own level, and harder questions earn more points, so anyone can win. Fall behind and you get easier questions to catch up.')),
     meBox,
     classBox,
     playBox,
@@ -1017,7 +1094,7 @@ VIEWS.profile=function(){
       }
       var weak=Object.keys(d.facts).map(function(k){var p=k.split('x'),f=d.facts[k],t=f[0]+f[1];return {a:+p[0],b:+p[1],t:t,acc:t?f[0]/t:1}})
         .filter(function(x){return x.t>0&&x.acc<0.8}).sort(function(x,y){return x.acc-y.acc||y.t-x.t}).slice(0,12);
-      out.push(h('section',{class:'panel'},
+      if(Object.keys(d.facts).length)out.push(h('section',{class:'panel'},
         h('h2',null,'Your all-time map'),
         h('p',{class:'note'},'Every question you have answered, across all rounds. Rows are the table, columns are the number you multiplied by.'),
         h('div',{class:'mapwrap'},h('div',{class:'map'},rows)),
@@ -1026,7 +1103,7 @@ VIEWS.profile=function(){
         weak.length?h('div',{class:'mchips'},weak.map(function(x){return h('span',{class:'mchip'},x.a+' × '+x.b+' = '+(x.a*x.b),h('i',null,Math.round(x.acc*100)+'%'))})):h('p',{class:'note'},'Nothing is wobbling right now.')));
       out.push(h('section',{class:'panel'},h('h2',null,'Recent rounds'),h('div',null,d.recent.map(function(r){
         var when=r.t?new Date(r.t).toLocaleDateString(undefined,{month:'short',day:'numeric'}):'';
-        return h('div',{class:'hrow'},h('span',null,when+' · '+(r.m==='solo'?'On my own':'With friends')),h('span',null,r.sc+' pts · '+r.r+' right · '+r.w+' wrong'));
+        return h('div',{class:'hrow'},h('span',null,when+' · '+(r.m==='solo'?'On my own':'With friends')+(r.tk&&r.tk!=='tables'?' · '+TRACKS[trackIdx(r.tk)].short:'')),h('span',null,r.sc+' pts · '+r.r+' right · '+r.w+' wrong'));
       }))));
     }
     fill(el,out);
@@ -1086,7 +1163,7 @@ VIEWS.game=function(){
   E.boost=h('div',{class:'boostbar',hidden:true});
   E.count=h('div',{class:'countnum',hidden:true});
   E.q=h('div',{class:'q'});
-  E.ansText=h('span');E.ans=h('div',{class:'ans','aria-label':'Your answer'},E.ansText,h('span',{class:'caret'}));
+  E.ansPre=h('span',{class:'pre'});E.ansText=h('span');E.ans=h('div',{class:'ans','aria-label':'Your answer'},E.ansPre,E.ansText,h('span',{class:'caret'}));
   E.fb=h('div',{class:'fb',role:'status'});
   E.qcard=h('div',{class:'qcard'},E.count,E.q,E.ans,E.fb);
   var keyList=['1','2','3','4','5','6','7','8','9','Del','0','Go'];
@@ -1122,8 +1199,9 @@ function drawGame(){
   E.keys.classList.toggle('off',counting);
   if(counting)E.count.textContent=String(Math.max(1,Math.ceil((P.countEnd-Date.now())/1000)));
   if(P.q&&!counting&&P.qShown!==P.i){
-    var x=P.q.flip?P.q.b:P.q.a,y=P.q.flip?P.q.a:P.q.b;
-    fill(E.q,String(x),h('span',{class:'x'},'×'),String(y));
+    if(P.q.txt!==undefined){E.q.className='q txt';fill(E.q,P.q.txt)}
+    else{var x=P.q.flip?P.q.b:P.q.a,y=P.q.flip?P.q.a:P.q.b;E.q.className='q';fill(E.q,String(x),h('span',{class:'x'},'×'),String(y))}
+    E.ansPre.textContent=P.q.pre||'';
     P.qShown=P.i;
   }
   E.ansText.textContent=P.typed;
@@ -1139,7 +1217,7 @@ function drawGame(){
   else if(i>0)line=ordinal(i+1)+' place. '+(ps[0].sc-ps[i].sc)+' behind '+ps[0].n+'.';
   E.rank.textContent=line;
   E.boost.hidden=me.lv===0;
-  E.boost.textContent=me.lv===2?'Turbo comeback. Only the friendliest tables now, same points per answer.':'Comeback boost on. Easier tables, same points per answer. Use it to catch up.';
+  E.boost.textContent=me.lv===2?'Turbo comeback. Much easier questions now, same points per answer.':'Comeback boost on. Easier questions, same points per answer. Use it to catch up.';
   fill(E.lb,lbList(liveItems(ps),true));
   E.track.hidden=S.mode==='solo'&&!P.best;
   drawTrack(E,ps);
@@ -1204,9 +1282,9 @@ VIEWS.results=function(){
     var tab=showSession?S.resTab:'round';
     var items;
     if(tab==='round'){
-      items=round.map(function(p){var t=p.r+p.w;return {isMe:p.isMe,n:p.n,c:p.c,lv:0,pts:p.sc,meta:p.r+' right · '+p.w+' wrong'+(t?' · '+Math.round(p.r/t*100)+'%':'')}});
+      items=round.map(function(p){var t=p.r+p.w;return {isMe:p.isMe,n:p.n,c:p.c,lv:0,tk:p.tk,pts:p.sc,meta:p.r+' right · '+p.w+' wrong'+(t?' · '+Math.round(p.r/t*100)+'%':'')}});
     }else{
-      items=all.map(function(p){var sc=p.base+p.sc,r=p.br+p.r,w=p.bw+p.w;return {isMe:p.isMe,n:p.n,c:p.c,lv:0,pts:sc,w:w,meta:r+' right · '+w+' wrong'}})
+      items=all.map(function(p){var sc=p.base+p.sc,r=p.br+p.r,w=p.bw+p.w;return {isMe:p.isMe,n:p.n,c:p.c,lv:0,tk:p.tk,pts:sc,w:w,meta:r+' right · '+w+' wrong'}})
         .sort(function(a,b){return b.pts-a.pts||a.w-b.w});
     }
     var out=[];
@@ -1239,13 +1317,14 @@ VIEWS.results=function(){
         for(b=1;b<=12;b++){var st=P.grid.get(a+'x'+b);rows.push(h('span',{class:'cell'+(st?' '+st:''),title:a+' × '+b}))}
       }
       var miss=Array.from(P.missed.values()).sort(function(x,y){return y.n-x.n}).slice(0,14);
-      out.push(h('section',{class:'panel'},
+      var missChips=miss.length?h('div',{class:'mchips'},miss.map(function(m){return h('span',{class:'mchip'},m.full,m.n>1?h('i',null,'×'+m.n):null)})):h('p',{class:'note'},'No misses. Clean round.');
+      if(P.tk.id==='tables')out.push(h('section',{class:'panel'},
         h('h2',null,"This round's map"),
         h('p',{class:'note'},'Only the questions from the round you just played.'),
         h('div',{class:'mapwrap'},h('div',{class:'map'},rows)),
         h('div',{class:'legend'},h('span',{class:'l-ok'},'Right'),h('span',{class:'l-miss'},'Missed'),h('span',null,'Not asked')),
-        h('div',{class:'label'},'Tricky ones to practise'),
-        miss.length?h('div',{class:'mchips'},miss.map(function(m){return h('span',{class:'mchip'},m.a+' × '+m.b+' = '+(m.a*m.b),m.n>1?h('i',null,'×'+m.n):null)})):h('p',{class:'note'},'No misses. Clean round.')));
+        h('div',{class:'label'},'Tricky ones to practise'),missChips));
+      else out.push(h('section',{class:'panel'},h('h2',null,'Questions to look at again'),h('p',{class:'note'},P.tk.name+'. Only the questions you missed this round.'),missChips));
     }
     if(P.recorded&&me.rd===g.g)out.push(h('p',{class:'note'},PF.code?(P.newBest?'New personal best! ':'')+'Round saved to your profile.':'Not saved. Make a profile on the home screen to keep your scores.'));
     if(g.hostIsMe){
