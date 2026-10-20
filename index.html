@@ -591,10 +591,10 @@ async function loadLink(){
   if(PF.code===code)refreshProfileUI();
 }
 async function refreshLink(){
-  if(!PF.sb||PF.state!=='ready'||!PF.code||PF.link==='off'||PF.link===undefined)return;
+  if(!PF.sb||PF.state!=='ready'||!PF.code)return;
   var code=PF.code,old=PF.link&&PF.link.track;
   try{var r=await PF.sb.rpc('tts_class_mine',{p_code:code});if(r.error||PF.code!==code)return;
-    var nl=r.data||null,nt=nl&&nl.track;if(nt!==old||(!!nl)!==(!!PF.link)){PF.link=nl;refreshProfileUI()}}catch(e){}
+    var nl=r.data||null,nt=nl&&nl.track;if(nt!==old||(!!nl)!==(PF.link&&PF.link!=='off'?true:false)){PF.link=nl;refreshProfileUI()}}catch(e){}
 }
 setInterval(function(){if(!document.hidden)refreshLink()},20000);
 document.addEventListener('visibilitychange',function(){if(!document.hidden)refreshLink()});
@@ -828,6 +828,7 @@ function beginRound(g){
   if(me.rd>0&&me.rd<g.g){me.base+=me.sc;me.br+=me.r;me.bw+=me.w}
   Object.assign(me,{rd:g.g,sc:0,r:0,w:0,st:0,bs:0,lv:0,fin:0,phase:'count'});
   me.tk=trackIdx(myTrack());P.tk=TRACKS[me.tk];
+  refreshLink().then(function(){if(me.phase==='count'&&me.rd===g.g){me.tk=trackIdx(myTrack());P.tk=TRACKS[me.tk]}});
   P.G=g;P.i=0;P.q=null;P.qShown=-1;P.typed='';P.lock=false;P.flash='';P.fbText='';P.fbKind='';
   P.missed=new Map();P.grid=new Map();P.fr=new Map();P.recorded=false;P.newBest=false;
   P.best=PF.data.best[bestKey(g,P.tk)]||0;
@@ -1067,7 +1068,7 @@ function teacherPanel(){
     if(R.rows.length){
       out.push(h('div',{class:'label',style:'margin-top:6px'},'Progress'));
       var bulkSel=h('select',{class:'input','aria-label':'Level for everyone',style:'padding:8px 10px;min-height:0;font-size:.9rem',onchange:function(){T.bulk=bulkSel.value}},TRACKS.map(function(t){return h('option',{value:t.id},t.name)}));bulkSel.value=T.bulk;
-      out.push(h('div',{class:'stack'},h('p',{class:'note'},'Change levels below, then press Save levels (version 4). Or set everyone to one level first:'),
+      out.push(h('div',{class:'stack'},h('p',{class:'note'},'Change levels below, then press Save levels (version 5). Or set everyone to one level first:'),
         h('div',{class:'joinrow'},bulkSel,h('button',{class:'btn small',type:'button',disabled:T.saving,onclick:function(){R.rows.forEach(function(r){if(TRACKS[trackIdx(r.track)].id===T.bulk)delete T.pending[r.rid];else T.pending[r.rid]=T.bulk});draw()}},'Set all'))));
       barMsg=h('span',{class:'nmtxt',style:'white-space:normal'});
       saveBtn=h('button',{class:'btn primary',type:'button',onclick:function(){saveLevels()}},'Save levels');
