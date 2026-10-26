@@ -11,8 +11,9 @@ A times-table race game (tables up to 12) for the classroom. Play it at **https:
 The site at **https://wjsmit.github.io/math-mayhem/** is a home page with both games:
 - `index.html` - the home page ("Mayhem Games") with a button for each game.
 - `maths/index.html` - Math Mayhem (its own Supabase project, schema `tts`).
-- `science/index.html` - Science Mayhem (its own Supabase project `science-mayhem`, schema `sci`). Copied from the `wjsmit/science-mayhem` repo; edit it here from now on.
-The two games keep separate profiles, class lists and leaderboards.
+- `science/index.html` - Science Mayhem. Copied from the `wjsmit/science-mayhem` repo; edit it here from now on.
+
+Both games use the SAME Supabase project (`Math Mayhem`): one profile (name, colour, avatar) per student, one class list, one teacher PIN. Maths progress is in `tts.profiles`, science progress in `sci.profiles` (same id). Each student has a maths level and a science topic + stage on the shared class list. The leaderboards stay separate per game. See `database/7_shared_with_science.sql`. (`5_class_lists_finish.sql` is no longer needed: renaming now carries the class link across, and Remove name works.)
 
 ## How it is built
 - `index.html` — the whole game in one file. It talks to a Supabase database from the browser using the public key.

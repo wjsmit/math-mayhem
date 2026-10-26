@@ -526,8 +526,8 @@ var toastTO;
 function toast(msg){var t=document.getElementById('toast');t.textContent=msg;t.hidden=false;clearTimeout(toastTO);toastTO=setTimeout(function(){t.hidden=true},1900)}
 
 /* ---------- game server (Supabase): live rooms use Realtime presence, profiles use a few locked-down functions ---------- */
-var SUPABASE_URL='https://qjdvalmqaipaageoudam.supabase.co';
-var SUPABASE_KEY='sb_publishable_SuIMtJwhPWxHX4_MXDZ4Yw_LHw99Iz-'; /* public "anon" key: safe to ship, the database only exposes the sci_* functions */
+var SUPABASE_URL='https://gkgoviulsyjqvwlzyiib.supabase.co';
+var SUPABASE_KEY='sb_publishable_F4i7QjnrLSZiGYKhv2hOaw_ELREw-1r'; /* public "anon" key: safe to ship, the database only exposes the sci_* functions */
 function makeRoomApi(sb){
   // Presence is rate-limited by Supabase (5 updates / 30 s per client), so it is used ONLY for
   // "who is in the room" (tracked once + rare slow updates). All live game state travels by Broadcast.
@@ -680,7 +680,7 @@ async function openProfile(code){
     // a profile's code is its name; older profiles keep working with their old code until renamed
     PF.code=(isLegacy(typed)&&nameKey(PF.data.name)!==nameKey(typed))?normCode(typed):(cleanName(PF.data.name)||typed);
     PF.state='ready';PF.msg='';
-    lsSet('sci-code',PF.code);
+    lsSet('tts-code',PF.code);
     setTimeout(loadLeaderboard,0);setTimeout(loadLink,0);
     S.name=cleanName(PF.data.name)||S.name;S.color=PF.data.color;S.nameTouched=false;
     S.av=PF.data.av||defaultAv(PF.data.name);
@@ -695,7 +695,7 @@ async function createProfile(){
     if(r.error){var m=String(r.error.message||'');return /taken/.test(m)?'taken':/bad_name/.test(m)?'bad':'error'}
     if(!r.data)return 'error';
     PF.code=String(r.data);PF.data=blankProfile();PF.data.name=S.name;PF.data.color=S.color;PF.state='ready';PF.msg='';
-    lsSet('sci-code',PF.code);
+    lsSet('tts-code',PF.code);
     setTimeout(loadLeaderboard,0);PF.link=null;
     return 'ok';
   }catch(e){return 'error'}
@@ -716,7 +716,7 @@ setInterval(function(){if(!document.hidden)refreshLink()},20000);
 document.addEventListener('visibilitychange',function(){if(!document.hidden)refreshLink()});
 window.addEventListener('focus',refreshLink);
 function saveAvatar(){if(PF.state==='ready'&&PF.code&&validAv(S.av)&&PF.data.av!==S.av)callProfile('sci_profile_set_avatar',{p_av:S.av})}
-function closeProfile(){S.av=randomAv();PF.link=undefined;setTimeout(loadLeaderboard,0);PF.data=blankProfile();PF.code='';PF.state='none';PF.msg='';lsSet('sci-code','')}
+function closeProfile(){S.av=randomAv();PF.link=undefined;setTimeout(loadLeaderboard,0);PF.data=blankProfile();PF.code='';PF.state='none';PF.msg='';lsSet('tts-code','')}
 /* one request at a time; the server adds each round to the stored profile, so two devices never overwrite each other */
 function callProfile(fn,args){
   if(!PF.code)return Promise.resolve();
@@ -748,7 +748,7 @@ function syncIdentityToProfile(){
       try{
         var r=await PF.sb.rpc('sci_profile_rename',{p_code:oldCode,p_name:want,p_color:col});
         if(r.error)throw r.error;
-        if(PF.code===oldCode&&r.data){PF.code=String(r.data.code);PF.data=sanitizeProfile(r.data.data);PF.msg='';lsSet('sci-code',PF.code);setTimeout(loadLeaderboard,0)}
+        if(PF.code===oldCode&&r.data){PF.code=String(r.data.code);PF.data=sanitizeProfile(r.data.data);PF.msg='';lsSet('tts-code',PF.code);setTimeout(loadLeaderboard,0)}
       }catch(e){
         var m=String(e&&e.message||'');
         PF.msg=/taken/.test(m)?'The name "'+want+'" is already taken, so your profile stays "'+PF.data.name+'". Try another name.':/bad_name/.test(m)?'Names need at least 3 letters or numbers.':'Could not save the new name. Check your connection.';
@@ -2417,7 +2417,7 @@ function teacherPanel(){
     if(T.confirm!==key){T.confirm=key;draw();setTimeout(function(){if(T.confirm===key){T.confirm='';draw()}},4000);return}
     fn();
   }
-  function del(it){ask(it.handle,function(){act('sci_admin_delete',{p_handle:it.handle},'Removed "'+it.name+'".')})}
+  function del(it){ask(it.handle,function(){act('tts_admin_delete',{p_handle:it.handle},'Removed "'+it.name+'".')})}
   function importNames(){
     var names=T.names.split(/\r?\n/).map(function(x){return x.replace(/\t.*$/,'').trim()}).filter(function(x){return x.length>1});
     if(!names.length){T.msg='Paste the names first, one per line.';draw();return}
@@ -3028,7 +3028,7 @@ S.room=SB?makeRoomApi(SB):null;S.roomState=S.room?'ready':'unavailable';
 PF.sb=SB;PF.dbState=SB?'ready':'unavailable';
 render();
 (async function(){
-  var saved=lsGet('sci-code');
+  var saved=lsGet('tts-code');
   if(SB&&saved){var r=await openProfile(saved);if(r==='notfound'||r==='invalid')closeProfile()}
   refreshProfileUI();
 })();
