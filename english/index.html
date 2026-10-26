@@ -1,0 +1,2065 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#0B0720">
+<title>English Mayhem</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Chakra+Petch:wght@400;500;700&family=Press+Start+2P&family=VT323&display=swap">
+<style>
+/* Layout: one calm column on phones; on wide screens the live standings sit beside the question.
+   Graph-paper ground, and the 12x12 multiplication chart is the recurring motif (results map). */
+:root{
+  /* Retro arcade: one deliberate look, a night-time cabinet screen with neon colours */
+  --bg:#0B0720; --surface:#150F33; --surface2:#241A55; --fg:#F4F0FF; --muted:#A99CD9; --line:#3F3189;
+  --accent:#00E5FF; --accent-fg:#06041A; --accent2:#FF3DD1; --grid:rgba(0,229,255,.06);
+  --good:#39FF88; --good-bg:#0C3322; --bad:#FF4D79; --bad-bg:#3D1026;
+  --boost:#FFE600; --boost-bg:#3A3200; --boost-fg:#FFF3A0;
+  --p0:#00E5FF; --p1:#FF3DD1; --p2:#39FF88; --p3:#FFE600; --p4:#FF8A00; --p5:#A678FF; --p6:#FF5C5C; --p7:#7DF9C4;
+  --font-display:"Press Start 2P","Courier New",monospace;
+  --font-body:"Chakra Petch","Segoe UI",system-ui,sans-serif;
+  --font-mono:"VT323","Courier New",ui-monospace,monospace;
+  color-scheme:dark;
+}
+*{box-sizing:border-box}
+body{
+  background-color:var(--bg);
+  background-image:linear-gradient(var(--grid) 1px,transparent 1px),linear-gradient(90deg,var(--grid) 1px,transparent 1px);
+  background-size:28px 28px;
+  color:var(--fg); font-family:var(--font-body); font-size:16px; line-height:1.45;
+}
+.shell{max-width:980px;margin:0 auto;padding-block:calc(14px + env(safe-area-inset-top,0px)) calc(56px + env(safe-area-inset-bottom,0px));padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px))}
+h1,h2,h3{font-family:var(--font-display);margin:0;line-height:1.1;text-wrap:balance;letter-spacing:-.01em}
+h1{font-size:clamp(32px,8vw,46px);font-weight:800}
+h2{font-size:22px;font-weight:800}
+p{margin:0}
+.note{color:var(--muted);font-size:14px}
+.label{font-size:12px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--muted)}
+
+/* top bar */
+.top{display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;margin-bottom:20px}
+.brand{display:flex;align-items:center;gap:10px;font-family:var(--font-display);font-weight:800;font-size:19px;letter-spacing:-.01em}
+.brand-mark{width:32px;height:32px;border-radius:9px;background:var(--accent);color:var(--accent-fg);display:grid;place-items:center;font-size:22px;line-height:1}
+.chips{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+.chip{font-family:var(--font-mono);font-size:13px;padding:6px 11px;border:1px solid var(--line);border-radius:999px;background:var(--surface);color:var(--fg);display:inline-flex;gap:6px;align-items:center}
+button.chip{cursor:pointer;font-family:var(--font-mono)}
+.chip b{font-weight:500;letter-spacing:.12em}
+.chip.warn{background:var(--boost-bg);color:var(--boost-fg);border-color:var(--boost)}
+
+/* controls */
+.btn{font:inherit;font-weight:700;border-radius:12px;border:1px solid var(--line);background:var(--surface);color:var(--fg);min-height:44px;padding:10px 18px;cursor:pointer;touch-action:manipulation}
+.btn:hover:not([disabled]){border-color:var(--accent)}
+.btn.primary{background:var(--accent);color:var(--accent-fg);border-color:transparent;box-shadow:0 3px 0 rgba(0,0,0,.28)}
+.btn.primary:active:not([disabled]){transform:translateY(2px);box-shadow:0 1px 0 rgba(0,0,0,.28)}
+.btn.big{min-height:56px;font-size:18px;font-family:var(--font-display);font-weight:800}
+.btn.small{min-height:36px;padding:6px 12px;font-size:14px}
+.btn[disabled]{opacity:.5;cursor:not-allowed}
+.btn:focus-visible,.key:focus-visible,.segbtn:focus-visible,.chip:focus-visible,.avatar-btn:focus-visible,.input:focus-visible{outline:3px solid var(--accent);outline-offset:2px}
+.input{font:inherit;font-size:18px;padding:12px 14px;border-radius:12px;border:1px solid var(--line);background:var(--bg);color:var(--fg);width:100%;min-width:0}
+.input.code{font-family:var(--font-mono);letter-spacing:.35em;text-align:center;text-transform:uppercase;padding-left:calc(14px + .35em)}
+.seg{display:flex;gap:6px;flex-wrap:wrap}
+.segbtn{font:inherit;font-weight:700;font-family:var(--font-mono);min-width:56px;min-height:40px;border-radius:10px;border:1px solid var(--line);background:var(--surface);color:var(--fg);cursor:pointer;touch-action:manipulation}
+.segbtn[aria-pressed="true"]{background:var(--accent);color:var(--accent-fg);border-color:transparent}
+
+/* panels */
+.panel{background:var(--surface);border:1px solid var(--line);border-radius:16px;padding:18px;display:grid;gap:14px;align-content:start;min-width:0}
+.home{display:grid;gap:16px;max-width:560px;margin:0 auto}
+.hero{display:grid;gap:8px;margin-bottom:4px}
+.hero p{color:var(--muted);font-size:17px;max-width:46ch}
+.namerow{display:flex;gap:10px;align-items:center}
+.joinrow{display:flex;gap:10px}
+.joinrow .input{flex:1}
+.joinrow .btn{flex:none;min-width:96px}
+.avatar{flex:none;width:var(--s,36px);height:var(--s,36px);border-radius:50%;display:grid;place-items:center;color:#fff;font-family:var(--font-display);font-weight:800;font-size:calc(var(--s,36px)*.46);background:var(--pc,var(--accent))}
+.avatar-btn{flex:none;border:0;background:none;padding:0;cursor:pointer;border-radius:50%}
+.steps{margin:0;padding-left:18px;display:grid;gap:6px;color:var(--muted);font-size:15px}
+
+/* lobby */
+.lobby{display:grid;gap:16px;grid-template-columns:minmax(0,1fr)}
+@media (min-width:860px){.lobby{grid-template-columns:minmax(0,1fr) minmax(0,1fr)}}
+.codetiles{display:flex;gap:8px;margin-top:8px}
+.tile{width:clamp(48px,16vw,72px);aspect-ratio:3/4;display:grid;place-items:center;font-family:var(--font-mono);font-weight:500;font-size:clamp(28px,9vw,44px);background:var(--bg);border:1px solid var(--line);border-bottom-width:4px;border-radius:12px}
+.plist{display:grid;gap:8px}
+.lbrow{display:grid;grid-template-columns:2.2em minmax(0,1fr) auto;align-items:center;gap:10px;padding:8px 10px;border-radius:10px;border:1px solid var(--line);background:var(--surface)}
+.lbrow.me{border-color:var(--accent);box-shadow:0 0 0 2px var(--accent) inset}
+.lbrow .rk{font-family:var(--font-mono);font-weight:800;text-align:center}
+.lbrow .sub{font-size:.8rem;color:var(--muted)}
+.lbrow .sc{font-family:var(--font-mono);font-weight:800;font-size:1.1rem}
+.bigname{font-size:clamp(20px,6vw,26px);font-weight:800;min-width:0;overflow-wrap:anywhere}
+.input:disabled{opacity:.6;cursor:not-allowed}
+.lblist{display:flex;flex-direction:column;gap:6px;margin-top:8px}
+.track{position:relative;border:1px solid var(--line);border-radius:14px;background:var(--surface);padding:8px 14px 8px 8px;display:flex;flex-direction:column;gap:4px;overflow:hidden}
+.track::after{content:"";position:absolute;top:0;bottom:0;right:10px;width:10px;background:repeating-conic-gradient(var(--fg) 0 25%,var(--surface) 0 50%) 0 0/10px 10px;opacity:.55}
+.lane{position:relative;height:34px;border-bottom:1px dashed var(--line);margin-right:18px}
+.lane:last-child{border-bottom:0}
+.lane .runner{position:absolute;top:0;left:0;display:flex;align-items:center;gap:4px;transition:left .5s ease-out;will-change:left}
+.lane .runner .pt{font:700 .72rem var(--font-mono);color:var(--muted);white-space:nowrap}
+.lane.me .runner .pt{color:var(--fg)}
+.lane.me{background:linear-gradient(90deg,transparent,rgba(45,91,255,.08))}
+.lane.ghost .runner{opacity:.6}
+.track-cap{display:flex;justify-content:space-between;font-size:.74rem;color:var(--muted);margin:0 0 4px}
+@media (prefers-reduced-motion:reduce){.lane .runner{transition:none}}
+.prow{display:flex;align-items:center;gap:10px;min-width:0}
+.settings{display:grid;gap:14px}
+.settings .field{display:grid;gap:6px}
+.rules{margin:6px 0 4px;padding-left:18px;display:grid;gap:6px;font-size:14px;color:var(--muted)}
+.waiting{color:var(--muted);font-size:15px}
+
+/* leaderboard */
+.lb{display:grid;gap:8px;margin:0;padding:0;list-style:none}
+.lb-row{display:grid;grid-template-columns:26px 36px minmax(0,1fr) auto;gap:10px;align-items:center;padding:10px 12px;border-radius:12px;background:var(--surface);border:1px solid var(--line)}
+.lb-row.me{border-color:var(--accent);box-shadow:inset 0 0 0 1px var(--accent)}
+.rank{font-family:var(--font-mono);font-weight:500;color:var(--muted);text-align:center}
+.lb-row:first-child .rank{color:var(--accent);font-weight:500}
+.who{min-width:0}
+.nmrow{display:flex;align-items:center;gap:6px;min-width:0}
+.nmtxt{font-weight:700;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;min-width:0}
+.tag{flex:none;font-size:11px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;padding:2px 7px;border-radius:999px;background:var(--surface2);color:var(--muted)}
+.tag.boost{background:var(--boost-bg);color:var(--boost-fg)}
+.meta{font-size:13px;color:var(--muted)}
+.pts{font-family:var(--font-mono);font-size:21px;font-weight:500;font-variant-numeric:tabular-nums}
+
+/* game */
+.game-grid{display:grid;gap:16px;grid-template-columns:minmax(0,1fr);align-items:start}
+@media (min-width:860px){.game-grid{grid-template-columns:minmax(0,1fr) minmax(0,340px)}}
+.playcol{display:grid;gap:12px;min-width:0}
+.hud{display:grid;gap:8px}
+.hud-top{display:flex;justify-content:space-between;align-items:flex-end;gap:12px}
+.timer{font-family:var(--font-mono);font-size:46px;line-height:1;font-weight:500;font-variant-numeric:tabular-nums}
+.timer small{font-size:14px;color:var(--muted);margin-left:4px}
+.scorebox{text-align:right}
+.scorebox .pts{font-size:34px;line-height:1}
+.bar{height:8px;border-radius:99px;background:var(--surface2);overflow:hidden}
+.bar>i{display:block;height:100%;width:100%;background:var(--accent);transform-origin:left center}
+.bar.low>i{background:var(--bad)}
+.statrow{display:flex;gap:16px;flex-wrap:wrap;font-size:14px;color:var(--muted)}
+.statrow b{color:var(--fg);font-family:var(--font-mono);font-weight:500}
+.rankline{font-size:15px;font-weight:600;min-height:22px}
+.boostbar{background:var(--boost-bg);color:var(--boost-fg);border:1px solid var(--boost);border-radius:12px;padding:10px 12px;font-size:14px;font-weight:600}
+.qcard{background:var(--surface);border:1px solid var(--line);border-radius:20px;padding:20px 14px 16px;text-align:center;display:grid;gap:10px;justify-items:center;transition:background .12s,border-color .12s}
+.qcard.good{background:var(--good-bg);border-color:var(--good)}
+.qcard.bad{background:var(--bad-bg);border-color:var(--bad)}
+.q{font-family:var(--font-display);font-weight:800;font-size:clamp(56px,18vw,96px);line-height:1;letter-spacing:-.02em;font-variant-numeric:tabular-nums;white-space:nowrap}
+.q .x{color:var(--accent);padding:0 .14em}
+.q.txt{font-size:clamp(30px,9vw,54px);white-space:normal;line-height:1.15;text-align:center;letter-spacing:0;font-weight:700}
+.ans .pre{opacity:.55;margin-right:.35em}
+.ans{min-height:62px;min-width:170px;font-family:var(--font-mono);font-size:44px;display:flex;justify-content:center;align-items:center;gap:3px;border-bottom:3px solid var(--line)}
+.caret{width:3px;height:1em;background:var(--accent);animation:blink 1s steps(1) infinite}
+@keyframes blink{50%{opacity:0}}
+.fb{min-height:26px;font-weight:700;font-size:17px}
+.fb.good{color:var(--good)} .fb.bad{color:var(--bad)}
+.countnum{font-family:var(--font-display);font-weight:800;font-size:clamp(96px,30vw,150px);line-height:1;color:var(--accent);padding:12px 0}
+.keys{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;max-width:380px;margin:0 auto;width:100%}
+.key{font-family:var(--font-display);font-weight:800;font-size:26px;min-height:60px;border-radius:14px;border:1px solid var(--line);background:var(--surface);color:var(--fg);box-shadow:0 3px 0 var(--line);cursor:pointer;touch-action:manipulation;user-select:none}
+.key:active{transform:translateY(2px);box-shadow:0 1px 0 var(--line)}
+.key.fn{font-size:16px;color:var(--muted)}
+.key.go{background:var(--accent);color:var(--accent-fg);border-color:transparent;box-shadow:0 3px 0 rgba(0,0,0,.28);font-size:18px}
+.keys.off{opacity:.45;pointer-events:none}
+.side{display:grid;gap:10px;min-width:0}
+
+/* wait + results */
+.stack{display:grid;gap:16px;max-width:720px;margin:0 auto}
+.winner{display:flex;gap:14px;align-items:center;padding:16px;border-radius:16px;background:var(--accent);color:var(--accent-fg)}
+.winner .avatar{box-shadow:0 0 0 3px var(--accent-fg)}
+.winner h2{font-size:clamp(22px,6vw,30px)}
+.winner p{font-size:14px;opacity:.9}
+.awards{display:flex;flex-wrap:wrap;gap:10px}
+.award{padding:10px 12px;border:1px solid var(--line);border-radius:12px;background:var(--surface);font-size:14px;display:grid;gap:2px}
+.award b{font-family:var(--font-display);font-size:16px}
+.mapwrap{overflow-x:auto}
+.map{display:grid;grid-template-columns:18px repeat(12,minmax(0,1fr));gap:2px;font-family:var(--font-mono);font-size:10px;color:var(--muted)}
+.map .lab{display:grid;place-items:center}
+.cell{aspect-ratio:1;border-radius:4px;background:var(--surface2)}
+.cell.ok{background:var(--good)} .cell.miss{background:var(--bad)} .cell.mid{background:var(--boost)}
+.legend{display:flex;gap:14px;flex-wrap:wrap;font-size:13px;color:var(--muted)}
+.legend span::before{content:"";display:inline-block;width:12px;height:12px;border-radius:3px;margin-right:6px;vertical-align:-1px;background:var(--surface2)}
+.legend .l-ok::before{background:var(--good)} .legend .l-miss::before{background:var(--bad)} .legend .l-mid::before{background:var(--boost)}
+.statgrid{display:grid;grid-template-columns:repeat(auto-fit,minmax(110px,1fr));gap:10px}
+.stat{padding:10px 12px;border:1px solid var(--line);border-radius:12px;background:var(--bg);display:grid;gap:2px}
+.stat b{font-family:var(--font-display);font-size:26px;line-height:1.1;font-variant-numeric:tabular-nums}
+.stat span{font-size:12px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:var(--muted)}
+.hrow{display:flex;justify-content:space-between;gap:10px;flex-wrap:wrap;font-size:14px;padding:8px 0;border-top:1px solid var(--line)}
+.hrow span:last-child{font-family:var(--font-mono)}
+.btn.danger{color:var(--bad);border-color:var(--bad)}
+.pfline{display:flex;gap:10px;align-items:center;justify-content:space-between;flex-wrap:wrap}
+.pfblock{display:grid;gap:12px;min-width:0}
+.codebig{font-family:var(--font-mono);font-weight:500;font-size:clamp(22px,7vw,30px);letter-spacing:.08em;padding:6px 12px;border:1px dashed var(--accent);border-radius:12px;background:var(--bg)}
+.mchips{display:flex;flex-wrap:wrap;gap:8px}
+.mchip{font-family:var(--font-mono);padding:6px 10px;border-radius:10px;background:var(--bad-bg);border:1px solid var(--bad)}
+.mchip i{font-style:normal;color:var(--muted);font-size:12px;margin-left:6px}
+.actions{display:flex;gap:10px;flex-wrap:wrap}
+.toast{position:fixed;left:50%;transform:translateX(-50%);bottom:calc(16px + env(safe-area-inset-bottom,0px));background:var(--fg);color:var(--bg);padding:10px 16px;border-radius:999px;font-weight:600;z-index:20;max-width:90vw}
+@media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
+
+html{color-scheme:dark}
+body{margin:0}
+[hidden]{display:none!important}
+img{max-width:100%}
+.savebar{position:sticky;bottom:calc(8px + env(safe-area-inset-bottom,0px));z-index:5;display:grid;gap:8px;padding:10px 12px;background:var(--surface2);border:3px solid var(--boost);border-radius:6px;box-shadow:0 0 14px rgba(255,230,0,.25)}
+.newbox{margin-top:10px;border-top:1px solid var(--line,rgba(128,128,128,.3));padding-top:10px;display:flex;flex-direction:column;gap:10px}.newbox summary{cursor:pointer;font-weight:600;padding:6px 0}
+.subd{margin-top:8px}.subd[open]>summary{margin-bottom:8px}textarea.input{min-height:110px;padding:10px 14px;resize:vertical;font:inherit;line-height:1.4}
+
+/* ===== retro arcade layer ===== */
+body{font-size:17px;background-size:32px 32px}
+body::after{content:"";position:fixed;inset:0;pointer-events:none;z-index:50;background:repeating-linear-gradient(0deg,rgba(0,0,0,.09) 0 1px,transparent 1px 3px);mix-blend-mode:multiply}
+h1,h2,h3{letter-spacing:0;line-height:1.4}
+h1{font-size:clamp(18px,5.4vw,28px);font-weight:400;color:var(--accent);text-shadow:0 0 12px rgba(0,229,255,.55),3px 3px 0 var(--accent2)}
+h2{font-size:14px;font-weight:400;color:var(--fg)}
+.hero p{font-size:18px}
+.label{font-family:var(--font-display);font-size:10px;font-weight:400;letter-spacing:.08em;color:var(--accent2)}
+.note{font-size:16px}
+.brand{font-weight:400;font-size:13px;letter-spacing:0}
+.brand a{color:inherit;text-decoration:none}
+.brand a:hover,.brand a:focus-visible{color:var(--accent);text-decoration:underline}
+.brand-mark{border-radius:4px;box-shadow:0 0 0 3px var(--accent2),0 0 14px rgba(255,61,209,.6);font-family:var(--font-display);font-size:16px}
+.chip{border-width:2px;border-radius:4px;font-size:18px}
+.panel{border:3px solid var(--line);border-radius:6px;box-shadow:0 0 0 1px #000,6px 6px 0 rgba(0,0,0,.45)}
+.btn{border:3px solid var(--line);border-radius:4px;text-transform:uppercase;letter-spacing:.05em;font-size:15px;box-shadow:0 4px 0 #000;transition:none}
+.btn:hover:not([disabled]){border-color:var(--accent);color:var(--accent)}
+.btn:active:not([disabled]){transform:translateY(3px);box-shadow:0 1px 0 #000}
+.btn.primary{background:var(--accent);color:var(--accent-fg);border-color:var(--accent);box-shadow:0 4px 0 #007585,0 0 16px rgba(0,229,255,.35)}
+.btn.primary:hover:not([disabled]){color:var(--accent-fg);background:#7DF4FF}
+.btn.primary:active:not([disabled]){box-shadow:0 1px 0 #007585}
+.btn.big{font-family:var(--font-display);font-weight:400;font-size:13px;min-height:60px;line-height:1.5}
+.btn.small{font-size:13px}
+.btn.danger{border-color:var(--bad);color:var(--bad)}
+.input{border:3px solid var(--line);border-radius:4px;background:#080519;font-family:var(--font-mono);font-size:24px}
+.input:focus-visible,.btn:focus-visible,.key:focus-visible,.segbtn:focus-visible,.chip:focus-visible,.avatar-btn:focus-visible{outline:3px solid var(--accent2);outline-offset:2px}
+select.input{font-family:var(--font-body);font-size:16px}
+textarea.input{font-family:var(--font-body);font-size:17px}
+.input.code{letter-spacing:.3em}
+.segbtn{border:3px solid var(--line);border-radius:4px;font-family:var(--font-mono);font-size:20px}
+.avatar{border-radius:4px;overflow:hidden;box-shadow:inset 0 -3px 0 rgba(0,0,0,.25),0 0 0 2px #000}
+.avatar svg{display:block;width:100%;height:100%}
+.avedit{display:grid;gap:12px}
+.avprev{display:flex;align-items:center;gap:14px}
+.avgrid{display:flex;flex-wrap:wrap;gap:6px}
+.avopt{padding:0;border:3px solid var(--line);border-radius:6px;background:var(--bg);cursor:pointer;line-height:0;touch-action:manipulation}
+.avopt[aria-pressed="true"]{border-color:var(--accent2);box-shadow:0 0 10px rgba(255,61,209,.55)}
+.avopt .avatar{box-shadow:none;border-radius:2px}
+.avcol{width:32px;height:32px;border-radius:4px;border:3px solid var(--line);cursor:pointer;padding:0}
+.avcol[aria-pressed="true"]{border-color:var(--fg);box-shadow:0 0 10px rgba(255,255,255,.5)}
+.bigname{font-family:var(--font-display);font-weight:400;font-size:clamp(14px,4.4vw,18px);line-height:1.5}
+.tile{border:3px solid var(--line);border-bottom-width:6px;border-radius:4px;font-family:var(--font-display);font-size:clamp(20px,7vw,32px);color:var(--accent);text-shadow:0 0 10px rgba(0,229,255,.6)}
+.lbrow,.lb-row,.award,.stat{border:2px solid var(--line);border-radius:4px}
+.lbrow.me,.lb-row.me{border-color:var(--accent2);box-shadow:inset 0 0 0 1px var(--accent2),0 0 12px rgba(255,61,209,.3)}
+.lbrow .sc,.pts{font-family:var(--font-mono);font-weight:400;font-size:26px;color:var(--boost);text-shadow:0 0 8px rgba(255,230,0,.4)}
+.lbrow .rk,.rank{font-family:var(--font-display);font-size:11px;font-weight:400}
+.lb-row:first-child .rank,.lbrow:first-child .rk{color:var(--boost)}
+.nmtxt{font-weight:700}
+.tag{border-radius:3px;font-family:var(--font-display);font-size:8px;letter-spacing:.04em;padding:4px 6px;background:var(--surface2);color:var(--accent)}
+.tag.boost{background:var(--boost);color:#1A1500}
+.meta,.lbrow .sub{font-size:15px}
+.stat b{font-family:var(--font-display);font-weight:400;font-size:16px;color:var(--accent)}
+.stat span{font-family:var(--font-display);font-size:8px;line-height:1.6}
+.track{border:3px solid var(--line);border-radius:4px;background:#080519}
+.lane{border-bottom:2px dashed var(--line)}
+.lane.me{background:linear-gradient(90deg,transparent,rgba(255,61,209,.14))}
+.lane .runner .pt{font:400 18px var(--font-mono)}
+.track-cap{font-family:var(--font-display);font-size:8px;line-height:1.6;color:var(--accent2)}
+.timer{font-size:60px;font-weight:400;color:var(--accent);text-shadow:0 0 12px rgba(0,229,255,.6)}
+.timer small{font-size:22px}
+.scorebox .pts{font-size:46px}
+.bar{height:14px;border-radius:2px;border:2px solid var(--line);background:#080519}
+.bar>i{background:repeating-linear-gradient(90deg,var(--accent) 0 8px,transparent 8px 10px)}
+.bar.low>i{background:repeating-linear-gradient(90deg,var(--bad) 0 8px,transparent 8px 10px)}
+.statrow{font-size:16px}.statrow b{font-size:22px;font-weight:400}
+.rankline{font-family:var(--font-body);font-size:16px;font-weight:700;color:var(--accent2)}
+.boostbar{border:3px solid var(--boost);border-radius:4px;font-size:15px}
+.qcard{border:3px solid var(--line);border-radius:8px;background:#0E0829;box-shadow:inset 0 0 0 2px #000,0 0 22px rgba(0,229,255,.12)}
+.qcard.good{background:var(--good-bg);border-color:var(--good);box-shadow:0 0 26px rgba(57,255,136,.45)}
+.qcard.bad{background:var(--bad-bg);border-color:var(--bad);box-shadow:0 0 26px rgba(255,77,121,.45)}
+.q{font-family:var(--font-display);font-weight:400;font-size:clamp(26px,9.4vw,46px);line-height:1.3;letter-spacing:0;color:var(--fg);text-shadow:3px 3px 0 var(--accent2)}
+.q .x{color:var(--accent);padding:0 .3em}
+.q.txt{font-family:var(--font-mono);font-weight:400;font-size:clamp(38px,12vw,60px);line-height:1.1;text-shadow:2px 2px 0 var(--accent2)}
+.ans{font-family:var(--font-mono);font-size:56px;min-height:68px;border-bottom:4px solid var(--accent);color:var(--accent);text-shadow:0 0 10px rgba(0,229,255,.5)}
+.ans .pre{opacity:.6}
+.caret{width:.4em;height:.12em;margin-top:.7em;background:var(--accent2)}
+.fb{font-family:var(--font-mono);font-size:26px;font-weight:400}
+.countnum{font-family:var(--font-display);font-weight:400;font-size:clamp(72px,24vw,120px);color:var(--accent2);text-shadow:0 0 20px rgba(255,61,209,.7),5px 5px 0 #000}
+.key{font-family:var(--font-display);font-weight:400;font-size:20px;border:3px solid var(--line);border-radius:6px;box-shadow:0 5px 0 #000;background:#1B1342}
+.key:active{transform:translateY(4px);box-shadow:0 1px 0 #000}
+.key.fn{font-size:12px;color:var(--muted)}
+.key.go{background:var(--accent);color:var(--accent-fg);border-color:var(--accent);box-shadow:0 5px 0 #007585,0 0 16px rgba(0,229,255,.4);font-size:14px}
+.opts{display:grid;grid-template-columns:1fr 1fr;gap:12px;max-width:380px;margin:0 auto;width:100%}
+.opts.off{opacity:.45;pointer-events:none}
+.opt{font-family:var(--font-display);font-size:22px;min-height:76px;border:3px solid var(--line);border-radius:6px;background:#1B1342;color:var(--fg);box-shadow:0 5px 0 #000;cursor:pointer;touch-action:manipulation;user-select:none}
+.opt:active{transform:translateY(4px);box-shadow:0 1px 0 #000}
+.opt:focus-visible{outline:3px solid var(--accent)}
+.winner{border-radius:6px;border:3px solid var(--fg);background:var(--accent2);color:#14041A;box-shadow:0 0 24px rgba(255,61,209,.5),6px 6px 0 rgba(0,0,0,.5)}
+.winner h2{font-size:clamp(13px,4vw,18px);color:#14041A}
+.winner .avatar{box-shadow:0 0 0 3px #14041A}
+.award b{font-family:var(--font-display);font-weight:400;font-size:11px;line-height:1.5}
+.cell{border-radius:2px}
+.mchip{border-radius:3px;font-size:19px}
+.hrow span:last-child{font-size:18px}
+.toast{border-radius:4px;border:3px solid var(--accent2);background:var(--surface);color:var(--fg);font-family:var(--font-mono);font-size:20px;font-weight:400}
+.codebig{border-radius:4px}
+.newbox{border-top:2px dashed var(--line)}
+.newbox summary,.tpanel summary{font-family:var(--font-display);font-size:10px;font-weight:400;color:var(--accent2)}
+@media (prefers-reduced-motion:reduce){.caret{animation:none}}
+
+/* ===== english layer: long text questions and answers ===== */
+.q.txt.sci{font-family:var(--font-mono);font-size:clamp(22px,5.6vw,32px);line-height:1.25;text-shadow:none;text-align:center;padding:4px 6px}
+.opts{grid-template-columns:1fr;max-width:640px}
+.opt{font-family:var(--font-mono);font-size:clamp(18px,4.4vw,22px);line-height:1.2;min-height:58px;padding:10px 14px;text-align:left;white-space:normal;display:flex;gap:12px;align-items:center}
+.opt .on{font-family:var(--font-display);font-size:13px;opacity:.7;min-width:1.2em}
+.opt.pickgood{border-color:var(--good);background:var(--good-bg)}
+.opt.pickbad{border-color:var(--bad);background:var(--bad-bg)}
+.mchip{white-space:normal;text-align:left}
+@media (min-width:720px){.opts{grid-template-columns:1fr 1fr}}
+</style>
+</head>
+<body>
+<div class="shell">
+  <header class="top" id="top"></header>
+  <main id="main"></main>
+</div>
+<div id="toast" class="toast" role="status" hidden></div>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.117.0/dist/umd/supabase.js"></script>
+<script>
+(function(){
+'use strict';
+
+/* ---------- helpers ---------- */
+var COLORS=8;
+var NAMES_A=['Turbo','Sneaky','Fuzzy','Cosmic','Soggy','Mighty','Spicy','Wobbly','Rapid','Sleepy','Dizzy','Crispy','Ninja','Grumpy','Poetic','Dramatic'];
+var NAMES_B=['Quill','Potato','Penguin','Pancake','Walrus','Comma','Llama','Noodle','Raccoon','Waffle','Banana','Hamster','Pretzel','Octopus','Cactus','Dictionary'];
+var NAMES_C=['Sir Semi-Colon','Count Comma','Prof Pun-ctuation','Lady Alliteration','Dr Thesaurus','Hyperbole Hannah','Mad Metaphor Max','Lord of the Lines','Simile Sam','Madame Syntax'];
+var sleep=function(ms){return new Promise(function(r){setTimeout(r,ms)})};
+var rint=function(n){return Math.floor(Math.random()*n)};
+var pick=function(a){return a[rint(a.length)]};
+function clampN(v,lo,hi){v=Number(v);return Number.isFinite(v)?Math.min(hi,Math.max(lo,Math.round(v))):lo}
+function cleanName(s){return String(s==null?'':s).replace(/[\u0000-\u001f\u007f-\u009f​-‏‪-‮⁠-⁯﻿]/g,'').replace(/\s+/g,' ').trim().slice(0,20)}
+function randomName(){return (Math.random()<0.4?pick(NAMES_C):pick(NAMES_A)+' '+pick(NAMES_B)).slice(0,20)}
+function randomCode(){var L='ABCDEFGHJKMNPQRSTUVWXYZ',c='';for(var i=0;i<4;i++)c+=L[rint(L.length)];return c}
+function lsGet(k){try{return localStorage.getItem(k)}catch(e){return null}}
+function lsSet(k,v){try{localStorage.setItem(k,v)}catch(e){}}
+function ordinal(n){var s=['th','st','nd','rd'],v=n%100;return n+(s[(v-20)%10]||s[v]||s[0])}
+function mulberry32(a){return function(){a|=0;a=a+0x6D2B79F5|0;var t=Math.imul(a^a>>>15,1|a);t=t+Math.imul(t^t>>>7,61|t)^t;return((t^t>>>14)>>>0)/4294967296}}
+function hash(){var x=2166136261;for(var i=0;i<arguments.length;i++){x^=(arguments[i]>>>0);x=Math.imul(x,16777619)>>>0}return x>>>0}
+function h(tag,attrs){
+  var e=document.createElement(tag);
+  if(attrs)for(var k in attrs){
+    var v=attrs[k];if(v==null||v===false)continue;
+    if(k==='class')e.className=v;
+    else if(k.slice(0,2)==='on')e.addEventListener(k.slice(2),v);
+    else e.setAttribute(k,v===true?'':v);
+  }
+  for(var i=2;i<arguments.length;i++){
+    var kids=[].concat(arguments[i]);
+    for(var j=0;j<kids.length;j++){var c=kids[j];if(c==null||c===false)continue;e.append(c.nodeType?c:document.createTextNode(String(c)))}
+  }
+  return e;
+}
+/* ---------- avatars: pixel faces built from parts. A face is six digits: head colour, head shape, eyes, mouth, hat, extra ---------- */
+var AV_HEAD=['#FFD9B3','#E8B48A','#B98058','#7A4B2E','#8CF7A0','#8FE9FF','#FF9EDD','#D0D3E6'];
+var AV_COL={I:'#120A33',W:'#FFFFFF',P:'#FF3DD1',G:'#FFE600',C:'#00E5FF',V:'#A678FF'};
+var AV_PARTS={
+  shape:[
+    [[2,3,8,7,'H'],[2,9,8,1,'S']],
+    [[3,2,6,9,'H'],[2,3,8,7,'H'],[3,10,6,1,'S'],[2,9,1,1,'S'],[9,9,1,1,'S']],
+    [[1,4,10,6,'H'],[2,3,8,8,'H'],[2,10,8,1,'S'],[1,9,1,1,'S'],[10,9,1,1,'S']],
+    [[2,3,8,7,'H'],[2,9,8,1,'S'],[1,5,1,3,'S'],[10,5,1,3,'S'],[5,0,2,2,'G'],[5,2,2,1,'I']]
+  ],
+  eyes:[
+    [[4,5,1,2],[7,5,1,2]],
+    [[3,5,2,2,'W'],[7,5,2,2,'W'],[4,6,1,1],[8,6,1,1]],
+    [[3,6,1,1],[4,5,1,1],[5,6,1,1],[6,6,1,1],[7,5,1,1],[8,6,1,1]],
+    [[3,5,6,2],[4,5,1,1,'W'],[7,6,1,1,'W']],
+    [[4,4,4,3,'W'],[5,5,2,2]],
+    [[3,6,2,1],[7,6,2,1]]
+  ],
+  mouth:[
+    [[4,8,1,1],[5,9,2,1],[7,8,1,1]],
+    [[4,8,4,2],[5,8,2,1,'W']],
+    [[4,9,4,1]],
+    [[5,8,2,2]],
+    [[4,8,4,1],[5,9,2,1,'P']]
+  ],
+  hat:[
+    [],
+    [[2,1,8,2,'P'],[1,3,4,1,'P']],
+    [[3,0,1,1,'G'],[5,0,2,1,'G'],[8,0,1,1,'G'],[3,1,6,2,'G']],
+    [[3,1,6,2,'C'],[2,2,8,1,'C'],[5,0,2,1,'W']],
+    [[5,0,2,1,'V'],[4,1,4,1,'V'],[3,2,6,1,'V'],[2,3,8,1,'V'],[6,1,1,1,'G']],
+    [[2,2,8,1,'I'],[1,5,2,3,'P'],[9,5,2,3,'P'],[2,3,1,2,'I'],[9,3,1,2,'I']],
+    [[5,0,2,1,'G'],[4,1,4,1,'P'],[3,2,6,1,'C']]
+  ],
+  extra:[
+    [],
+    [[2,7,1,1,'S'],[3,8,1,1,'S'],[9,7,1,1,'S'],[8,8,1,1,'S']],
+    [[2,7,2,1,'P'],[8,7,2,1,'P']],
+    [[3,7,6,1]],
+    [[8,3,1,3,'G'],[7,4,3,1,'G']]
+  ]
+};
+var AV_ORDER=['head','shape','eyes','mouth','hat','extra'];
+var AV_SIZES=[8,4,6,5,7,5];
+function validAv(a){return typeof a==='string'&&/^[0-7][0-3][0-5][0-4][0-6][0-4]$/.test(a)}
+function defaultAv(n){
+  var x=2166136261,t=String(n||'?');
+  for(var i=0;i<t.length;i++){x^=t.charCodeAt(i);x=Math.imul(x,16777619)>>>0}
+  return [x%8,(x>>>3)%4,(x>>>5)%6,(x>>>8)%5,(x>>>11)%7,0].join('');
+}
+function randomAv(){return AV_SIZES.map(function(n){return Math.floor(Math.random()*n)}).join('')}
+function avShade(hex){var n=parseInt(hex.slice(1),16),r=(n>>16)&255,g=(n>>8)&255,b=n&255;return '#'+[r,g,b].map(function(v){return ('0'+Math.round(v*0.74).toString(16)).slice(-2)}).join('')}
+function avSvg(av){
+  var d=av.split('').map(Number),head=AV_HEAD[d[0]],col={H:head,S:avShade(head)};
+  var NS='http://www.w3.org/2000/svg',svg=document.createElementNS(NS,'svg');
+  svg.setAttribute('viewBox','0 0 12 12');svg.setAttribute('shape-rendering','crispEdges');svg.setAttribute('aria-hidden','true');
+  var order=[['shape',d[1]],['extra',d[5]],['eyes',d[2]],['mouth',d[3]],['hat',d[4]]];
+  order.forEach(function(o){AV_PARTS[o[0]][o[1]].forEach(function(r){
+    var e=document.createElementNS(NS,'rect');e.setAttribute('x',r[0]);e.setAttribute('y',r[1]);e.setAttribute('width',r[2]);e.setAttribute('height',r[3]);
+    e.setAttribute('fill',col[r[4]]||AV_COL[r[4]]||AV_COL.I);svg.appendChild(e)})});
+  return svg;
+}
+var AVC={};
+function avatar(n,c,s,av){
+  var a=validAv(av)?av:(AVC[nameKey(n)]||defaultAv(n));
+  return h('span',{class:'avatar',style:'--s:'+s+'px;--pc:var(--p'+c+')','aria-hidden':'true'},avSvg(a));
+}
+function plainQ(t){return t.replace(/^\[\[[a-z]+:[^\]]*\]\]/,'(diagram) ')}
+function graphSVG(t){
+  var m=/^\[\[([a-z]+):([^\]]*)\]\]/.exec(t);if(!m)return null;
+  var kind=m[1],arg=m[2],W=330,H=210,o='',INK='#222',ACC='#d6336c',GRID='#d5dbe3',label='Diagram';
+  function n(v){return (+v).toFixed(1)}
+  function tx(x,y,s,fs,a,c,b){return '<text x="'+n(x)+'" y="'+n(y)+'" font-size="'+(fs||11)+'" text-anchor="'+(a||'middle')+'" fill="'+(c||INK)+'"'+(b?' font-weight="700"':'')+'>'+s+'</text>'}
+  function ln(x1,y1,x2,y2,c,w,dash){return '<line x1="'+n(x1)+'" y1="'+n(y1)+'" x2="'+n(x2)+'" y2="'+n(y2)+'" stroke="'+(c||INK)+'" stroke-width="'+(w||1)+'"'+(dash?' stroke-dasharray="'+dash+'"':'')+'/>'}
+  function arrow(x1,y1,x2,y2,c,w){var a=Math.atan2(y2-y1,x2-x1),hl=10,s=ln(x1,y1,x2-Math.cos(a)*hl*0.6,y2-Math.sin(a)*hl*0.6,c,w);
+    return s+'<polygon fill="'+c+'" points="'+n(x2)+','+n(y2)+' '+n(x2-hl*Math.cos(a-0.4))+','+n(y2-hl*Math.sin(a-0.4))+' '+n(x2-hl*Math.cos(a+0.4))+','+n(y2-hl*Math.sin(a+0.4))+'"/>'}
+  var XY={vt:['Time (s)','Speed (m/s)','Speed-time graph'],dt:['Time (s)','Distance (m)','Distance-time graph'],fe:['Extension (cm)','Force (N)','Force-extension graph']};
+  if(XY[kind]){
+    label=XY[kind][2];
+    var pts=arg.split(';').map(function(s){var a=s.split(',');return [+a[0],+a[1]]});
+    var L=52,R=14,T=12,B=44,pw=W-L-R,ph=H-T-B,mx=0,my=0;
+    pts.forEach(function(p){mx=Math.max(mx,p[0]);my=Math.max(my,p[1])});
+    var nice=function(v){var st=[1,2,5,10,20,50,100,200];for(var i=0;i<st.length;i++)if(v/st[i]<=6)return st[i];return 500};
+    var sx=nice(mx),sy=nice(my),X=Math.ceil(mx/sx)*sx,Y=Math.ceil(my/sy)*sy;
+    var px=function(v){return L+v/X*pw},py=function(v){return T+ph-v/Y*ph};
+    o+='<rect width="'+W+'" height="'+H+'" rx="8" fill="#fff"/>';
+    for(var x=0;x<=X;x+=sx)o+=ln(px(x),T,px(x),T+ph,GRID,1)+tx(px(x),T+ph+14,x);
+    for(var y=0;y<=Y;y+=sy)o+=ln(L,py(y),L+pw,py(y),GRID,1)+tx(L-5,py(y)+4,y,11,'end');
+    o+=ln(L,T,L,T+ph,INK,1.6)+ln(L,T+ph,L+pw,T+ph,INK,1.6);
+    o+='<polyline fill="none" stroke="'+ACC+'" stroke-width="3" stroke-linejoin="round" points="'+pts.map(function(p){return n(px(p[0]))+','+n(py(p[1]))}).join(' ')+'"/>';
+    o+=tx(L+pw/2,H-6,XY[kind][0],12);
+    o+='<text transform="translate(12 '+n(T+ph/2)+') rotate(-90)" font-size="12" text-anchor="middle" fill="'+INK+'">'+XY[kind][1]+'</text>';
+  }else if(kind==='rose'){
+    label='Compass rose with an arrow';
+    var a0=+arg.split(',')[0],all=/all/.test(arg),cx=165,cy=105,r=78;
+    var pol=function(a,d){var q=a*Math.PI/180;return [cx+d*Math.sin(q),cy-d*Math.cos(q)]};
+    o+='<rect width="'+W+'" height="'+H+'" rx="8" fill="#fff"/><circle cx="'+cx+'" cy="'+cy+'" r="'+r+'" fill="none" stroke="'+GRID+'" stroke-width="2"/>';
+    for(var k=0;k<8;k++){var p1=pol(k*45,r-(k%2?5:10)),p2=pol(k*45,r);o+=ln(p1[0],p1[1],p2[0],p2[1],INK,k%2?1:2)}
+    var nm=['N','NE','E','SE','S','SW','W','NW'];
+    for(var k=0;k<8;k++){if(k%2&&!all)continue;var pp=pol(k*45,r+(k%2?15:13));o+=tx(pp[0],pp[1]+4,nm[k],k%2?10:13,'middle',INK,!(k%2))}
+    var e=pol(a0,r-14);o+=arrow(cx,cy,e[0],e[1],ACC,4)+'<circle cx="'+cx+'" cy="'+cy+'" r="4" fill="'+INK+'"/>';
+  }else if(kind==='bear'){
+    label='Bearing diagram';
+    var pr=arg.split(','),th=+pr[0],show=pr[1]==='show',Ax=150,Ay=140;
+    var pol2=function(a,d){var q=a*Math.PI/180;return [Ax+d*Math.sin(q),Ay-d*Math.cos(q)]};
+    o+='<rect width="'+W+'" height="'+H+'" rx="8" fill="#fff"/>';
+    var nT=pol2(0,115);o+=arrow(Ax,Ay,nT[0],nT[1],INK,2)+tx(nT[0],nT[1]-6,'N',13,'middle',INK,true);
+    var B2=pol2(th,95);o+=ln(Ax,Ay,B2[0],B2[1],ACC,3);
+    var s1=pol2(0,34),s2=pol2(th,34);
+    o+='<path d="M '+n(s1[0])+' '+n(s1[1])+' A 34 34 0 '+(th>180?1:0)+' 1 '+n(s2[0])+' '+n(s2[1])+'" fill="none" stroke="'+INK+'" stroke-width="1.5"/>';
+    if(show){var lm=pol2(th/2,52);o+=tx(lm[0],lm[1]+4,th+'°',12,'middle',INK,true)}
+    var la=pol2(th,108),lb=pol2(th,0);
+    o+='<circle cx="'+Ax+'" cy="'+Ay+'" r="4" fill="'+INK+'"/><circle cx="'+n(B2[0])+'" cy="'+n(B2[1])+'" r="4" fill="'+ACC+'"/>';
+    o+=tx(Ax-13,Ay+16,'A',13,'middle',INK,true);var lbp=pol2(th,106);o+=tx(lbp[0],lbp[1]+4,'B',13,'middle',ACC,true);
+  }else if(kind==='ll'){
+    label='Map of latitude and longitude lines';H=196;
+    var L2=40,T2=12,pw2=276,ph2=138,items=arg?arg.split(';'):[];
+    var LX=function(lo){return L2+(lo+180)/360*pw2},LY=function(la){return T2+(90-la)/180*ph2};
+    o+='<rect width="'+W+'" height="'+H+'" rx="8" fill="#fff"/><rect x="'+L2+'" y="'+T2+'" width="'+pw2+'" height="'+ph2+'" fill="#eef4fb" stroke="'+INK+'" stroke-width="1"/>';
+    for(var lo=-180;lo<=180;lo+=30){o+=ln(LX(lo),T2,LX(lo),T2+ph2,lo===0?INK:GRID,lo===0?2:1);
+      o+=tx(LX(lo),T2+ph2+12,lo===0||Math.abs(lo)===180?(lo===0?'0':'180'):Math.abs(lo)+(lo<0?'W':'E'),9)}
+    for(var la=-90;la<=90;la+=30){o+=ln(L2,LY(la),L2+pw2,LY(la),la===0?INK:GRID,la===0?2:1);
+      o+=tx(L2-4,LY(la)+3,la===0?'0':Math.abs(la)+(la<0?'S':'N'),9,'end')}
+    o+=tx(L2+pw2/2,H-8,'Longitude',11)+'<text transform="translate(9 '+n(T2+ph2/2)+') rotate(-90)" font-size="11" text-anchor="middle" fill="'+INK+'">Latitude</text>';
+    items.forEach(function(it){var f=it.split(',');
+      if(f[0]==='hl'){var v=+f[2];if(f[1]==='lat')o+=ln(L2,LY(v),L2+pw2,LY(v),ACC,3);else o+=ln(LX(v),T2,LX(v),T2+ph2,ACC,3)}
+      else{var cx2=LX(+f[2]),cy2=LY(+f[1]);o+='<circle cx="'+n(cx2)+'" cy="'+n(cy2)+'" r="5" fill="'+ACC+'" stroke="#fff" stroke-width="1.5"/>'+tx(cx2+8,cy2-5,f[0],13,'start',ACC,true)}});
+  }else if(kind==='gmap'){
+    label='Grid map with a key';H=250;
+    var gx=36,gy=26,cs=36,items2=arg.split(';').map(function(s){return s.split(',')}),cols='ABCDEF';
+    var NAME={S:'School',C:'Church',H:'Hospital',T:'Station',K:'Campsite',W:'Lake',P:'Wood'};
+    o+='<rect width="'+W+'" height="'+H+'" rx="8" fill="#fff"/>';
+    var used={};
+    items2.forEach(function(f){used[f[0]]=1;var c=cols.indexOf(f[1]),r2=+f[2]-1,x0=gx+c*cs,y0=gy+r2*cs;
+      if(f[0]==='W')o+='<rect x="'+x0+'" y="'+y0+'" width="'+cs+'" height="'+cs+'" fill="#9ec9ee"/>';
+      if(f[0]==='P')o+='<rect x="'+x0+'" y="'+y0+'" width="'+cs+'" height="'+cs+'" fill="#a8d5a0"/>'});
+    for(var i=0;i<=6;i++){o+=ln(gx+i*cs,gy,gx+i*cs,gy+6*cs,INK,1)+ln(gx,gy+i*cs,gx+6*cs,gy+i*cs,INK,1)}
+    for(var i=0;i<6;i++){o+=tx(gx+i*cs+cs/2,gy-8,cols[i],12,'middle',INK,true)+tx(gx-10,gy+i*cs+cs/2+4,i+1,12,'middle',INK,true)}
+    var sym=function(k,x,y){
+      if(k==='S')return '<rect x="'+n(x-7)+'" y="'+n(y-7)+'" width="14" height="14" fill="#1d4ed8"/>';
+      if(k==='C')return '<path d="M '+n(x)+' '+n(y-9)+' V '+n(y+9)+' M '+n(x-6)+' '+n(y-3)+' H '+n(x+6)+'" stroke="#111" stroke-width="3" fill="none"/>';
+      if(k==='H')return '<rect x="'+n(x-8)+'" y="'+n(y-8)+'" width="16" height="16" fill="#fff" stroke="#c00" stroke-width="1.5"/><path d="M '+n(x)+' '+n(y-5)+' V '+n(y+5)+' M '+n(x-5)+' '+n(y)+' H '+n(x+5)+'" stroke="#c00" stroke-width="3" fill="none"/>';
+      if(k==='T')return '<circle cx="'+n(x)+'" cy="'+n(y)+'" r="8" fill="none" stroke="#111" stroke-width="2.5"/><circle cx="'+n(x)+'" cy="'+n(y)+'" r="3" fill="#111"/>';
+      if(k==='K')return '<polygon points="'+n(x)+','+n(y-9)+' '+n(x-9)+','+n(y+7)+' '+n(x+9)+','+n(y+7)+'" fill="#15803d"/>';
+      return ''};
+    items2.forEach(function(f){if(f[0]==='W'||f[0]==='P')return;var c=cols.indexOf(f[1]),r2=+f[2]-1;o+=sym(f[0],gx+c*cs+cs/2,gy+r2*cs+cs/2)});
+    var ky=gy+4;o+=tx(264,gy-8,'Key',12,'start',INK,true);
+    Object.keys(used).forEach(function(k){
+      if(k==='W')o+='<rect x="262" y="'+(ky+8)+'" width="14" height="14" fill="#9ec9ee" stroke="#555"/>';
+      else if(k==='P')o+='<rect x="262" y="'+(ky+8)+'" width="14" height="14" fill="#a8d5a0" stroke="#555"/>';
+      else o+=sym(k,269,ky+15);
+      o+=tx(282,ky+19,NAME[k],10,'start');ky+=26});
+  }else if(kind==='fb'){
+    label='Force diagram';
+    var v=arg.split(',').map(function(s){return +s||0}),mxv=Math.max.apply(null,v.concat([1])),bx=165,by=105,hw=26,hh=18;
+    var len=function(f){return Math.max(14,f/mxv*78)};
+    o+='<rect width="'+W+'" height="'+H+'" rx="8" fill="#fff"/><rect x="'+(bx-hw)+'" y="'+(by-hh)+'" width="'+(hw*2)+'" height="'+(hh*2)+'" rx="4" fill="#e5e7eb" stroke="'+INK+'" stroke-width="1.5"/>'+tx(bx,by+4,'object',11);
+    if(v[0]>0){var l=len(v[0]);o+=arrow(bx,by-hh,bx,by-hh-l,ACC,4)+tx(bx+8,by-hh-l/2+4,v[0]+' N',12,'start',ACC,true)}
+    if(v[1]>0){var l=len(v[1]);o+=arrow(bx,by+hh,bx,by+hh+l,ACC,4)+tx(bx+8,by+hh+l/2+4,v[1]+' N',12,'start',ACC,true)}
+    if(v[2]>0){var l=len(v[2]);o+=arrow(bx-hw,by,bx-hw-l,by,ACC,4)+tx(bx-hw-l/2,by-8,v[2]+' N',12,'middle',ACC,true)}
+    if(v[3]>0){var l=len(v[3]);o+=arrow(bx+hw,by,bx+hw+l,by,ACC,4)+tx(bx+hw+l/2,by-8,v[3]+' N',12,'middle',ACC,true)}
+  }else return null;
+  var d=document.createElement('div');
+  d.innerHTML='<svg data-g="'+m[0]+'" viewBox="0 0 '+W+' '+H+'" role="img" aria-label="'+label+'" style="width:100%;max-width:420px;height:auto;display:block;margin:0 auto 6px">'+o+'</svg>';
+  return d.firstChild;
+}
+function fill(el){var kids=[];for(var i=1;i<arguments.length;i++)[].concat(arguments[i]).forEach(function(k){if(k!=null&&k!==false)kids.push(k)});el.replaceChildren.apply(el,kids);return el}
+function tag(t,cls){return h('span',{class:'tag'+(cls?' '+cls:'')},t)}
+var toastTO;
+function toast(msg){var t=document.getElementById('toast');t.textContent=msg;t.hidden=false;clearTimeout(toastTO);toastTO=setTimeout(function(){t.hidden=true},1900)}
+
+/* ---------- game server (Supabase): live rooms use Realtime presence, profiles use a few locked-down functions ---------- */
+var SUPABASE_URL='https://gkgoviulsyjqvwlzyiib.supabase.co';
+var SUPABASE_KEY='sb_publishable_F4i7QjnrLSZiGYKhv2hOaw_ELREw-1r'; /* public "anon" key: safe to ship, the database only exposes the sci_* functions */
+function makeRoomApi(sb){
+  // Presence is rate-limited by Supabase (5 updates / 30 s per client), so it is used ONLY for
+  // "who is in the room" (tracked once + rare slow updates). All live game state travels by Broadcast.
+  var myKey='k'+Math.random().toString(36).slice(2,10)+Date.now().toString(36);
+  return {join:function(name){
+    return new Promise(function(resolve,reject){
+      var mine={},conn=false,settled=false,left=false,fireT=null,bcT=null,trT=null,hbT=null,pSubs=[],cSubs=[];
+      var lastBc='',lastTrack='',lastTrackAt=0,tracked=false,peerData={};
+      var TRACK_GAP=12000;
+      var ch=sb.channel('eng-'+name,{config:{presence:{key:myKey},broadcast:{self:false}}});
+      function entry(k,pr){return {peer:k,by:null,isMe:k===myKey,sameTab:k===myKey,kind:'viewer',guest:false,presence:pr,updatedAt:0}}
+      function build(){
+        var st=ch.presenceState(),arr=[],seenMe=false;
+        Object.keys(st).forEach(function(k){
+          var metas=st[k];if(!metas||!metas.length)return;
+          var m=metas[metas.length-1],pr={};
+          if(k===myKey){pr=Object.assign({},mine);seenMe=true}
+          else if(peerData[k])pr=Object.assign({},peerData[k]);
+          else Object.keys(m).forEach(function(f){if(f!=='presence_ref')pr[f]=m[f]});
+          arr.push(entry(k,pr));
+        });
+        if(!seenMe)arr.push(entry(myKey,Object.assign({},mine)));
+        return arr;
+      }
+      function fire(){fireT=null;if(left)return;var snap=build();pSubs.slice().forEach(function(f){try{f({peers:snap})}catch(e){}})}
+      function fireSoon(){if(!fireT)fireT=setTimeout(fire,0)}
+      function cFire(){cSubs.slice().forEach(function(f){try{f(conn)}catch(e){}})}
+      function sendBc(force){
+        bcT=null;
+        if(!conn||left||!Object.keys(mine).length)return;
+        var js=JSON.stringify(mine);
+        if(!force&&js===lastBc)return;
+        lastBc=js;
+        try{ch.send({type:'broadcast',event:'st',payload:{k:myKey,d:mine}})}catch(e){}
+      }
+      function bcSoon(){if(!bcT)bcT=setTimeout(function(){sendBc(false)},200)}
+      function doTrack(){
+        trT=null;
+        if(!conn||left||!Object.keys(mine).length)return;
+        var js=JSON.stringify(mine);
+        if(tracked&&js===lastTrack)return;
+        tracked=true;lastTrack=js;lastTrackAt=Date.now();
+        try{ch.track(Object.assign({},mine))}catch(e){}
+      }
+      function trackSoon(){
+        if(trT||!conn||left)return;
+        if(!tracked){trT=setTimeout(doTrack,100);return}
+        var wait=Math.max(300,TRACK_GAP-(Date.now()-lastTrackAt));
+        trT=setTimeout(doTrack,wait);
+      }
+      var api={name:name,
+        presence:function(patch){
+          Object.keys(patch).forEach(function(k){if(patch[k]===null)delete mine[k];else mine[k]=patch[k]});
+          bcSoon();trackSoon();fireSoon();return Promise.resolve();
+        },
+        peers:build,
+        onPeers:function(fn){pSubs.push(fn);fireSoon();return function(){pSubs=pSubs.filter(function(f){return f!==fn})}},
+        connected:function(){return conn},
+        onConnection:function(fn){cSubs.push(fn);setTimeout(function(){fn(conn)},0);return function(){cSubs=cSubs.filter(function(f){return f!==fn})}},
+        leave:function(){left=true;clearTimeout(trT);clearTimeout(bcT);clearTimeout(fireT);clearInterval(hbT);try{sb.removeChannel(ch)}catch(e){}return Promise.resolve()}};
+      var to=setTimeout(function(){if(!settled){settled=true;try{sb.removeChannel(ch)}catch(e){}reject(new Error('timeout'))}},9000);
+      ch.on('presence',{event:'sync'},fireSoon);
+      ch.on('presence',{event:'join'},function(p){
+        if(p&&p.key===myKey)return;
+        setTimeout(function(){sendBc(true)},100+Math.random()*500);   // greet newcomer with my state
+      });
+      ch.on('presence',{event:'leave'},function(p){if(p&&p.key)delete peerData[p.key];fireSoon()});
+      ch.on('broadcast',{event:'st'},function(m){
+        var pl=m&&m.payload;if(!pl||!pl.k||pl.k===myKey||!pl.d)return;
+        peerData[pl.k]=pl.d;fireSoon();
+      });
+      ch.subscribe(function(status){
+        if(left)return;
+        if(status==='SUBSCRIBED'){
+          conn=true;
+          if(Object.keys(mine).length){ if(!tracked)doTrack(); sendBc(true) }
+          clearInterval(hbT);hbT=setInterval(function(){sendBc(true)},4000);   // heartbeat covers dropped messages
+          cFire();fireSoon();
+          if(!settled){settled=true;clearTimeout(to);resolve(api)}
+        }else if(status==='CHANNEL_ERROR'||status==='TIMED_OUT'||status==='CLOSED'){
+          conn=false;cFire();
+          if(!settled){settled=true;clearTimeout(to);reject(new Error(status))}
+        }
+      });
+    });
+  }};
+}
+
+/* ---------- state ---------- */
+var S={name:'',color:0,mode:'home',sub:'',nameTouched:false,roomState:'connecting',room:null,nr:null,code:'',conn:true,err:'',busy:false,
+  settings:{du:90,mx:12},soloGame:null,seen:false,lastG:0,resTab:'round',unsubs:[]};
+var me={rd:0,base:0,br:0,bw:0,sc:0,r:0,w:0,st:0,bs:0,lv:0,fin:0,phase:'idle'};
+var P={G:null,i:0,q:null,qShown:-1,typed:'',lock:false,flash:'',fbText:'',fbKind:'',countEnd:0,roundEnd:0,
+  missed:new Map(),grid:new Map(),fr:new Map(),recorded:false,timer:null,best:0,newBest:false};
+var GV=null,curKey=null,curView=null,hostTO=null,connTO=null;
+
+/* ---------- profile: a short code opens the same profile on any device (kept on the game server, never in the browser) ---------- */
+var PF={link:undefined,data:null,sb:null,dbState:'connecting',code:'',state:'none',busy:false,msg:'',q:Promise.resolve()};
+function blankProfile(){return {name:'',color:0,rounds:0,right:0,wrong:0,bestStreak:0,bestScore:0,best:{},facts:{},recent:[],av:'',created:Date.now(),updated:0}}
+PF.data=blankProfile();
+function sanitizeProfile(o){
+  var b=blankProfile();if(!o||typeof o!=='object')return b;
+  var n=function(v,hi){return clampN(v,0,hi)};
+  b.name=cleanName(o.name);b.color=n(o.color,COLORS-1);b.av=validAv(o.av)?o.av:'';b.rounds=n(o.rounds,1e6);b.right=n(o.right,1e8);b.wrong=n(o.wrong,1e8);
+  b.bestStreak=n(o.bestStreak,1e5);b.bestScore=n(o.bestScore,1e6);b.created=n(o.created,8.64e15)||Date.now();b.updated=n(o.updated,8.64e15);
+  if(o.best&&typeof o.best==='object')Object.keys(o.best).slice(0,40).forEach(function(k){if(/^\d{2,3}-[a-z0-9]{3,8}-(ks3|ig)$/.test(k))b.best[k]=n(o.best[k],1e6)});
+  if(o.facts&&typeof o.facts==='object')Object.keys(o.facts).slice(0,200).forEach(function(k){var v=o.facts[k];if(/^[a-z]{2,6}\d{1,4}$/.test(k)&&Array.isArray(v))b.facts[k]=[n(v[0],1e6),n(v[1],1e6)]});
+  if(Array.isArray(o.recent))b.recent=o.recent.slice(0,10).map(function(r){r=r||{};return {t:n(r.t,8.64e15),sc:n(r.sc,1e5),r:n(r.r,1e4),w:n(r.w,1e4),du:[45,60,90].indexOf(r.du)>=0?r.du:60,mx:clampN(r.mx,6,12),m:r.m==='solo'?'solo':'room',tk:TRACKS[trackIdx(r.tk)].id,sg:r.sg==='ig'?'ig':'ks3'}});
+  return b;
+}
+var LB={state:'idle',data:null,cb:null};
+async function loadLeaderboard(){
+  if(!PF.sb){LB.state='error';if(LB.cb)LB.cb();return}
+  LB.state='loading';if(LB.cb)LB.cb();
+  try{
+    var r=await PF.sb.rpc('eng_leaderboard',{p_code:PF.code||null});
+    if(r.error||!r.data)throw new Error('lb');
+    LB.data=r.data;LB.state='ready';
+  }catch(e){LB.state='error'}
+  if(LB.cb)LB.cb();
+}
+function normCode(c){return String(c==null?'':c).toUpperCase().replace(/[^A-Z0-9]/g,'')}
+var CODE_WORDS='WALRUS LLAMA NOODLE PANCAKE PENGUIN POTATO RACCOON WAFFLE BANANA HAMSTER PRETZEL OCTOPUS CACTUS GOBLIN ABACUS NINJA COMET ROBOT TIGER OTTER MANGO PIZZA DRAGON FALCON PICKLE BISCUIT KOALA TOASTER ROCKET MUFFIN BADGER SPROUT WIZARD DONUT GECKO PLANET BAGEL SQUID TURNIP YETI PANDA APPLE LEMON PEACH GRAPE CLOUD RIVER MAPLE EAGLE ZEBRA MONKEY RABBIT FROG PARROT SHARK WHALE CANDY COOKIE'.split(' ');
+function nameKey(x){return String(x==null?'':x).toLowerCase().replace(/[^\p{L}\p{N}]/gu,'')}
+function isLegacy(x){return /^([A-Z]{3,8}[0-9]{4}|[A-Z]{9,30})$/.test(normCode(x))}
+function validCode(n){return nameKey(n).length>=3}
+function splitWords(n){
+  if(!n)return [];
+  for(var i=0;i<CODE_WORDS.length;i++){var w=CODE_WORDS[i];
+    if(n.indexOf(w)===0){var rest=splitWords(n.slice(w.length));if(rest)return [w].concat(rest)}}
+  return null;
+}
+function displayCode(n){
+  if(!n)return '';
+  if(/^[A-Z]{3,8}[0-9]{4}$/.test(n))return n.slice(0,-4)+'-'+n.slice(-4);   // older WORD1234 profiles
+  if(/^[A-Z]{9,30}$/.test(n)){var parts=splitWords(n);return parts?parts.join('-'):n}
+  return n;
+}
+
+function rpcKind(err){var m=String(err&&err.message||'');return /invalid_code/.test(m)?'invalid':/not_found/.test(m)?'notfound':'error'}
+async function openProfile(code){
+  var typed=String(code==null?'':code).replace(/\s+/g,' ').trim();
+  if(!validCode(typed))return 'invalid';
+  if(!PF.sb)return 'error';
+  try{
+    var r=await PF.sb.rpc('eng_profile_get',{p_code:typed});
+    if(r.error)return rpcKind(r.error);
+    if(!r.data)return 'notfound';
+    PF.data=sanitizeProfile(r.data);
+    // a profile's code is its name; older profiles keep working with their old code until renamed
+    PF.code=(isLegacy(typed)&&nameKey(PF.data.name)!==nameKey(typed))?normCode(typed):(cleanName(PF.data.name)||typed);
+    PF.state='ready';PF.msg='';
+    lsSet('tts-code',PF.code);
+    setTimeout(loadLeaderboard,0);setTimeout(loadLink,0);
+    S.name=cleanName(PF.data.name)||S.name;S.color=PF.data.color;S.nameTouched=false;
+    S.av=PF.data.av||defaultAv(PF.data.name);
+    return 'ok';
+  }catch(e){return 'error'}
+}
+async function createProfile(){
+  if(!PF.sb)return 'error';
+  if(nameKey(S.name).length<3)return 'bad';
+  try{
+    var r=await PF.sb.rpc('eng_profile_create',{p_name:S.name,p_color:S.color});
+    if(r.error){var m=String(r.error.message||'');return /taken/.test(m)?'taken':/bad_name/.test(m)?'bad':'error'}
+    if(!r.data)return 'error';
+    PF.code=String(r.data);PF.data=blankProfile();PF.data.name=S.name;PF.data.color=S.color;PF.state='ready';PF.msg='';
+    lsSet('tts-code',PF.code);
+    setTimeout(loadLeaderboard,0);PF.link=null;
+    return 'ok';
+  }catch(e){return 'error'}
+}
+async function loadLink(){
+  var code=PF.code;PF.link=undefined;
+  if(!PF.sb||PF.state!=='ready')return;
+  try{var r=await PF.sb.rpc('eng_class_mine',{p_code:code});PF.link=r.error?'off':(r.data||null)}catch(e){PF.link='off'}
+  if(PF.code===code)refreshProfileUI();
+}
+async function refreshLink(){
+  if(!PF.sb||PF.state!=='ready'||!PF.code)return;
+  var code=PF.code,old=PF.link&&PF.link.track?PF.link.track+'|'+PF.link.stage:undefined;
+  try{var r=await PF.sb.rpc('eng_class_mine',{p_code:code});if(r.error||PF.code!==code)return;
+    var nl=r.data||null,nt=nl&&nl.track?nl.track+'|'+nl.stage:(nl&&nl.track);if(nt!==old||(!!nl)!==(PF.link&&PF.link!=='off'?true:false)){PF.link=nl;refreshProfileUI()}}catch(e){}
+}
+setInterval(function(){if(!document.hidden)refreshLink()},20000);
+document.addEventListener('visibilitychange',function(){if(!document.hidden)refreshLink()});
+window.addEventListener('focus',refreshLink);
+function saveAvatar(){if(PF.state==='ready'&&PF.code&&validAv(S.av)&&PF.data.av!==S.av)callProfile('eng_profile_set_avatar',{p_av:S.av})}
+function closeProfile(){S.av=randomAv();PF.link=undefined;setTimeout(loadLeaderboard,0);PF.data=blankProfile();PF.code='';PF.state='none';PF.msg='';lsSet('tts-code','')}
+/* one request at a time; the server adds each round to the stored profile, so two devices never overwrite each other */
+function callProfile(fn,args){
+  if(!PF.code)return Promise.resolve();
+  PF.q=PF.q.then(async function(){
+    var code=PF.code;if(!code)return;
+    for(var t=0;t<2;t++){
+      try{
+        var r=await PF.sb.rpc(fn,Object.assign({p_code:code},args));
+        if(r.error)throw r.error;
+        if(PF.code===code&&r.data){PF.data=sanitizeProfile(r.data);PF.msg=''}
+        break;
+      }catch(e){
+        if(/too_soon/.test(String(e&&e.message)))break;   // already saved (a retry after a slow connection)
+        if(t===1||rpcKind(e)!=='error'){PF.msg='Could not save to your profile. Check your connection.';break}
+        await sleep(700);
+      }
+    }
+    refreshProfileUI();
+  });
+  return PF.q;
+}
+function syncIdentityToProfile(){
+  if(!PF.code||PF.state!=='ready')return;
+  if(PF.data.name===S.name&&PF.data.color===S.color&&nameKey(PF.code)===nameKey(S.name))return;
+  if(nameKey(S.name)!==nameKey(PF.code)){
+    if(nameKey(S.name).length<3){PF.msg='Names need at least 3 letters or numbers.';S.name=PF.data.name;S.nameTouched=false;refreshProfileUI();return}
+    var oldCode=PF.code,want=S.name,col=S.color;
+    PF.q=PF.q.then(async function(){
+      try{
+        var r=await PF.sb.rpc('eng_profile_rename',{p_code:oldCode,p_name:want,p_color:col});
+        if(r.error)throw r.error;
+        if(PF.code===oldCode&&r.data){PF.code=String(r.data.code);PF.data=sanitizeProfile(r.data.data);PF.msg='';lsSet('tts-code',PF.code);setTimeout(loadLeaderboard,0)}
+      }catch(e){
+        var m=String(e&&e.message||'');
+        PF.msg=/taken/.test(m)?'The name "'+want+'" is already taken, so your profile stays "'+PF.data.name+'". Try another name.':/bad_name/.test(m)?'Names need at least 3 letters or numbers.':'Could not save the new name. Check your connection.';
+        S.name=cleanName(PF.data.name)||S.name;S.nameTouched=false;
+      }
+      refreshProfileUI();
+    });
+    return;
+  }
+  callProfile('eng_profile_set_identity',{p_name:S.name,p_color:S.color});
+}
+function recordRound(){
+  var g=P.G;
+  if(!g||P.recorded||me.r+me.w===0)return;
+  P.recorded=true;
+  var key=bestKey(g,P.tk),prev=PF.data.best[key]||0;
+  P.newBest=prev>0&&me.sc>prev;P.best=Math.max(prev,me.sc);
+  if(!PF.code)return;
+  var fr={};P.fr.forEach(function(v,k){fr[k]=[v[0],v[1]]});
+  callProfile('eng_profile_apply_round',{p_delta:{r:me.r,w:me.w,bs:me.bs,sc:me.sc,du:g.du,mx:g.mx,tk:P.tk.id,sg:P.sg.id,m:S.mode==='solo'?'solo':'room',fr:fr,name:S.name,color:S.color}});
+}
+function copyProfileCode(){
+  var p;try{p=navigator.clipboard.writeText(displayCode(PF.code))}catch(e){p=Promise.reject(e)}
+  p.then(function(){toast('Profile code copied')},function(){toast('Your code: '+displayCode(PF.code))});
+}
+function refreshProfileUI(){if(curView&&curView.pull)curView.pull();render()}
+function resetMe(){Object.assign(me,{rd:0,base:0,br:0,bw:0,sc:0,r:0,w:0,st:0,bs:0,lv:0,fin:0,tk:trackIdx(myTrack()),sg:stageIdx(myStage()),phase:'idle'});P.G=null;clearInterval(P.timer)}
+
+/* ---------- room data ---------- */
+function players(){
+  if(S.mode==='solo')return [{id:'me',isMe:true,h:true,n:S.name,c:S.color,rd:me.rd,sc:me.sc,r:me.r,w:me.w,st:me.st,bs:me.bs,lv:me.lv,fin:me.fin,tk:me.tk,sg:me.sg,av:S.av,base:me.base,br:me.br,bw:me.bw}];
+  if(!S.nr)return [];
+  return S.nr.peers().filter(function(p){return p.kind==='viewer'&&p.presence&&p.presence.n!=null}).map(function(p){
+    var x=p.presence;
+    return {id:p.peer,isMe:!!p.sameTab,h:x.h===1,n:cleanName(x.n)||'Mystery player',c:clampN(x.c,0,COLORS-1),
+      rd:clampN(x.rd,0,9999),sc:clampN(x.sc,0,99999),r:clampN(x.r,0,9999),w:clampN(x.w,0,9999),st:clampN(x.st,0,9999),bs:clampN(x.bs,0,9999),
+      lv:clampN(x.lv,0,2),tk:clampN(x.tk,0,TRACKS.length-1),sg:clampN(x.sg,0,1),fin:x.fin?1:0,base:clampN(x.base,0,999999),br:clampN(x.br,0,99999),bw:clampN(x.bw,0,99999),av:validAv(x.av)?x.av:''};
+  }).map(function(p){if(p.av)AVC[nameKey(p.n)]=p.av;return p});
+}
+function game(){
+  if(S.mode==='solo')return S.soloGame;
+  if(!S.nr)return null;
+  var hs=S.nr.peers().filter(function(p){return p.kind==='viewer'&&p.presence&&p.presence.h===1&&p.presence.n!=null}).sort(function(a,b){return a.peer<b.peer?-1:1});
+  if(!hs.length)return null;
+  var x=hs[0].presence;
+  return {hostIsMe:!!hs[0].sameTab,ph:(x.ph==='play'||x.ph==='results')?x.ph:'lobby',g:clampN(x.g,0,9999),sd:clampN(x.sd,0,2147483000),
+    du:[45,60,90].indexOf(x.du)>=0?x.du:60,mx:clampN(x.mx,6,12)};
+}
+function setPresence(patch){if(S.nr)S.nr.presence(patch).catch(function(){})}
+function pushMe(){setPresence({rd:me.rd,base:me.base,br:me.br,bw:me.bw,sc:me.sc,r:me.r,w:me.w,st:me.st,bs:me.bs,lv:me.lv,tk:me.tk,sg:me.sg,fin:me.fin,av:S.av})}
+function hostSet(patch){if(S.mode==='solo'){Object.assign(S.soloGame,patch);sync()}else setPresence(patch)}
+var cmp=function(a,b){return b.sc-a.sc||a.w-b.w||(a.n<b.n?-1:a.n>b.n?1:0)||(a.id<b.id?-1:1)};
+function roundPlayers(g){
+  return players().map(function(p){return p.isMe&&me.rd===g.g?Object.assign({},p,{sc:me.sc,r:me.r,w:me.w,lv:me.lv,fin:me.fin,bs:me.bs}):p}).filter(function(p){return p.rd===g.g}).sort(cmp);
+}
+
+/* ---------- game logic ---------- */
+/* ---------- English topics and stages: the teacher gives each student a topic and a stage; IGCSE questions are worth more points ---------- */
+var STAGES=[
+  {id:'ks3',name:'Lower secondary',short:'Lower sec.',code:'k',pts:10},
+  {id:'ig',name:'IGCSE',short:'IGCSE',code:'i',pts:15}
+];
+var TRACKS=[
+  {id:'figures',name:'Figures of speech',short:'Figures of speech',mult:1.1},
+  {id:'synonyms',name:'Synonyms: words with the same meaning',short:'Synonyms',mult:0.9},
+  {id:'antonyms',name:'Antonyms: words with opposite meanings',short:'Antonyms',mult:0.9},
+  {id:'punct',name:'Punctuation checks',short:'Punctuation',mult:1},
+  {id:'grammar',name:'Grammar checks',short:'Grammar',mult:1.1},
+  {id:'mixed',name:'Mixed: a bit of everything',short:'Mixed',mult:1.2}
+];
+var TOPICS=['figures','synonyms','antonyms','punct','grammar'];
+var TOPIC_PRE={figures:'fg',synonyms:'sn',antonyms:'an',punct:'pu',grammar:'gr'};
+var BANK_TEXT={
+figures:`
+k1|Which figure of speech is "as brave as a lion"?|Simile|Metaphor|Personification|Alliteration
+k1|Which figure of speech is "The snow was a white blanket over the fields"?|Metaphor|Simile|Onomatopoeia|Hyperbole
+k1|Which figure of speech is "The sun smiled down on the town"?|Personification|Simile|Alliteration|Hyperbole
+k1|Which figure of speech is "I have told you a million times to tidy your room"?|Hyperbole|Simile|Personification|Onomatopoeia
+k1|Which figure of speech is "The bees buzzed and the door banged shut"?|Onomatopoeia|Alliteration|Simile|Metaphor
+k1|Which figure of speech is "Peter Piper picked a peck of pickled peppers"?|Alliteration|Onomatopoeia|Simile|Oxymoron
+k1|Which figure of speech is "He ran like the wind"?|Simile|Metaphor|Hyperbole|Personification
+k1|Which figure of speech is "Time is a thief"?|Metaphor|Simile|Alliteration|Onomatopoeia
+k1|Which figure of speech is "The flowers danced in the breeze"?|Personification|Metaphor|Hyperbole|Simile
+k1|Which figure of speech is "I am so hungry I could eat a horse"?|Hyperbole|Simile|Metaphor|Alliteration
+k1|Which word is an example of onomatopoeia?|Sizzle|Table|Yellow|Quietly
+k1|Which figure of speech compares two things using the words "like" or "as"?|Simile|Metaphor|Alliteration|Personification
+k1|What is a metaphor?|A comparison that says one thing IS another|A comparison using like or as|Words that start with the same sound|A deliberate exaggeration
+k1|What is personification?|Giving human qualities to something that is not human|Comparing two things using like or as|Repeating the same sound at the start of words|A word that sounds like its meaning
+k1|Which figure of speech is "Her voice was music to my ears"?|Metaphor|Simile|Alliteration|Hyperbole
+k1|Which figure of speech is "The leaves whispered secrets to each other"?|Personification|Simile|Onomatopoeia|Alliteration
+k1|Which figure of speech is "She sells seashells by the seashore"?|Alliteration|Hyperbole|Metaphor|Simile
+k1|What is hyperbole?|A deliberate exaggeration|A comparison using like or as|Giving human qualities to an object|A word that sounds like a noise
+k2|Which figure of speech is "a deafening silence"?|Oxymoron|Simile|Alliteration|Personification
+k2|Which figure of speech is "It is raining cats and dogs"?|Idiom|Simile|Oxymoron|Alliteration
+k2|Which figure of speech is "I am reading a book about anti-gravity. It is impossible to put down"?|Pun|Simile|Idiom|Personification
+k2|Which figure of speech is "Do you think money grows on trees?"|Rhetorical question|Simile|Oxymoron|Personification
+k2|Which figure of speech is "Never, never, never give up"?|Repetition|Simile|Metaphor|Onomatopoeia
+k2|After a hurricane destroys a house, someone says "It is a bit of a mess." Which figure of speech is this?|Understatement|Hyperbole|Simile|Alliteration
+k2|Which figure of speech is "He passed away peacefully" (instead of "He died")?|Euphemism|Hyperbole|Simile|Oxymoron
+k2|A fire station burns down. Which figure of speech describes this event?|Irony|Simile|Alliteration|Onomatopoeia
+k2|Which figure of speech is "This bag weighs a ton"?|Hyperbole|Understatement|Simile|Idiom
+k2|Which sentence contains a simile?|The runner was as fast as lightning.|The runner was lightning.|The runner flew past us.|Lightning is very fast.
+k2|Which sentence contains personification?|The angry sea swallowed the boat.|The sea was very rough.|The sea was like a monster.|The boat sank quickly.
+k2|Which phrase shows alliteration?|bright blue balloons|red roses|loud noises|very quiet
+k2|Which word is an example of onomatopoeia?|Crackle|Gentle|Mountain|Seven
+k2|Which phrase is an oxymoron?|Bitter sweet|Bright light|Very large|Slow walk
+k2|What is an idiom?|A phrase whose meaning is different from the meaning of its words|A comparison using like or as|A word that sounds like a noise|A repeated sound at the start of words
+i1|Which technique is shown in "The snake slithered silently, sliding sideways"?|Sibilance|Assonance|Onomatopoeia|Pathetic fallacy
+i1|Which technique is shown in "The sky wept as she buried her father"?|Pathetic fallacy|Simile|Hyperbole|Oxymoron
+i1|Which figure of speech is "I must be cruel to be kind"?|Paradox|Simile|Alliteration|Onomatopoeia
+i1|Which technique is shown in "We shall fight on the beaches, we shall fight on the landing grounds, we shall fight in the fields"?|Anaphora|Oxymoron|Pathetic fallacy|Metonymy
+i1|Which technique is shown in "To err is human; to forgive, divine"?|Antithesis|Simile|Onomatopoeia|Sibilance
+i1|Which technique is shown in "The Crown announced new laws"?|Metonymy|Simile|Alliteration|Euphemism
+i1|Which technique is shown in "All hands on deck"?|Synecdoche|Simile|Oxymoron|Hyperbole
+i1|Which technique is shown in "Go slow over the road"?|Assonance|Sibilance|Alliteration|Onomatopoeia
+i1|Which technique is shown in "I came, I saw, I conquered"?|Tricolon|Oxymoron|Pathetic fallacy|Personification
+i1|Which technique is shown in "O Death, where is thy sting?"|Apostrophe|Simile|Oxymoron|Euphemism
+i1|Why might a writer use hyperbole?|To emphasise strong feelings|To make the writing more factual|To avoid describing anything|To explain a rule
+i1|A beggar sits beneath a huge advert for luxury holidays. Which technique does the writer use to show the contrast?|Juxtaposition|Alliteration|Onomatopoeia|Pun
+i1|Which phrase is a cliché?|Avoid it like the plague|The moon was a silver coin|Her laughter rippled like a stream|Smoke curled from the chimney
+i1|What effect does personification often have?|It makes things seem alive and easier to picture|It makes writing sound more scientific|It shortens a sentence|It lists facts in order
+i1|What does a simile help a reader to do?|Picture something by comparing it to something familiar|Memorise a date|Find the main verb|Check spelling
+i1|Which sentence contains a metaphor?|The classroom was a zoo.|The classroom was like a zoo.|The classroom was very noisy.|The classroom had a loud clock.
+i1|Which technique is shown in "The old house groaned and creaked, its windows staring blankly at the street"?|Personification|Simile|Hyperbole|Paradox
+i1|What is verbal irony?|Saying the opposite of what you mean|Repeating a word for effect|Comparing two things using like or as|Imitating a sound
+i2|Which device is shown in "It was not a bad performance" meaning it was very good?|Litotes|Hyperbole|Oxymoron|Anaphora
+i2|Which device is shown in "She lost her keys and her temper"?|Zeugma|Simile|Alliteration|Pathetic fallacy
+i2|Which device is shown in "Ask not what your country can do for you; ask what you can do for your country"?|Chiasmus|Anaphora|Litotes|Pathetic fallacy
+i2|Which device is shown in "We ate and drank and laughed and sang and danced"?|Polysyndeton|Asyndeton|Anaphora|Oxymoron
+i2|What is asyndeton?|Leaving out conjunctions in a list|Repeating conjunctions in a list|Exaggerating for effect|Giving human qualities to objects
+i2|What is dramatic irony?|The audience knows something the characters do not|A character says the opposite of what they mean|A character addresses an absent person|A comparison using like or as
+i2|Which sentence contains a mixed metaphor?|We will burn that bridge when we come to it.|Time is money.|She is a rock.|He swims like a fish.
+i2|Which device is shown in "He met his Waterloo"?|Allusion|Simile|Alliteration|Onomatopoeia
+i2|What effect does sibilance often create?|A soft, hushing or sinister sound|A loud, aggressive tone|A comic effect|A formal tone
+i2|What effect does harsh plosive alliteration (repeated b and p sounds) often create?|An aggressive or forceful tone|A gentle, calm tone|A sad tone|A formal tone
+i2|What is the effect of pathetic fallacy?|The weather or setting mirrors the mood|A character is made to look foolish|Two opposite ideas are placed together|A list is made longer
+i2|What is juxtaposition?|Placing contrasting things side by side|Repeating a word at the start of lines|Leaving out connecting words|Exaggerating something
+i2|Which is the best description of an oxymoron?|Two contradictory words placed together|A comparison using like or as|A sound that imitates a noise|An extended comparison
+i2|Which device is shown in "The pen is mightier than the sword"?|Metonymy|Anaphora|Zeugma|Litotes
+i2|Which device is shown in "He was a brave knight, a true hero, and extremely fond of cheese"?|Bathos|Pathetic fallacy|Sibilance|Litotes
+i2|What is the difference between a paradox and an oxymoron?|A paradox is a statement that seems contradictory but may be true; an oxymoron is two contradictory words together|They are exactly the same thing|A paradox uses like or as; an oxymoron does not|An oxymoron is a long speech; a paradox is a single word
+i2|"Lovely weather!" says a woman standing in a thunderstorm. Which device is this?|Verbal irony|Dramatic irony|Understatement|Litotes
+i2|Which device is shown in "Fair is foul, and foul is fair"?|Antithesis|Sibilance|Onomatopoeia|Apostrophe
+`,
+synonyms:`
+k1|Which word means the same as "big"?|huge|tiny|shy|late
+k1|Choose the synonym of "happy".|cheerful|gloomy|angry|tired
+k1|Which word is closest in meaning to "sad"?|miserable|cheerful|excited|proud
+k1|Which word means the same as "small"?|tiny|huge|loud|heavy
+k1|Choose the synonym of "fast".|quick|slow|late|strong
+k1|Which word is closest in meaning to "begin"?|start|finish|stop|wait
+k1|Which word means the same as "end"?|finish|begin|open|climb
+k1|Choose the synonym of "smart".|clever|silly|lazy|rude
+k1|Which word is closest in meaning to "scared"?|frightened|brave|calm|joyful
+k1|Which word means the same as "angry"?|furious|pleased|gentle|sleepy
+k1|Choose the synonym of "tired".|exhausted|energetic|hungry|cheerful
+k1|Which word is closest in meaning to "shout"?|yell|whisper|mumble|sing
+k1|Which word means the same as "walk"?|stroll|sprint|leap|crawl
+k1|Choose the synonym of "pretty".|beautiful|ugly|plain|rough
+k1|Which word is closest in meaning to "mistake"?|error|success|answer|rule
+k1|Which word means the same as "rich"?|wealthy|poor|humble|empty
+k1|Choose the synonym of "cold".|chilly|boiling|warm|damp
+k1|Which word is closest in meaning to "strange"?|odd|normal|common|ordinary
+k1|Which word means the same as "fix"?|repair|break|lose|drop
+k1|Choose the synonym of "brave".|courageous|timid|nervous|careless
+k1|Which word is closest in meaning to "tidy"?|neat|messy|rough|loud
+k1|Which word means the same as "quiet"?|silent|noisy|loud|busy
+k1|Choose the synonym of "funny".|amusing|serious|dull|grim
+k2|Which word is closest in meaning to "abandon"?|desert|keep|guard|rescue
+k2|Which word means the same as "attempt"?|try|finish|avoid|forget
+k2|Choose the synonym of "conceal".|hide|reveal|display|announce
+k2|Which word is closest in meaning to "enormous"?|gigantic|minor|ordinary|narrow
+k2|Which word means the same as "fragile"?|delicate|sturdy|heavy|rigid
+k2|Choose the synonym of "grateful".|thankful|resentful|curious|careless
+k2|Which word is closest in meaning to "hesitate"?|pause|rush|decide|agree
+k2|Which word means the same as "ignore"?|overlook|notice|examine|welcome
+k2|Choose the synonym of "jealous".|envious|generous|proud|relaxed
+k2|Which word is closest in meaning to "obvious"?|clear|hidden|uncertain|complicated
+k2|Which word means the same as "peculiar"?|unusual|typical|ordinary|regular
+k2|Choose the synonym of "rude".|impolite|courteous|shy|friendly
+k2|Which word is closest in meaning to "tremble"?|shake|stand|freeze|settle
+k2|Which word means the same as "vanish"?|disappear|appear|return|multiply
+k2|Choose the synonym of "wander".|roam|march|stay|hurry
+k2|Which word is closest in meaning to "cautious"?|careful|reckless|bold|hasty
+k2|Which word means the same as "reluctant"?|unwilling|eager|greedy|ready
+k2|Choose the synonym of "keen".|eager|bored|reluctant|calm
+i1|Which word is closest in meaning to "benevolent"?|kind|cruel|clever|careless
+i1|Which word means the same as "meticulous"?|careful|hasty|careless|bold
+i1|Choose the synonym of "candid".|frank|secretive|polite|vague
+i1|Which word is closest in meaning to "diligent"?|hardworking|lazy|careless|bored
+i1|Which word means the same as "eloquent"?|articulate|clumsy|silent|hesitant
+i1|Choose the synonym of "frugal".|thrifty|wasteful|generous|wealthy
+i1|Which word is closest in meaning to "gullible"?|naive|cunning|suspicious|wise
+i1|Which word means the same as "inevitable"?|unavoidable|doubtful|avoidable|unlikely
+i1|Choose the synonym of "meagre".|scanty|plentiful|generous|sizeable
+i1|Which word is closest in meaning to "obstinate"?|stubborn|flexible|obedient|cheerful
+i1|Which word means the same as "prosperous"?|thriving|struggling|humble|declining
+i1|Choose the synonym of "scarce".|rare|plentiful|common|ordinary
+i1|Which word is closest in meaning to "serene"?|tranquil|turbulent|restless|noisy
+i1|Which word means the same as "tedious"?|monotonous|thrilling|lively|rapid
+i1|Choose the synonym of "vague".|unclear|precise|definite|certain
+i1|Which word is closest in meaning to "pensive"?|thoughtful|cheerful|careless|drowsy
+i1|Which word means the same as "lethargic"?|sluggish|energetic|restless|alert
+i1|Choose the synonym of "mundane".|ordinary|extraordinary|thrilling|marvellous
+i1|Which word is closest in meaning to "abundant"?|plentiful|scarce|sparse|limited
+i1|Which word means the same as "adamant"?|unyielding|flexible|doubtful|uncertain
+i1|Choose the synonym of "hostile".|unfriendly|welcoming|neutral|cheerful
+i1|Which word is closest in meaning to "timid"?|fearful|bold|rude|proud
+i2|Which word means the same as "ubiquitous"?|omnipresent|rare|hidden|fleeting
+i2|Choose the synonym of "ephemeral".|fleeting|permanent|ancient|enduring
+i2|Which word is closest in meaning to "copious"?|abundant|meagre|scarce|trivial
+i2|Which word means the same as "obsequious"?|servile|domineering|rebellious|aloof
+i2|Choose the synonym of "taciturn".|reserved|talkative|boisterous|cheerful
+i2|Which word is closest in meaning to "pragmatic"?|practical|idealistic|impulsive|theoretical
+i2|Which word means the same as "ambivalent"?|undecided|certain|enthusiastic|hostile
+i2|Choose the synonym of "capricious".|unpredictable|steady|reliable|stubborn
+i2|Which word is closest in meaning to "enigmatic"?|mysterious|obvious|ordinary|cheerful
+i2|Which word means the same as "fastidious"?|fussy|careless|casual|tolerant
+i2|Choose the synonym of "garrulous".|talkative|silent|shy|boastful
+i2|Which word is closest in meaning to "innocuous"?|harmless|dangerous|offensive|powerful
+i2|Which word means the same as "laconic"?|brief|wordy|rambling|joyful
+i2|Choose the synonym of "magnanimous".|generous|spiteful|petty|greedy
+i2|Which word is closest in meaning to "nefarious"?|wicked|virtuous|mischievous|honourable
+i2|Which word means the same as "ostentatious"?|showy|modest|tasteful|shabby
+i2|Choose the synonym of "sporadic".|occasional|constant|frequent|regular
+i2|Which word is closest in meaning to "tenacious"?|determined|yielding|fragile|hesitant
+i2|Which word means the same as "venerate"?|revere|despise|ignore|imitate
+i2|Choose the synonym of "zenith".|peak|base|middle|edge
+`,
+antonyms:`
+k1|Which word means the opposite of "hot"?|cold|boiling|warm|bright
+k1|Choose the antonym of "ascend".|descend|climb|rise|lift
+k1|Which word is most opposite in meaning to "early"?|late|soon|quick|first
+k1|Which word means the opposite of "full"?|empty|heavy|round|large
+k1|Choose the antonym of "difficult".|easy|hard|tough|complex
+k1|Which word is most opposite in meaning to "sweet"?|sour|sugary|tasty|fresh
+k1|Which word means the opposite of "wide"?|narrow|broad|long|deep
+k1|Choose the antonym of "heavy".|light|weighty|large|thick
+k1|Which word is most opposite in meaning to "brave"?|cowardly|bold|daring|strong
+k1|Which word means the opposite of "arrive"?|depart|reach|enter|come
+k1|Choose the antonym of "buy".|sell|pay|shop|spend
+k1|Which word is most opposite in meaning to "polite"?|rude|kind|gentle|quiet
+k1|Which word means the opposite of "ancient"?|modern|old|antique|distant
+k1|Choose the antonym of "generous".|selfish|kind|wealthy|careless
+k1|Which word is most opposite in meaning to "expand"?|shrink|grow|stretch|swell
+k1|Which word means the opposite of "noisy"?|quiet|loud|busy|rowdy
+k1|Choose the antonym of "dry".|wet|dusty|thirsty|bare
+k1|Which word is most opposite in meaning to "success"?|failure|victory|progress|effort
+k1|Which word means the opposite of "friend"?|enemy|partner|helper|neighbour
+k1|Choose the antonym of "inside".|outside|within|beneath|beside
+k1|Which word is most opposite in meaning to "include"?|exclude|contain|add|allow
+k1|Which word means the opposite of "forget"?|remember|ignore|lose|drop
+k1|Choose the antonym of "love".|hate|like|adore|enjoy
+k1|Which word is most opposite in meaning to "tight"?|loose|firm|small|narrow
+k2|Which word means the opposite of "scarce"?|plentiful|rare|limited|sparse
+k2|Choose the antonym of "temporary".|permanent|brief|short|passing
+k2|Which word is most opposite in meaning to "accept"?|reject|agree|receive|allow
+k2|Which word means the opposite of "increase"?|decrease|grow|expand|raise
+k2|Choose the antonym of "visible".|invisible|clear|obvious|plain
+k2|Which word is most opposite in meaning to "guilty"?|innocent|ashamed|accused|careless
+k2|Which word means the opposite of "public"?|private|common|open|famous
+k2|Choose the antonym of "common".|rare|usual|ordinary|plain
+k2|Which word is most opposite in meaning to "strengthen"?|weaken|harden|build|support
+k2|Which word means the opposite of "cruel"?|kind|harsh|fierce|bitter
+k2|Choose the antonym of "transparent".|opaque|clear|glassy|thin
+k2|Which word is most opposite in meaning to "maximum"?|minimum|highest|greatest|extreme
+k2|Which word means the opposite of "freedom"?|captivity|liberty|peace|power
+k2|Choose the antonym of "rural".|urban|country|village|farm
+k2|Which word is most opposite in meaning to "optimist"?|pessimist|dreamer|leader|thinker
+k2|Which word means the opposite of "victory"?|defeat|triumph|prize|progress
+i1|Choose the antonym of "benevolent".|malevolent|kind|generous|gracious
+i1|Which word is most opposite in meaning to "candid"?|evasive|honest|frank|open
+i1|Which word means the opposite of "diligent"?|idle|hardworking|careful|eager
+i1|Choose the antonym of "frugal".|extravagant|thrifty|sparing|careful
+i1|Which word is most opposite in meaning to "inevitable"?|avoidable|certain|unavoidable|likely
+i1|Which word means the opposite of "meagre"?|ample|scanty|slight|modest
+i1|Choose the antonym of "obstinate".|compliant|stubborn|firm|proud
+i1|Which word is most opposite in meaning to "prosperous"?|impoverished|thriving|wealthy|successful
+i1|Which word means the opposite of "serene"?|agitated|calm|peaceful|quiet
+i1|Choose the antonym of "tedious".|fascinating|boring|slow|long
+i1|Which word is most opposite in meaning to "vague"?|explicit|unclear|hazy|brief
+i1|Which word means the opposite of "lethargic"?|energetic|sluggish|drowsy|idle
+i1|Choose the antonym of "mundane".|extraordinary|ordinary|common|dull
+i1|Which word is most opposite in meaning to "abundant"?|scarce|plentiful|ample|rich
+i1|Which word means the opposite of "arrogant"?|humble|proud|boastful|confident
+i1|Choose the antonym of "conceal".|reveal|hide|cover|protect
+i1|Which word is most opposite in meaning to "superficial"?|profound|shallow|brief|obvious
+i1|Which word means the opposite of "vivid"?|dull|bright|colourful|lively
+i1|Choose the antonym of "expand".|contract|grow|stretch|enlarge
+i1|Which word is most opposite in meaning to "affluent"?|destitute|wealthy|prosperous|famous
+i1|Which word means the opposite of "hostile"?|amicable|unfriendly|fierce|distant
+i1|Choose the antonym of "accelerate".|decelerate|speed|hasten|rush
+i2|Which word is most opposite in meaning to "ubiquitous"?|rare|widespread|common|constant
+i2|Which word means the opposite of "ephemeral"?|enduring|brief|fleeting|delicate
+i2|Choose the antonym of "copious".|sparse|plentiful|abundant|rich
+i2|Which word is most opposite in meaning to "obsequious"?|domineering|servile|polite|humble
+i2|Which word means the opposite of "taciturn"?|loquacious|reserved|silent|solemn
+i2|Choose the antonym of "pragmatic".|idealistic|practical|realistic|careful
+i2|Which word is most opposite in meaning to "ambivalent"?|decisive|uncertain|undecided|hesitant
+i2|Which word means the opposite of "capricious"?|steadfast|unpredictable|careless|cheerful
+i2|Choose the antonym of "magnanimous".|petty|generous|gracious|wealthy
+i2|Which word is most opposite in meaning to "nefarious"?|virtuous|wicked|villainous|cunning
+i2|Which word means the opposite of "ostentatious"?|modest|showy|grand|loud
+i2|Choose the antonym of "quixotic".|realistic|idealistic|romantic|foolish
+i2|Which word is most opposite in meaning to "sporadic"?|continuous|occasional|rare|random
+i2|Which word means the opposite of "tenacious"?|yielding|determined|stubborn|persistent
+i2|Choose the antonym of "venerate".|despise|revere|respect|admire
+i2|Which word is most opposite in meaning to "zenith"?|nadir|peak|summit|height
+i2|Which word means the opposite of "laconic"?|verbose|brief|silent|curt
+i2|Choose the antonym of "garrulous".|reticent|talkative|boastful|friendly
+i2|Which word is most opposite in meaning to "lucid"?|obscure|clear|simple|bright
+`,
+punct:`
+k1|Which sentence is punctuated correctly?|I like apples, bananas and grapes.|I like apples bananas and grapes,|I like, apples bananas, and grapes|I like apples. bananas and grapes.
+k1|Which sentence is punctuated correctly?|Where do you live?|Where do you live.|where do you live?|Where do you live,
+k1|Which sentence uses capital letters correctly?|On Monday, Sam visited London.|on monday, sam visited london.|On Monday, Sam visited london.|On monday, Sam visited London.
+k1|Which sentence uses an apostrophe correctly?|This is Tom's bike.|This is Toms bike.|This is Toms' bike.|This is Tom,s bike.
+k1|Which sentence uses an apostrophe correctly?|I do not know, so I don't answer.|I do not know, so I dont answer.|I do not know, so I do'nt answer.|I do not know, so I d'ont answer.
+k1|Which sentence is punctuated correctly?|It's raining outside.|Its raining outside.|Its' raining outside.|It,s raining outside.
+k1|Which sentence has correct speech marks?|She said, "I am tired."|She said "I am tired.|She said, I am tired."|"She said, I am tired.
+k1|Which punctuation mark do you put at the end of a question?|Question mark|Full stop|Comma|Apostrophe
+k1|Which punctuation mark shows surprise or a shout?|Exclamation mark|Comma|Full stop|Colon
+k1|Which punctuation mark is used to separate items in a list?|Comma|Full stop|Question mark|Exclamation mark
+k1|Which sentence is punctuated correctly?|Watch out!|Watch out.!|Watch out?!.|Watch, out
+k1|What is an apostrophe used for?|To show possession or a missing letter|To end a sentence|To join two words together|To show a question
+k1|Which sentence is punctuated correctly?|The cat sat on the mat.|the cat sat on the mat|The cat sat on the mat|The cat sat, on the mat
+k1|Which sentence is punctuated correctly?|My brother, Sam, plays football.|My brother Sam, plays football.|My brother, Sam plays football.|My, brother Sam plays football.
+k1|Which sentence needs a capital letter on the name of a place?|We flew to Paris on holiday.|We flew to paris on holiday.|we flew to paris on holiday|We flew to paris on Holiday.
+k1|Which is the correct way to write "cannot" as a contraction?|can't|cant|ca'nt|can,t
+k2|Which sentence is punctuated correctly?|After lunch, we went swimming.|After lunch we, went swimming.|After, lunch we went swimming.|After lunch we went swimming,.
+k2|Which sentence is punctuated correctly?|"Let's go," said Mia.|"Let's go" said Mia.|"Let's go", said Mia.|Let's go, said Mia.
+k2|Which sentence uses an apostrophe correctly for many girls?|The girls' coats were wet.|The girl's coats were wet.|The girls coats' were wet.|The girls coat's were wet.
+k2|Which sentence uses a colon correctly?|You will need three things: a pen, paper and a ruler.|You will need: three things a pen, paper and a ruler.|You will: need three things a pen, paper and a ruler.|You will need three things a pen: paper and a ruler.
+k2|Which sentence is punctuated correctly?|Let's eat, Grandma!|Let's eat Grandma!|Lets eat, Grandma!|Let's, eat Grandma!
+k2|Which sentence is punctuated correctly?|It was raining, so we stayed in.|It was raining, we stayed in.|It was raining so, we stayed in.|It was, raining so we stayed in.
+k2|Which sentence uses a hyphen correctly?|She is a well-known author.|She is a well known-author.|She is a well - known author.|She is a-well known author.
+k2|Which sentence is punctuated correctly?|"Where are you going?" asked Dad.|"Where are you going." asked Dad.|"Where are you going?", asked Dad.|"Where are you going" asked Dad?
+k2|Which sentence uses brackets correctly?|My dog (a black Labrador) loves the beach.|My dog a black Labrador) loves the beach.|My (dog a black Labrador loves the beach.|My dog (a black Labrador loves) the beach.
+k2|Which sentence is punctuated correctly?|The children's toys were on the floor.|The childrens' toys were on the floor.|The childrens toys were on the floor.|The children's toy's were on the floor.
+k2|Which sentence is punctuated correctly?|Yes, I would love some cake.|Yes I would, love some cake.|Yes, I would love, some cake.|Yes I would love some, cake.
+k2|Which sentence uses commas correctly?|My friends, Ali and Beth, are coming tonight.|My friends Ali, and Beth are coming, tonight.|My, friends Ali and Beth, are coming tonight.|My friends, Ali and Beth are, coming tonight.
+k2|Which sentence uses its or it's correctly?|The dog wagged its tail because it's happy.|The dog wagged it's tail because its happy.|The dog wagged its tail because its happy.|The dog wagged it's tail because it's happy.
+k2|Which sentence has the correct punctuation?|I bought milk, bread, eggs and butter.|I bought: milk, bread, eggs, and, butter.|I bought milk bread eggs, and butter.|I bought, milk, bread, eggs and butter
+i1|Which sentence uses a semicolon correctly?|I love tea; my sister prefers coffee.|I love; tea my sister prefers coffee.|I love tea; and my sister prefers coffee.|I love tea my sister; prefers coffee.
+i1|Which sentence contains a comma splice?|The film was long, I enjoyed it.|The film was long, but I enjoyed it.|The film was long; I enjoyed it.|The film was long. I enjoyed it.
+i1|Which sentence uses a colon correctly?|There is one thing I hate: lateness.|There is one: thing I hate lateness.|There is one thing: I hate lateness.|There is one thing I hate lateness:
+i1|Which sentence uses dashes for an interruption correctly?|My cousin - who is rarely on time - arrived early.|My cousin - who is rarely on time arrived early.|My cousin who is - rarely on time - arrived early.|My - cousin who is rarely on time arrived early.
+i1|Which sentence uses an apostrophe correctly?|The boys' changing room is down the corridor.|The boy's changing room is for all the boys.|The boys changing room' is down the corridor.|The boys changing rooms' is down the corridor.
+i1|Which sentence is punctuated correctly?|However, I disagree with the decision.|However I disagree, with the decision.|However; I disagree with the decision.|However: I disagree, with the decision.
+i1|Which sentence uses an ellipsis correctly to show a pause or trailing off?|"Well... I suppose so," she said.|"Well.. I suppose so," she said.|"Well.... I suppose so" she said.|"Well, ... I suppose so", she said.
+i1|Which sentence is punctuated correctly?|Mr Khan, the head teacher, spoke to the class.|Mr Khan the head teacher, spoke to the class.|Mr Khan, the head teacher spoke to the class.|Mr, Khan the head teacher spoke to the class.
+i1|In which sentence is the apostrophe wrong?|Three of the DVD's were scratched.|The dog's bowl was empty.|The students' results were excellent.|It's time to go home.
+i1|Which sentence is punctuated correctly?|She asked, "Are you coming?"|She asked "Are you coming?".|She asked, "Are you coming."|She asked: "are you coming?"
+i1|Which sentence correctly punctuates a list of items that each contain commas?|We visited Paris, France; Rome, Italy; and Madrid, Spain.|We visited Paris, France, Rome, Italy, and Madrid, Spain.|We visited Paris; France, Rome; Italy, and Madrid; Spain.|We visited Paris France; Rome Italy; and Madrid Spain.
+i1|Which sentence is punctuated correctly?|If you work hard, you will succeed.|If you work hard you, will succeed.|If, you work hard you will succeed.|If you work hard; you will succeed.
+i1|Which sentence uses a hyphen correctly?|I have twenty-one cousins.|I have twenty one-cousins.|I have twenty- one cousins.|I have twenty -one cousins.
+i1|Which sentence needs no extra punctuation?|The man who lives next door is a pilot.|The man, who lives next door, is a pilot (there are many men on our street).|The man who, lives next door is a pilot.|The man who lives next door, is a pilot.
+i1|Which sentence is punctuated correctly?|The teacher said, "Open your books."|The teacher said "Open your books".|The teacher said, "open your books."|The teacher said "Open your books."
+i2|Which sentence is punctuated correctly?|Having finished his homework, Tom went out to play.|Having finished his homework Tom, went out to play.|Having finished his homework; Tom went out to play.|Having finished, his homework Tom went out to play.
+i2|Which statement about the semicolon is correct?|It can join two closely related complete sentences|It must always be followed by a capital letter|It is used to show a missing letter|It is used to end a question
+i2|Which sentence is punctuated correctly (the speaker has only one brother)?|My brother, who lives in Leeds, is a doctor.|My brother who lives in Leeds is a doctor.|My brother, who lives in Leeds is a doctor.|My brother who lives, in Leeds, is a doctor.
+i2|Which sentence is punctuated correctly?|"Where are you going?" she asked.|"Where are you going?," she asked.|"Where are you going," she asked?|"Where are you going?" She asked.
+i2|Which sentence uses an apostrophe incorrectly?|The 1990's were a decade of change.|It is a dog's life.|The women's team won the cup.|That coat is hers.
+i2|Which sentence uses a colon incorrectly?|My favourite colours are: red and blue.|He had one aim: to win.|There was only one problem: the door was locked.|Ingredients: flour, eggs and milk.
+i2|Which sentence is correctly punctuated?|The meeting is at 4 pm; however, I may be late.|The meeting is at 4 pm, however, I may be late.|The meeting is at 4 pm; however I may be late.|The meeting is at 4 pm however; I may be late.
+i2|Which sentence uses a dash correctly to add a dramatic afterthought?|She opened the box - it was empty.|She opened - the box it was empty.|She opened the box it - was empty.|She - opened the box it was empty.
+i2|Which is the correct way to punctuate this? my sister who is a vet lives in york|My sister, who is a vet, lives in York.|My sister who is a vet, lives in York.|my sister, who is a vet, lives in york.|My sister, who is a vet lives, in York.
+i2|Which sentence punctuates interrupted speech correctly?|"I think," said Ben, "that we should leave."|"I think" said Ben "that we should leave."|"I think", said Ben, "That we should leave."|"I think, said Ben, that we should leave."
+i2|Which sentence is punctuated correctly?|Although it was late, we carried on working.|Although it was late we, carried on working.|Although, it was late we carried on working.|Although it was late; we carried on working.
+i2|Which sentence uses apostrophes correctly?|The twins' mother said it's time to go.|The twin's mother said its time to go.|The twins mother said it's time to go.|The twins' mother said its' time to go.
+i2|Which sentence is a run-on sentence?|I was tired I went to bed early.|I was tired, so I went to bed early.|I was tired; I went to bed early.|I was tired. I went to bed early.
+i2|Which sentence uses quotation marks correctly for a quotation inside speech?|"She told me, 'Meet me at six,'" said Jo.|"She told me, "Meet me at six," said Jo.|'She told me, "Meet me at six,"' said Jo."|"She told me 'Meet me at six'," said Jo.
+i2|Which sentence uses a comma correctly after an introductory phrase?|In the middle of the night, the alarm went off.|In the middle of the night the alarm, went off.|In the middle, of the night the alarm went off.|In the middle of the night the alarm went off,.
+`,
+grammar:`
+k1|Which sentence is grammatically correct?|She walks to school every day.|She walk to school every day.|She walking to school every day.|She walked to school every day yesterday.
+k1|Which sentence is grammatically correct?|They are playing in the garden.|They is playing in the garden.|They am playing in the garden.|They be playing in the garden.
+k1|Which word correctly completes the sentence? "I have ___ apple."|an|a|the an|some an
+k1|Which word correctly completes the sentence? "There ___ three books on the desk."|are|is|was|be
+k1|Which sentence is grammatically correct?|He doesn't like broccoli.|He don't like broccoli.|He not like broccoli.|He doesn't likes broccoli.
+k1|Which word is a verb in "The dog chased the ball"?|chased|dog|ball|the
+k1|Which word is a noun in "The tall girl smiled"?|girl|tall|smiled|the
+k1|Which word is an adjective in "She wore a red coat"?|red|wore|coat|She
+k1|Which sentence is grammatically correct?|My friend and I went to the park.|Me and my friend went to the park.|My friend and me went to the park.|Me and my friend goed to the park.
+k1|Which is the correct past tense of "run"?|ran|runned|running|runs
+k1|Which is the correct plural of "child"?|children|childs|childrens|childes
+k1|Which sentence is grammatically correct?|I saw two mice in the kitchen.|I saw two mouses in the kitchen.|I saw two mices in the kitchen.|I seen two mice in the kitchen.
+k1|Which word correctly completes the sentence? "Their dog is bigger than ___."|ours|our's|ours'|us
+k1|Which sentence is grammatically correct?|We were late for the bus.|We was late for the bus.|We be late for the bus.|We is late for the bus.
+k1|Which word is an adverb in "He ran quickly home"?|quickly|ran|home|He
+k1|Which sentence is grammatically correct?|She has finished her homework.|She have finished her homework.|She has finish her homework.|She finished has her homework.
+k2|Which sentence is grammatically correct?|Neither of the boys was late.|Neither of the boys were late.|Neither of the boys are late.|Neither of the boys be late.
+k2|Which word correctly completes the sentence? "She sings ___ than her sister."|better|more better|best|gooder
+k2|Which sentence is grammatically correct?|I haven't got any money.|I haven't got no money.|I ain't got any money.|I hasn't got any money.
+k2|Which word correctly completes the sentence? "He is the ___ player in the team."|best|more good|goodest|most better
+k2|Which sentence uses the correct pronoun?|Give the book to her and me.|Give the book to she and I.|Give the book to her and I.|Give the book to she and me.
+k2|Which sentence is grammatically correct?|The team is winning the match.|The team are is winning the match.|The team be winning the match.|The team am winning the match.
+k2|Which sentence is in the past tense?|We visited the museum last week.|We visit the museum every week.|We are visiting the museum now.|We will visit the museum next week.
+k2|Which sentence is in the future tense?|They will arrive at noon.|They arrived at noon.|They arrive at noon every day.|They have arrived at noon.
+k2|Which word correctly completes the sentence? "I did ___ homework last night."|my|me|mine|I
+k2|Which sentence is grammatically correct?|Who did you give the present to?|Who did you gave the present to?|Who you did give the present to?|Whom you give did the present?
+k2|Which sentence is grammatically correct?|There are fewer people here today.|There are less people here today.|There is fewer people here today.|There is less peoples here today.
+k2|Which sentence has the correct verb form?|He has gone home.|He has went home.|He have gone home.|He has go home.
+k2|Which sentence is grammatically correct?|If I were you, I would apologise.|If I was you, I will apologise.|If I am you, I would apologise.|If I were you, I will apologised.
+k2|Which sentence is grammatically correct?|The children have eaten their lunch.|The children has eaten their lunch.|The children have ate their lunch.|The childrens have eaten their lunch.
+i1|Which sentence is grammatically correct?|Each of the students has a laptop.|Each of the students have a laptop.|Each of the students having a laptop.|Each of the students are having a laptop.
+i1|Which sentence has a dangling modifier?|Walking down the street, the rain started.|Walking down the street, I felt the rain start.|While I was walking down the street, the rain started.|The rain started as I walked down the street.
+i1|Which sentence is in the passive voice?|The window was broken by the ball.|The ball broke the window.|The ball is breaking the window.|The ball will break the window.
+i1|Which sentence is in the active voice?|The chef cooked the meal.|The meal was cooked by the chef.|The meal had been cooked.|The meal is being cooked by the chef.
+i1|Which sentence is grammatically correct?|The number of students has increased.|The number of students have increased.|The number of students are increased.|The number of students were increasing.
+i1|Which sentence uses "who" or "whom" correctly?|To whom did you speak?|To who did you speak?|Whom is at the door?|Whom are you?
+i1|Which sentence uses the subjunctive mood correctly?|I suggest that he leave immediately.|I suggest that he leaves immediately.|I suggest that he leaving immediately.|I suggest that he left immediately now.
+i1|Which sentence is grammatically correct?|Between you and me, I think he is wrong.|Between you and I, I think he is wrong.|Between you and I, I thinks he is wrong.|Between you and me, I thinking he is wrong.
+i1|Which sentence contains a subject-verb agreement error?|The list of items are on the desk.|The list of items is on the desk.|The items on the list are expensive.|The group of children was noisy.
+i1|Which is the correct sentence?|I would have gone if I had known.|I would of gone if I had known.|I would have went if I had known.|I would of went if I had known.
+i1|Which sentence is grammatically correct?|Having eaten dinner, we watched a film.|Having ate dinner, we watched a film.|Having eating dinner, we watched a film.|Have eaten dinner, we watched a film.
+i1|Which sentence uses a relative pronoun correctly?|The book that I borrowed was excellent.|The book who I borrowed was excellent.|The book whom I borrowed it was excellent.|The book what I borrowed was excellent.
+i1|Which sentence is grammatically correct?|The committee has made its decision.|The committee have made it's decision.|The committee has made it's decision.|The committee have made its' decision.
+i1|Which word completes the sentence correctly? "The results were ___ than we expected."|better|more better|most good|gooder
+i1|Which sentence is in the present perfect tense?|She has lived here for ten years.|She lived here ten years ago.|She is living here now.|She will live here for ten years.
+i1|Which sentence has a misplaced modifier?|She served sandwiches to the children on paper plates.|She served the children sandwiches on paper plates.|On paper plates, she served the children sandwiches.|She served sandwiches on paper plates to the children.
+i2|Which sentence is grammatically correct?|Not only was he late, but he was also rude.|Not only he was late, but he was also rude.|Not only was he late, but also he is rude.|Not only was he late, and he was also rude.
+i2|Which sentence uses parallel structure correctly?|She likes hiking, swimming and cycling.|She likes hiking, to swim and cycling.|She likes to hike, swimming and to cycle.|She likes hiking, swimming and to cycle.
+i2|Which sentence uses a past perfect tense correctly?|By the time we arrived, the film had started.|By the time we arrived, the film has started.|By the time we arrived, the film have started.|By the time we arrived, the film was start.
+i2|Which sentence is a complex sentence?|Although it was cold, we went swimming.|It was cold and we went swimming.|It was cold. We went swimming.|It was cold, so we stayed in.
+i2|Which sentence contains a relative clause?|The woman who lives next door is a doctor.|The woman next door is a doctor.|The woman is a doctor and lives next door.|Next door lives a doctor.
+i2|Which sentence is a compound sentence?|I wanted to leave, but she wanted to stay.|When I wanted to leave, she wanted to stay.|I wanted to leave.|Wanting to leave, I stood up.
+i2|Which sentence is grammatically correct?|Neither the teacher nor the students were ready.|Neither the teacher nor the students was ready.|Neither the teacher or the students were ready.|Neither the teacher nor the students is ready.
+i2|Which sentence uses the conditional correctly?|If it had rained, we would have stayed in.|If it would have rained, we would have stayed in.|If it had rained, we would stay in yesterday.|If it rains, we would have stayed in.
+i2|Which sentence is grammatically correct?|The reasons for his absence are unclear.|The reasons for his absence is unclear.|The reason for his absence are unclear.|The reasons for his absence being unclear.
+i2|What is the function of the underlined clause: "I will go if it stops raining"?|Adverbial clause of condition|Relative clause|Noun clause|Main clause
+i2|Which sentence uses a split infinitive?|She decided to quickly leave.|She decided to leave quickly.|She quickly decided to leave.|Quickly, she decided to leave.
+i2|Which sentence uses the correct modal verb for a strong obligation?|You must wear a seatbelt.|You might wear a seatbelt.|You could wear a seatbelt.|You may wearing a seatbelt.
+i2|Which sentence is grammatically correct?|Each of the players has their own locker.|Each of the players have their own locker.|Each of the players are having their own locker.|Each of the players has theirs own locker.
+i2|Which of these is a fragment, not a full sentence?|Because the bus was late.|The bus was late.|Was the bus late?|The bus was late, so I walked.
+`
+};
+
+var BANK={},BYID={};
+(function(){
+  Object.keys(BANK_TEXT).forEach(function(t){
+    var n=0;BANK[t]=[];
+    BANK_TEXT[t].split('\n').forEach(function(l){
+      l=l.trim();if(!l||l.charAt(0)==='#')return;
+      var f=l.split('|');if(f.length!==6)return;
+      n++;var q={id:TOPIC_PRE[t]+n,t:t,st:f[0].charAt(0),d:+f[0].charAt(1),q:f[1],a:f[2],w:f.slice(3)};
+      BANK[t].push(q);BYID[q.id]=q;
+    });
+  });
+})();
+function trackIdx(id){for(var i=0;i<TRACKS.length;i++)if(TRACKS[i].id===id)return i;return 0}
+function stageIdx(id){for(var i=0;i<STAGES.length;i++)if(STAGES[i].id===id)return i;return 0}
+function myTrack(){return TRACKS[trackIdx(PF.state==='ready'&&PF.link&&PF.link.track)].id}
+function myStage(){return STAGES[stageIdx(PF.state==='ready'&&PF.link&&PF.link.stage)].id}
+function bestKey(g,tk){return g.du+'-'+tk.id+'-'+P.sg.id}
+function shuffleIdx(n,seed){var rng=mulberry32(seed),a=[],i,j,t;for(i=0;i<n;i++)a.push(i);for(i=n-1;i>0;i--){j=Math.floor(rng()*(i+1));t=a[i];a[i]=a[j];a[j]=t}return a}
+var ORD={};
+function ordFor(key,n,seed){var k=key+'/'+n+'/'+seed;return ORD[k]||(ORD[k]=shuffleIdx(n,seed))}
+/* Comeback boost: level 1 = easier questions from your own stage, level 2 = the easiest lower-secondary questions. */
+function poolFor(topic,sg,lv){
+  var code=lv===2?'k':STAGES[stageIdx(sg)].code;
+  return BANK[topic].filter(function(q){return q.st===code&&(lv===0||q.d===1)});
+}
+function makeQ(g,i,t,lv,tk,sg){
+  var topic=tk,idx=i;
+  if(tk==='mixed'){var off=hash(g.sd,g.g,99)%TOPICS.length;topic=TOPICS[(i+off)%TOPICS.length];idx=Math.floor(i/TOPICS.length)}
+  var pool=poolFor(topic,sg,lv);
+  var order=ordFor(topic+sg+lv,pool.length,hash(g.sd,g.g,lv,topic.length,sg.length,5));
+  var it=pool[order[(idx+t)%pool.length]];
+  var rng=mulberry32(hash(g.sd,g.g,i,t,lv,77));
+  var opts=[it.a].concat(it.w);
+  for(var k=opts.length-1;k>0;k--){var j=Math.floor(rng()*(k+1)),tmp=opts[k];opts[k]=opts[j];opts[j]=tmp}
+  return {txt:it.q,opts:opts,ans:opts.indexOf(it.a),ca:it.a,fid:it.id,
+    base:Math.round(STAGES[stageIdx(sg)].pts*TRACKS[trackIdx(tk)].mult),full:plainQ(it.q)+'  →  '+it.a};
+}
+function updateLevel(){
+  if(S.mode==='solo'){me.lv=0;return}
+  var ps=roundPlayers(P.G);
+  var lead=ps.reduce(function(m,p){return Math.max(m,p.sc)},0);
+  var gap=lead-me.sc,lv=me.lv;
+  if(gap>=100)lv=2;else if(gap>=70&&lv===2)lv=2;else if(gap>=40)lv=1;else if(gap>=25&&lv>=1)lv=1;else lv=0;
+  me.lv=lv;
+}
+function nextQuestion(){
+  if(me.phase!=='play')return;
+  updateLevel();
+  var q;
+  for(var t=0;t<6;t++){q=makeQ(P.G,P.i,t,me.lv,P.tk.id,P.sg.id);if(!P.q||q.full!==P.q.full)break}
+  P.i++;P.q=q;P.pick=-1;P.typed='';P.flash='';P.fbText='';P.fbKind='';
+  pushMe();
+}
+function beginRound(g){
+  if(me.rd>0&&me.rd<g.g){me.base+=me.sc;me.br+=me.r;me.bw+=me.w}
+  Object.assign(me,{rd:g.g,sc:0,r:0,w:0,st:0,bs:0,lv:0,fin:0,phase:'count'});
+  ORD={};me.tk=trackIdx(myTrack());P.tk=TRACKS[me.tk];me.sg=stageIdx(myStage());P.sg=STAGES[me.sg];
+  refreshLink().then(function(){if(me.phase==='count'&&me.rd===g.g){me.tk=trackIdx(myTrack());P.tk=TRACKS[me.tk];me.sg=stageIdx(myStage());P.sg=STAGES[me.sg];P.best=PF.data.best[bestKey(g,P.tk)]||0}});
+  P.G=g;P.i=0;P.q=null;P.qShown=-1;P.typed='';P.lock=false;P.flash='';P.fbText='';P.fbKind='';
+  P.missed=new Map();P.grid=new Map();P.fr=new Map();P.recorded=false;P.newBest=false;
+  P.best=PF.data.best[bestKey(g,P.tk)]||0;
+  var now=Date.now();P.countEnd=now+3000;P.roundEnd=P.countEnd+g.du*1000;
+  pushMe();
+  clearInterval(P.timer);P.timer=setInterval(tick,100);
+  if(g.hostIsMe&&S.mode==='room'){
+    clearTimeout(hostTO);
+    hostTO=setTimeout(function(){var c=game();if(c&&c.hostIsMe&&c.ph==='play'&&c.g===g.g)hostSet({ph:'results'})},(3+g.du+8)*1000);
+  }
+}
+function abortRound(){clearInterval(P.timer);me.phase='idle';P.lock=false}
+function finishRound(){
+  clearInterval(P.timer);me.phase='done';me.fin=1;P.lock=false;
+  recordRound();
+  if(S.mode==='solo')S.soloGame.ph='results';
+  pushMe();sync();
+}
+function tick(){
+  var now=Date.now();
+  if(me.phase==='count'){
+    if(now>=P.countEnd){me.phase='play';nextQuestion();render()}
+    else if(GV)GV.count.textContent=String(Math.ceil((P.countEnd-now)/1000));
+    return;
+  }
+  if(me.phase==='play'){
+    if(now>=P.roundEnd){finishRound();return}
+    updateTimer(now);
+  }
+}
+function recordGrid(q,ok){
+  if(!q.fid)return;
+  var f=P.fr.get(q.fid)||[0,0];f[ok?0:1]++;P.fr.set(q.fid,f);
+}
+function pickOpt(v){
+  if(me.phase!=='play'||P.lock||!P.q||!P.q.opts)return;
+  P.pick=v;P.typed=String(v);submit();
+}
+function inputDigit(d){
+  if(me.phase!=='play'||P.lock||!P.q||P.q.opts)return;
+  if(P.typed.length<4)P.typed+=d;
+  if(P.typed.length>=String(P.q.ans).length)submit();else drawGame();
+}
+function backspace(){if(me.phase!=='play'||P.lock)return;P.typed=P.typed.slice(0,-1);drawGame()}
+function submit(){
+  if(me.phase!=='play'||P.lock||!P.typed||!P.q)return;
+  var q=P.q,ok=Number(P.typed)===q.ans;
+  recordGrid(q,ok);P.lock=true;
+  var qi=P.i;
+  if(ok){
+    var pts=Math.round((q.base||P.tk.base)*1*(1+Math.min(me.st,5)*0.2));
+    me.st++;me.bs=Math.max(me.bs,me.st);me.sc+=pts;me.r++;
+    P.flash='good';P.fbKind='good';P.fbText='+'+pts;
+    setTimeout(function(){P.lock=false;if(P.i===qi){nextQuestion();drawGame()}},220);
+  }else{
+    me.w++;me.st=0;
+    var key=q.full,m=P.missed.get(key)||{full:q.full,n:0};m.n++;P.missed.set(key,m);
+    P.flash='bad';P.fbKind='bad';P.fbText='Answer: '+q.ca;
+    setTimeout(function(){P.lock=false;if(P.i===qi){nextQuestion();drawGame()}},1700);
+  }
+  pushMe();drawGame();
+}
+function hostCheck(){
+  var g=game();
+  if(!g||!g.hostIsMe||g.ph!=='play'||S.mode==='solo')return;
+  var ps=players().filter(function(p){return p.rd===g.g});
+  if(ps.length&&ps.every(function(p){return p.fin}))hostSet({ph:'results'});
+}
+function syncGame(){
+  var g=game();if(!g)return;
+  if(!S.seen){S.seen=true;S.lastG=g.g;if(g.ph==='play')me.phase='idle'}
+  if(g.ph==='play'&&g.g>S.lastG){S.lastG=g.g;beginRound(g)}
+  if(g.ph==='lobby'&&me.phase!=='idle')abortRound();
+}
+function sync(){syncGame();hostCheck();render()}
+
+function startRound(){
+  var g=game();if(!g||!g.hostIsMe)return;
+  hostSet({ph:'play',g:g.g+1,sd:1+rint(2147483000),du:90,mx:12});
+}
+
+/* ---------- joining, leaving ---------- */
+function setErr(m){S.err=m||'';render()}
+function enterRoom(nr,code,asHost){
+  resetMe();S.nr=nr;S.code=code;S.mode='room';S.seen=false;S.lastG=0;S.conn=true;S.err='';S.resTab='round';
+  S.unsubs=[
+    nr.onPeers(function(){sync()},function(){leaveRoom('The connection to the room ended.')}),
+    nr.onConnection(function(c){
+      clearTimeout(connTO);
+      if(c){S.conn=true;renderTop()}else connTO=setTimeout(function(){S.conn=nr.connected();renderTop()},2000);
+    })
+  ];
+  var base={n:S.name,c:S.color,av:S.av,rd:0,sc:0,r:0,w:0,st:0,bs:0,lv:0,tk:trackIdx(myTrack()),fin:0,base:0,br:0,bw:0};
+  if(asHost)Object.assign(base,{h:1,ph:'lobby',g:0,sd:0,du:90,mx:12});
+  setPresence(base);
+  curKey=null;render();
+}
+async function createRoom(){
+  if(S.busy||!S.room)return;
+  S.busy=true;S.err='';render();
+  try{
+    for(var t=0;t<4;t++){
+      var code=randomCode();
+      var nr=await S.room.join('tt-'+code.toLowerCase());
+      await sleep(1300);
+      var taken=nr.peers().some(function(p){return p.kind==='viewer'&&p.presence&&p.presence.h===1&&!p.sameTab});
+      if(taken){await nr.leave();continue}
+      S.busy=false;enterRoom(nr,code,true);return;
+    }
+    S.err='Could not open a room. Try again in a moment.';
+  }catch(e){S.err='Could not open a room. Try again in a moment.'}
+  S.busy=false;render();
+}
+async function joinRoom(code){
+  if(S.busy||!S.room)return;
+  code=String(code||'').toUpperCase();
+  if(!/^[A-Z]{4}$/.test(code)){setErr('Room codes are 4 letters.');return}
+  S.busy=true;S.err='';render();
+  try{
+    var nr=await S.room.join('tt-'+code.toLowerCase());
+    var t0=Date.now(),found=false;
+    while(Date.now()-t0<3200){
+      if(nr.peers().some(function(p){return p.kind==='viewer'&&p.presence&&p.presence.h===1})){found=true;break}
+      await sleep(200);
+    }
+    if(!found){await nr.leave();S.err='No game found with code '+code+'. Check the letters or ask the host to start one.';S.busy=false;render();return}
+    S.busy=false;enterRoom(nr,code,false);return;
+  }catch(e){S.err='Could not join that room. Try again.'}
+  S.busy=false;render();
+}
+function leaveRoom(msg){
+  abortRound();clearTimeout(hostTO);clearTimeout(connTO);
+  S.unsubs.forEach(function(u){try{u()}catch(e){}});S.unsubs=[];
+  if(S.nr){try{S.nr.leave()}catch(e){}}
+  S.nr=null;S.mode='home';S.err=msg||'';resetMe();curKey=null;render();
+}
+function startSolo(){
+  resetMe();S.mode='solo';S.seen=true;S.lastG=0;S.err='';
+  S.soloGame={hostIsMe:true,ph:'lobby',g:0,sd:0,du:90,mx:12};
+  curKey=null;startRound();
+}
+function exitSolo(){abortRound();S.mode='home';S.soloGame=null;resetMe();curKey=null;render()}
+function becomeHost(){setPresence({h:1,ph:'lobby',g:S.lastG,sd:0,du:90,mx:12})}
+function copyCode(){
+  var p;try{p=navigator.clipboard.writeText(S.code)}catch(e){p=Promise.reject(e)}
+  p.then(function(){toast('Code copied')},function(){toast('Code: '+S.code)});
+}
+
+/* ---------- shared pieces ---------- */
+function lbList(items,showFin){
+  var ol=h('ol',{class:'lb'});
+  items.forEach(function(p,i){
+    ol.append(h('li',{class:'lb-row'+(p.isMe?' me':'')},
+      h('span',{class:'rank'},String(i+1)),
+      avatar(p.n,p.c,36),
+      h('div',{class:'who'},
+        h('div',{class:'nmrow'},h('span',{class:'nmtxt'},p.n),p.isMe?tag('You'):null,p.tk!=null?tag(TRACKS[p.tk].short+' · '+STAGES[p.sg||0].short):null,p.lv>0?tag('Boost','boost'):null,(showFin&&p.fin)?tag('Done'):null),
+        h('div',{class:'meta'},p.meta)),
+      h('span',{class:'pts'},String(p.pts))));
+  });
+  return ol;
+}
+function liveItems(ps){
+  return ps.map(function(p){return {isMe:p.isMe,n:p.n,c:p.c,lv:p.lv,tk:p.tk,sg:p.sg,fin:p.fin,pts:p.sc,meta:p.r+' right · '+p.w+' wrong'}});
+}
+
+/* ---------- views ---------- */
+var VIEWS={};
+/* ---------- teacher tools: only the teacher profile + its PIN can list or remove profiles (checked on the server) ---------- */
+function weakFacts(facts){
+  var by={};Object.keys(facts||{}).forEach(function(k){var q=BYID[k];if(!q)return;var f=facts[k],o=by[q.t]||(by[q.t]=[0,0]);o[0]+=f[0];o[1]+=f[1]});
+  return TRACKS.filter(function(t){var o=by[t.id];return o&&o[0]+o[1]>=3&&o[0]/(o[0]+o[1])<0.7}).map(function(t){var o=by[t.id];return t.short+' '+Math.round(o[0]/(o[0]+o[1])*100)+'%'}).join(', ');
+}
+function teacherPanel(){
+  var T={open:false,pin:'',list:null,roster:null,msg:'',busy:false,confirm:'',label:'',names:'',profOpen:false,pending:{},saving:false,bulk:'figures',bulkS:'ks3'};
+  var box=h('details',{class:'panel tpanel'});
+  box.addEventListener('toggle',function(){T.open=box.open});
+  function err(e){var m=String(e&&e.message||'');return /not_allowed/.test(m)?'That PIN does not work for this profile. Open the teacher profile first, then enter its PIN.':'Could not reach the game server. Try again.'}
+  async function fetchAll(){
+    var r=await PF.sb.rpc('eng_admin_list',{p_code:PF.code,p_pin:T.pin});if(r.error)throw r.error;T.list=r.data||[];
+    var r2=await PF.sb.rpc('eng_admin_roster',{p_code:PF.code,p_pin:T.pin});
+    T.roster=r2.error?null:r2.data;T.rosterOff=!!r2.error;
+  }
+  async function load(){
+    if(!PF.sb||PF.state!=='ready'){T.msg='Open the teacher profile first (type its name above), then enter the PIN.';draw();return}
+    T.busy=true;T.msg='';draw();
+    try{await fetchAll()}catch(e){T.list=null;T.msg=err(e)}
+    T.busy=false;draw();
+  }
+  async function act(fn,args,okMsg){
+    T.busy=true;T.confirm='';draw();
+    try{var r=await PF.sb.rpc(fn,Object.assign({p_code:PF.code,p_pin:T.pin},args));if(r.error)throw r.error;T.msg=typeof okMsg==='function'?okMsg(r.data):okMsg;await fetchAll();loadLeaderboard()}
+    catch(e){T.msg=/not_allowed/.test(String(e&&e.message))?err(e):/bad_label/.test(String(e&&e.message))?'Give the class a name first, like 8B.':/too_many/.test(String(e&&e.message))?'That is too many names at once. Add up to 80 at a time.':'That did not work. Check the database update has been run.'}
+    T.busy=false;draw();
+  }
+  function ask(key,fn){
+    if(T.confirm!==key){T.confirm=key;draw();setTimeout(function(){if(T.confirm===key){T.confirm='';draw()}},4000);return}
+    fn();
+  }
+  function del(it){ask(it.handle,function(){act('tts_admin_delete',{p_handle:it.handle},'Removed "'+it.name+'".')})}
+  function importNames(){
+    var names=T.names.split(/\r?\n/).map(function(x){return x.replace(/\t.*$/,'').trim()}).filter(function(x){return x.length>1});
+    if(!names.length){T.msg='Paste the names first, one per line.';draw();return}
+    act('eng_admin_import',{p_label:T.label,p_names:names,p_track:T.track||'figures',p_stage:T.stage||'ks3'},function(d){T.names='';return 'Added '+d.added+' name'+(d.added===1?'':'s')+' to '+d.class+'. Class code: '+d.code})
+  }
+  var barEl,barMsg,saveBtn,discardBtn;
+  function pendCount(){return Object.keys(T.pending).length}
+  function refreshBar(){
+    if(!barEl)return;var n=pendCount();
+    barMsg.textContent=T.saving?'Saving…':n?n+' level change'+(n===1?'':'s')+' not saved yet':'Pick a new topic or stage for a student, then press Save levels.';
+    saveBtn.disabled=T.saving||n===0;saveBtn.textContent=T.saving?'Saving…':'Save levels';
+    if(discardBtn)discardBtn.disabled=T.saving;
+  }
+  async function saveLevels(only){
+    var ids=Object.keys(T.pending);if(only!=null)ids=ids.filter(function(k){return k===String(only)});if(!ids.length||T.saving)return;
+    T.saving=true;T.msg='';draw();
+    var ok=0,bad=[];
+    for(var i=0;i<ids.length;i++){
+      var rid=+ids[i],want=T.pending[ids[i]];
+      try{var r=await PF.sb.rpc('eng_admin_set_level',{p_code:PF.code,p_pin:T.pin,p_rid:rid,p_track:want.t,p_stage:want.s});if(r.error)throw r.error;if(!(r.data>0))throw new Error('no row');delete T.pending[ids[i]];ok++}
+      catch(e){var row=(T.roster&&T.roster.rows||[]).filter(function(x){return x.rid===rid})[0];bad.push(row?row.real:'#'+rid)}
+    }
+    try{await fetchAll()}catch(e){}
+    T.msg=(ok?'Saved '+ok+' level'+(ok===1?'':'s')+'.':'')+(bad.length?' Could not save: '+bad.join(', ')+'. Check your internet and press Save again.':'');
+    T.saving=false;draw();
+  }
+  function rosterView(){
+    var out=[h('div',{class:'label',style:'margin-top:6px'},'Class lists')];
+    if(T.rosterOff||!T.roster){out.push(h('p',{class:'note'},'Class lists are not installed yet. Run database/1_setup.sql in the Supabase SQL Editor.'));return out}
+    var R=T.roster;
+    out.push(h('p',{class:'note'},'Students enter their class code, then tap their own name. Give them the code for their class.'));
+    if(R.classes.length)out.push(h('div',{class:'lblist'},R.classes.map(function(c){return h('div',{class:'lbrow',style:'grid-template-columns:minmax(0,1fr) auto'},h('div',{class:'nmtxt'},c.label),h('span',{class:'sc'},c.code))})));
+    var label=h('input',{class:'input',type:'text',maxlength:'20','aria-label':'Class name',placeholder:'Class name, e.g. 8B',value:T.label,style:'padding-left:14px',oninput:function(){T.label=label.value}});
+    var trackSel=h('select',{class:'input','aria-label':'Topic for these students',style:'padding-left:14px',onchange:function(){T.track=trackSel.value}},TRACKS.map(function(t){return h('option',{value:t.id},t.name)}));trackSel.value=T.track||'figures';
+    var stageSel=h('select',{class:'input','aria-label':'Stage for these students',style:'padding-left:14px',onchange:function(){T.stage=stageSel.value}},STAGES.map(function(t){return h('option',{value:t.id},t.name)}));stageSel.value=T.stage||'ks3';
+    var names=h('textarea',{class:'input',rows:'5','aria-label':'Student names','aria-describedby':'nm-help',placeholder:'One name per line, e.g.\nAnna S.\nThabo M.',oninput:function(){T.names=names.value}});names.value=T.names;
+    out.push(h('div',{class:'stack'},label,names,h('p',{class:'note'},'Topic and stage for these students (you can change each student afterwards):'),trackSel,stageSel,h('p',{class:'note',id:'nm-help'},'Tip: use first name and last initial. Anyone with the class code can see the names that are still free.'),
+      h('button',{class:'btn',type:'button',disabled:T.busy,onclick:importNames},'Add names to class')));
+    if(R.rows.length){
+      out.push(h('div',{class:'label',style:'margin-top:6px'},'Progress'));
+      var bulkSel=h('select',{class:'input','aria-label':'Topic for everyone',style:'padding:8px 10px;min-height:0;font-size:.9rem',onchange:function(){T.bulk=bulkSel.value}},TRACKS.map(function(t){return h('option',{value:t.id},t.name)}));bulkSel.value=T.bulk;
+      var bulkSt=h('select',{class:'input','aria-label':'Stage for everyone',style:'padding:8px 10px;min-height:0;font-size:.9rem',onchange:function(){T.bulkS=bulkSt.value}},STAGES.map(function(t){return h('option',{value:t.id},t.name)}));bulkSt.value=T.bulkS;
+      out.push(h('div',{class:'stack'},h('p',{class:'note'},'Change levels below, then press Save levels. Or set everyone to one topic and stage first:'),
+        h('div',{class:'joinrow'},bulkSel,bulkSt,h('button',{class:'btn small',type:'button',disabled:T.saving,onclick:function(){R.rows.forEach(function(r){var ct=TRACKS[trackIdx(r.track)].id,cs=STAGES[stageIdx(r.stage)].id;if(ct===T.bulk&&cs===T.bulkS)delete T.pending[r.rid];else T.pending[r.rid]={t:T.bulk,s:T.bulkS}});draw()}},'Set all'))));
+      barMsg=h('span',{class:'nmtxt',style:'white-space:normal'});
+      saveBtn=h('button',{class:'btn primary',type:'button',onclick:function(){saveLevels()}},'Save levels');
+      discardBtn=h('button',{class:'btn small',type:'button',disabled:T.saving,onclick:function(){T.pending={};T.msg='';draw()}},'Discard');
+      barEl=h('div',{class:'savebar',role:'status'},barMsg,h('div',{class:'actions'},saveBtn,discardBtn));
+      refreshBar();
+      out.push(barEl);
+      out.push(h('div',{class:'lblist'},R.rows.map(function(r){
+        var tot=(r.right||0)+(r.wrong||0),acc=tot?Math.round(r.right/tot*100)+'%':'–';
+        var weak=weakFacts(r.facts);
+        var sub=r.user?(r.user+' · '+(r.rounds||0)+' rounds · '+acc+' right · best '+(r.best||0)+(weak?' · weak: '+weak:'')):'Has not picked this name yet';
+        var ct=TRACKS[trackIdx(r.track)].id,cs=STAGES[stageIdx(r.stage)].id,pend=T.pending[r.rid];
+        var chg=h('div',{class:'actions',style:'align-items:center',hidden:!pend},h('span',{class:'sub',style:'color:var(--boost);font-weight:700'},'Changed.'),h('button',{class:'btn small primary',type:'button',onclick:function(){saveLevels(r.rid)}},'Save this level'));
+        var selT,selS;
+        function onSel(){if(selT.value===ct&&selS.value===cs)delete T.pending[r.rid];else T.pending[r.rid]={t:selT.value,s:selS.value};chg.hidden=selT.value===ct&&selS.value===cs;refreshBar()}
+        selT=h('select',{class:'input','aria-label':'Topic for '+r.real,style:'padding:6px 10px;min-height:0;font-size:.85rem',disabled:T.saving,onchange:onSel},TRACKS.map(function(t){return h('option',{value:t.id},t.name)}));selT.value=pend?pend.t:ct;
+        selS=h('select',{class:'input','aria-label':'Stage for '+r.real,style:'padding:6px 10px;min-height:0;font-size:.85rem;margin-top:6px',disabled:T.saving,onchange:onSel},STAGES.map(function(t){return h('option',{value:t.id},t.name)}));selS.value=pend?pend.s:cs;
+        return h('div',{class:'lbrow',style:'grid-template-columns:minmax(0,1fr) auto'},
+          h('div',{style:'min-width:0'},h('div',{class:'nmtxt'},r.real+' ('+r.class+')'),h('div',{class:'sub'},sub),h('div',{class:'sub',style:'margin-top:6px'},'Level:'),selT,selS,chg),
+          h('div',{class:'actions',style:'justify-content:flex-end'},
+            r.user?h('button',{class:'btn small',type:'button',disabled:T.busy,onclick:function(){ask('u'+r.rid,function(){act('eng_admin_unlink',{p_rid:r.rid},'Unlinked '+r.real+'. They can pick a name again.')})}},T.confirm==='u'+r.rid?'Tap again':'Unlink'):null,
+            h('button',{class:'btn small danger',type:'button',disabled:T.busy,onclick:function(){ask('r'+r.rid,function(){act('eng_admin_roster_remove',{p_rid:r.rid},'Removed '+r.real+' from the list.')})}},T.confirm==='r'+r.rid?'Tap again':'Remove')));
+      })));
+    }
+    return out;
+  }
+  function draw(){
+    var pin=h('input',{class:'input',type:'password',autocomplete:'off',spellcheck:'false','aria-label':'Teacher PIN',placeholder:'Teacher PIN',value:T.pin,style:'padding-left:14px',
+      oninput:function(){T.pin=pin.value},onkeydown:function(e){if(e.key==='Enter')load()}});
+    var kids=[h('summary',{class:'label',style:'cursor:pointer'},'Teacher tools')];
+    if(T.list===null){
+      kids.push(h('p',{class:'note'},'For the teacher only. Open the teacher profile and enter the PIN to manage class lists and remove profiles.'),
+        h('div',{class:'joinrow'},pin,h('button',{class:'btn',type:'button',disabled:T.busy,onclick:load},'Unlock')));
+    }else{
+      rosterView().forEach(function(x){kids.push(x)});
+      var prof=h('details',{class:'subd'},h('summary',{class:'label',style:'cursor:pointer'},'All profiles (remove)'),
+        h('div',{class:'lblist'},T.list.map(function(it){
+          return h('div',{class:'lbrow',style:'grid-template-columns:minmax(0,1fr) auto'},
+            h('div',null,h('div',{class:'nmtxt'},it.name+(it.me?' (you)':'')),h('div',{class:'sub'},it.rounds+' rounds, best '+it.best)),
+            h('div',{class:'actions',style:'justify-content:flex-end'},
+              it.me?null:h('button',{class:'btn small danger',type:'button',disabled:T.busy,onclick:function(){del(it)}},T.confirm===it.handle?'Tap again to remove':'Remove')));
+        })));
+      prof.open=T.profOpen;prof.addEventListener('toggle',function(){T.profOpen=prof.open});
+      kids.push(prof,h('div',{class:'actions'},h('button',{class:'btn small',type:'button',onclick:function(){T.list=null;T.roster=null;T.pin='';T.msg='';T.pending={};draw()}},'Lock')));
+    }
+    if(T.msg)kids.push(h('p',{class:'note',role:'status'},T.msg));
+    fill(box,kids);box.open=T.open;
+  }
+  draw();
+  return box;
+}
+VIEWS.home=function(){
+  var el=h('div',{class:'home'});
+  var renaming=false;
+  /* ---- who is playing ---- */
+  var avOpen=false,avTO;
+  var avBox=h('section',{class:'panel',hidden:true});
+  var avatarBtn=h('button',{class:'avatar-btn',type:'button','aria-label':'Make your avatar',title:'Tap to make your avatar',onclick:toggleAv});
+  function toggleAv(){avOpen=!avOpen;paintAv();if(avOpen&&avBox.scrollIntoView)avBox.scrollIntoView({block:'nearest'})}
+  function avChanged(){AVC[nameKey(S.name)]=S.av;paint();paintAv();clearTimeout(avTO);avTO=setTimeout(saveAvatar,500)}
+  function setAvPart(i,v){var a=S.av.split('');a[i]=String(v);S.av=a.join('');avChanged()}
+  function paintAv(){
+    avBox.hidden=!avOpen;
+    if(!avOpen)return;
+    var cats=[['Head colour',0],['Face shape',1],['Eyes',2],['Mouth',3],['Hat',4],['Extra',5]];
+    var rows=[h('div',{class:'pfline'},h('div',{class:'label'},'Your avatar'),h('div',{class:'actions'},
+        h('button',{class:'btn small',type:'button',onclick:function(){S.av=randomAv();avChanged()}},'Surprise me'),
+        h('button',{class:'btn small primary',type:'button',onclick:function(){avOpen=false;paintAv()}},'Done'))),
+      h('div',{class:'avprev'},avatar('x',S.color,96,S.av),h('p',{class:'note'},PF.state==='ready'?'Pick the parts you like. It saves to your profile.':'Pick the parts you like. Save your name to keep it.'))];
+    cats.forEach(function(c){
+      rows.push(h('div',{class:'label'},c[0]),h('div',{class:'avgrid'},Array.from({length:AV_SIZES[c[1]]},function(_,v){
+        var a=S.av.split('');a[c[1]]=String(v);
+        return h('button',{class:'avopt',type:'button','aria-label':c[0]+' '+(v+1),'aria-pressed':String(Number(S.av[c[1]])===v),onclick:function(){setAvPart(c[1],v)}},avatar('x',S.color,40,a.join('')));
+      })));
+    });
+    rows.push(h('div',{class:'label'},'Background'),h('div',{class:'avgrid'},Array.from({length:COLORS},function(_,v){
+      return h('button',{class:'avcol',type:'button','aria-label':'Background '+(v+1),'aria-pressed':String(S.color===v),style:'background:var(--p'+v+')',onclick:function(){S.color=v;paint();paintAv();syncIdentityToProfile()}});
+    })));
+    fill(avBox,h('div',{class:'avedit'},rows));
+  }
+  var nameIn=h('input',{class:'input',id:'player-name',type:'text',maxlength:'20',autocomplete:'off',spellcheck:'false','aria-label':'Your name',placeholder:'Type your name',value:S.name,
+    oninput:function(){S.nameTouched=true;S.name=cleanName(nameIn.value);paint();upd()},onkeydown:function(e){if(e.key==='Enter')doCreate()}});
+  var dice=h('button',{class:'btn small',type:'button',onclick:function(){nameIn.value=randomName();S.nameTouched=true;S.name=nameIn.value;paint();upd()}},'Surprise me');
+  var createBtn=h('button',{class:'btn primary',type:'button',style:'width:100%',onclick:doCreate},'Save my progress');
+  var pCode=h('input',{class:'input',id:'profile-code',type:'text',maxlength:'20',autocomplete:'off',spellcheck:'false','aria-label':'Your name from before',placeholder:'Your name',
+    oninput:function(){upd()},onkeydown:function(e){if(e.key==='Enter')doOpen()}});
+  var openBtn=h('button',{class:'btn',type:'button',onclick:doOpen},'Open');
+  var pfMsg=h('p',{class:'note',role:'status'});
+  var renameIn=h('input',{class:'input',id:'rename-input',type:'text',maxlength:'20',autocomplete:'off',spellcheck:'false','aria-label':'New name',
+    onkeydown:function(e){if(e.key==='Enter')saveRename();if(e.key==='Escape'){renaming=false;upd()}}});
+  var meBox=h('section',{class:'panel'});
+  var meSig='';
+  var newBox=h('details',{class:'newbox'},h('summary',null,'First time here? Make your name'),
+    h('div',{class:'namerow'},avatarBtn,nameIn),h('div',{class:'actions'},dice,h('button',{class:'btn small',type:'button',onclick:toggleAv},'Make avatar')),createBtn,
+    h('p',{class:'note'},'Saving keeps your scores. Next time, type the same name on any device to carry on.'));
+  async function doCreate(){
+    if(PF.busy||PF.state==='ready')return;
+    S.name=cleanName(nameIn.value);
+    if(nameKey(S.name).length<3){S.pfErr='Type your name first (at least 3 letters).';newBox.open=true;upd();nameIn.focus();return}
+    PF.busy=true;S.pfErr='';upd();
+    var r=await createProfile();PF.busy=false;
+    if(r==='ok')saveAvatar();
+    S.pfErr=r==='ok'?'':r==='taken'?'Someone already has that name. Add a letter or try "Surprise me".':r==='bad'?'Names need at least 3 letters or numbers.':'Could not save right now. Check your internet and try again.';
+    upd();
+  }
+  async function doOpen(){
+    if(PF.busy)return;PF.busy=true;S.pfErr='';upd();
+    var r=await openProfile(pCode.value);PF.busy=false;
+    S.pfErr=r==='ok'?'':r==='invalid'?'Type your name (at least 3 letters).':r==='notfound'?'No one has played with that name yet. Check the spelling.':'Could not reach the game server. Try again.';
+    if(r==='ok'){pCode.value='';nameIn.value=S.name;paint()}
+    upd();
+  }
+  function saveRename(){
+    var n=cleanName(renameIn.value);renaming=false;
+    if(n&&n!==PF.data.name){S.name=n;syncIdentityToProfile()}
+    upd();
+  }
+  function paint(){fill(avatarBtn,avatar(S.name||'?',S.color,48,S.av))}
+  /* make sure there is a name before playing */
+  function commit(){
+    if(PF.state==='ready'){S.name=cleanName(PF.data.name)||S.name;return}
+    S.name=cleanName(nameIn.value)||randomName();nameIn.value=S.name;paint();
+  }
+  /* ---- play ---- */
+  var codeIn=h('input',{class:'input code',id:'room-code',type:'text',maxlength:'4',autocomplete:'off',autocapitalize:'characters',spellcheck:'false','aria-label':'Room code',placeholder:'CODE',
+    oninput:function(){codeIn.value=codeIn.value.toUpperCase().replace(/[^A-Z]/g,'');upd()},
+    onkeydown:function(e){if(e.key==='Enter')doJoin()}});
+  var hostBtn=h('button',{class:'btn primary big',type:'button',onclick:function(){commit();createRoom()}},'Host a game');
+  var joinBtn=h('button',{class:'btn big',type:'button',onclick:doJoin},'Join');
+  var soloBtn=h('button',{class:'btn big',type:'button',onclick:function(){commit();startSolo()}},'Practice on my own');
+  var msg=h('p',{class:'note',role:'status'});
+  function doJoin(){commit();joinRoom(codeIn.value)}
+  var playBox=h('section',{class:'panel'},
+    h('div',{class:'label'},'Play'),
+    hostBtn,
+    h('div',{class:'joinrow'},codeIn,joinBtn),
+    soloBtn,
+    msg);
+  function upd(){
+    var ready=S.roomState==='ready'&&!S.busy;
+    hostBtn.disabled=!ready;joinBtn.disabled=!ready||codeIn.value.length!==4;
+    msg.textContent=S.err||(S.roomState==='connecting'?'Connecting…':S.roomState==='unavailable'?'Could not reach the game server. Check your internet and reload. Practising on your own still works.':'');
+    var isReady=PF.state==='ready',dbOk=PF.dbState==='ready';
+    paint();paintClass();
+    /* only rebuild the box when what it shows changes, so typing never loses focus */
+    var d=PF.data,tot=d.right+d.wrong;
+    var legacy=isReady&&isLegacy(PF.code)&&nameKey(PF.code)!==nameKey(d.name);
+    var sig=isReady?JSON.stringify(['in',d.name,d.rounds,d.right,d.wrong,d.bestScore,renaming,legacy,PF.msg||'',PF.code,(PF.link&&PF.link.class||'')+(PF.link&&PF.link.track||'')]):'out';
+    if(sig!==meSig){
+      meSig=sig;
+      if(!isReady){
+        fill(meBox,
+          h('div',{class:'label'},'Played before?'),
+          h('p',{class:'note'},'Type your name to carry on.'),
+          h('div',{class:'joinrow'},pCode,openBtn),
+          newBox,
+          pfMsg);
+      }else{
+        fill(meBox,
+          h('div',{class:'label'},'Playing as'),
+          renaming
+            ?h('div',{class:'namerow'},avatarBtn,renameIn)
+            :h('div',{class:'namerow'},avatarBtn,h('div',{class:'bigname'},d.name||S.name)),
+          renaming
+            ?h('div',{class:'actions'},h('button',{class:'btn small primary',type:'button',onclick:saveRename},'Save name'),h('button',{class:'btn small',type:'button',onclick:function(){renaming=false;upd()}},'Cancel'))
+            :h('div',{class:'actions'},
+                h('button',{class:'btn small',type:'button',onclick:toggleAv},'Avatar'),
+                h('button',{class:'btn small',type:'button',onclick:function(){renaming=true;renameIn.value=d.name||S.name;upd();renameIn.focus();renameIn.select()}},'Change name'),
+                d.rounds>0?h('button',{class:'btn small',type:'button',onclick:function(){S.sub='profile';render()}},'My stats'):null,
+                h('button',{class:'btn small',type:'button',onclick:function(){closeProfile();S.pfErr='';S.nameTouched=false;S.name='';nameIn.value='';upd()}},'Not you?')),
+          d.rounds>0?h('div',{class:'statgrid',style:'grid-template-columns:repeat(3,minmax(0,1fr))'},statTile('Rounds',d.rounds),statTile('Accuracy',Math.round(d.right/Math.max(1,tot)*100)+'%'),statTile('Best score',d.bestScore)):null,
+          legacy?h('p',{class:'note'},'Your old code is '+displayCode(PF.code)+'. Change your name and the name becomes your code.'):null,
+          PF.link&&PF.link.class?h('p',{class:'note'},'In class '+PF.link.class+' ✓ · Your level: '+TRACKS[trackIdx(PF.link.track)].name+' ('+STAGES[stageIdx(PF.link.stage)].name+')'):null,
+          PF.msg?h('p',{class:'note',role:'status'},PF.msg):null);
+      }
+    }
+    if(!isReady){
+      createBtn.disabled=!dbOk||PF.busy;
+      openBtn.disabled=!dbOk||PF.busy||nameKey(pCode.value).length<3;
+      pfMsg.textContent=S.pfErr||(!dbOk&&PF.dbState!=='connecting'?'Saving needs the internet. You can still play.':'');
+      if(document.activeElement!==nameIn&&!S.nameTouched)nameIn.value=S.name;
+    }
+  }
+  /* ---- join my class (so the teacher can see my progress) ---- */
+  var classBox=h('section',{class:'panel'});
+  var C={code:'',names:null,label:'',msg:'',busy:false,sel:0,sig:''};
+  var cIn=h('input',{class:'input code',type:'text',maxlength:'5',autocomplete:'off',autocapitalize:'characters',spellcheck:'false','aria-label':'Class code',placeholder:'CLASS CODE',
+    oninput:function(){cIn.value=cIn.value.toUpperCase().replace(/[^A-Z]/g,'');C.code=cIn.value;cFind.disabled=C.busy||C.code.length<5},onkeydown:function(e){if(e.key==='Enter'&&C.code.length===5)findClass()}});
+  var cFind=h('button',{class:'btn',type:'button',onclick:findClass},'Find');
+  function cErr(e){var m=String(e&&e.message||'');return /no_class/.test(m)?'That class code is not right. Check it with your teacher.':/name_taken/.test(m)?'Someone just picked that name. Ask your teacher.':/already_linked/.test(m)?'You already picked a name.':'Could not reach the game server. Try again.'}
+  async function findClass(){
+    if(C.busy)return;C.busy=true;C.msg='';paintClass();
+    try{var r=await PF.sb.rpc('eng_class_open',{p_class:C.code,p_code:PF.code});if(r.error)throw r.error;C.names=r.data.names||[];C.label=r.data.label;C.sel=0}
+    catch(e){C.msg=cErr(e)}
+    C.busy=false;paintClass();
+  }
+  async function claim(n){
+    if(C.sel!==n.rid){C.sel=n.rid;paintClass();return}
+    if(C.busy)return;C.busy=true;paintClass();
+    try{var r=await PF.sb.rpc('eng_class_claim',{p_class:C.code,p_code:PF.code,p_rid:n.rid});if(r.error)throw r.error;PF.link={class:r.data.class,track:r.data.track,stage:r.data.stage};C.names=null;C.code='';cIn.value='';C.busy=false;loadLeaderboard();refreshProfileUI();return}
+    catch(e){C.msg=cErr(e);if(/name_taken/.test(String(e&&e.message)))findClass()}
+    C.busy=false;paintClass();
+  }
+  function paintClass(){
+    var show=PF.state==='ready'&&PF.link===null;
+    var sig=JSON.stringify([show,C.names&&C.names.length,C.label,C.msg,C.busy,C.sel]);
+    if(sig===C.sig)return;C.sig=sig;
+    classBox.hidden=!show;
+    if(!show){fill(classBox);return}
+    cFind.disabled=C.busy||C.code.length<5;
+    if(!C.names){
+      fill(classBox,h('div',{class:'label'},'Join your class'),
+        h('p',{class:'note'},'Your teacher gave you a class code. Enter it and pick your own name, so your teacher can see your progress. Your username stays as it is in games.'),
+        h('div',{class:'joinrow'},cIn,cFind),
+        C.msg?h('p',{class:'note',role:'status'},C.msg):null);
+    }else{
+      fill(classBox,h('div',{class:'label'},'Class '+C.label),
+        h('p',{class:'note'},C.names.length?'Tap your own name. Then tap it again to confirm.':'No names are left. Ask your teacher.'),
+        h('div',{class:'lblist'},C.names.map(function(n){
+          return h('button',{class:'btn'+(C.sel===n.rid?' primary':''),type:'button',style:'width:100%;justify-content:flex-start',disabled:C.busy,onclick:function(){claim(n)}},C.sel===n.rid?'Yes, I am '+n.name:n.name)})),
+        h('div',{class:'actions'},h('button',{class:'btn small',type:'button',onclick:function(){C.names=null;C.msg='';paintClass()}},'Back')),
+        C.msg?h('p',{class:'note',role:'status'},C.msg):null);
+    }
+  }
+  /* ---- leaderboard ---- */
+  var lbBox=h('section',{class:'panel'});
+  function paintLB(){
+    var kids=[h('div',{class:'pfline'},h('div',{class:'label'},'Leaderboard'),
+      h('button',{class:'btn small',type:'button',onclick:loadLeaderboard},'Refresh'))];
+    if(LB.state==='loading'&&!LB.data)kids.push(h('p',{class:'note'},'Loading…'));
+    else if(LB.state==='error'&&!LB.data)kids.push(h('p',{class:'note'},'Could not load the leaderboard. Press Refresh.'));
+    else if(LB.data){
+      var d=LB.data,top=d.top||[],mine=d.me&&d.me.rank;
+      if(!top.length)kids.push(h('p',{class:'note'},'No scores yet. Save your progress and finish a round to be first.'));
+      else{
+        kids.push(h('p',{class:'note'},mine?'You are number '+mine+' of '+d.total+'. Best round scores:':'Best round scores:'));
+        kids.push(h('div',{class:'lblist'},top.map(function(t){
+          return h('div',{class:'lbrow'+(mine&&t.rank===mine?' me':'')},h('span',{class:'rk'},String(t.rank)),
+            h('div',{class:'prow'},avatar(t.name,t.color,32,t.av),h('div',{style:'min-width:0'},h('div',{class:'nmtxt'},t.name),h('div',{class:'sub'},t.acc+'% right · '+t.rounds+(t.rounds===1?' round':' rounds')))),
+            h('span',{class:'sc'},String(t.best)));
+        })));
+      }
+    }
+    fill(lbBox,kids);
+  }
+  LB.cb=paintLB;paintLB();loadLeaderboard();
+  function pull(){if(!S.nameTouched)nameIn.value=S.name;upd()}
+  upd();
+  el.append(
+    h('div',{class:'hero'},h('h1',null,'Race your friends at English.'),h('p',null,'90-second rounds. Everyone gets questions at their own level, and harder questions earn more points, so anyone can win. Fall behind and you get easier questions to catch up.')),
+    meBox,
+    avBox,
+    classBox,
+    playBox,
+    lbBox,
+    teacherPanel());
+  return {el:el,update:upd,pull:pull};
+};
+function statTile(label,value){return h('div',{class:'stat'},h('b',null,String(value)),h('span',null,label))}
+function factClass(f){if(!f)return '';var t=f[0]+f[1];if(!t)return '';var a=f[0]/t;return a>=0.9?' ok':a>=0.6?' mid':' miss'}
+
+VIEWS.profile=function(){
+  var el=h('div',{class:'stack'});
+  function upd(){
+    var d=PF.data,tot=d.right+d.wrong;
+    var out=[h('div',{class:'actions'},h('button',{class:'btn',type:'button',onclick:function(){S.sub='';render()}},'Back'))];
+    out.push(h('section',{class:'panel'},
+      h('div',{class:'namerow'},avatar(d.name||S.name,S.color,56),h('div',{class:'bigname'},d.name||S.name)),
+      h('div',{class:'statgrid',style:'grid-template-columns:repeat(2,minmax(0,1fr))'},statTile('Rounds',d.rounds),statTile('Accuracy',tot?Math.round(d.right/tot*100)+'%':'–'),statTile('Best score',d.bestScore),statTile('Best streak',d.bestStreak))));
+    if(d.rounds===0){
+      out.push(h('section',{class:'panel'},h('p',{class:'note'},'Play a round and your results will show up here.')));
+    }else{
+      var by={};Object.keys(d.facts).forEach(function(k){var q=BYID[k];if(!q)return;var f=d.facts[k],o=by[q.t]||(by[q.t]=[0,0]);o[0]+=f[0];o[1]+=f[1]});
+      var topicRows=TRACKS.filter(function(t){return by[t.id]}).map(function(t){var o=by[t.id],tt=o[0]+o[1];return h('div',{class:'hrow'},h('span',null,t.name),h('span',null,(tt?Math.round(o[0]/tt*100):0)+'% right · '+tt+' answers'))});
+      var weak=Object.keys(d.facts).map(function(k){var q=BYID[k],f=d.facts[k],t=f[0]+f[1];return q?{q:q,t:t,acc:t?f[0]/t:1}:null})
+        .filter(function(x){return x&&x.t>0&&x.acc<0.8}).sort(function(x,y){return x.acc-y.acc||y.t-x.t}).slice(0,12);
+      if(topicRows.length)out.push(h('section',{class:'panel'},
+        h('h2',null,'How you are doing by topic'),
+        h('p',{class:'note'},'Every question you have answered, across all rounds.'),
+        h('div',null,topicRows),
+        h('div',{class:'label'},'Work on these next'),
+        weak.length?h('div',{class:'mchips'},weak.map(function(x){return h('span',{class:'mchip'},plainQ(x.q.q)+'  →  '+x.q.a,h('i',null,Math.round(x.acc*100)+'%'))})):h('p',{class:'note'},'Nothing is wobbling right now.')));
+      out.push(h('section',{class:'panel'},h('h2',null,'Recent rounds'),h('div',null,d.recent.map(function(r){
+        var when=r.t?new Date(r.t).toLocaleDateString(undefined,{month:'short',day:'numeric'}):'';
+        return h('div',{class:'hrow'},h('span',null,when+' · '+(r.m==='solo'?'On my own':'With friends')+(r.tk?' · '+TRACKS[trackIdx(r.tk)].short+' · '+(r.sg==='ig'?'IGCSE':'Lower sec.'):'')),h('span',null,r.sc+' pts · '+r.r+' right · '+r.w+' wrong'));
+      }))));
+    }
+    fill(el,out);
+  }
+  return {el:el,update:upd};
+};
+
+VIEWS.finding=function(){
+  var el=h('div',{class:'stack'},h('section',{class:'panel'},h('h2',null,'Looking for the game…'),h('p',{class:'note'},'Hang on a second while we find the host.')));
+  return {el:el,update:function(){}};
+};
+VIEWS.nohost=function(){
+  var el=h('div',{class:'stack'},h('section',{class:'panel'},
+    h('h2',null,'The host left the room'),
+    h('p',{class:'note'},'Someone can take over and start the next round. Everyone else stays connected.'),
+    h('div',{class:'actions'},h('button',{class:'btn primary',type:'button',onclick:becomeHost},'Become the host'),h('button',{class:'btn',type:'button',onclick:function(){leaveRoom()}},'Leave room'))));
+  return {el:el,update:function(){}};
+};
+
+VIEWS.lobby=function(){
+  var playersBox=h('div',{class:'plist'}),startBox=h('div',null);
+  var left=h('section',{class:'panel'},
+    h('div',null,h('div',{class:'label'},'Room code'),h('div',{class:'codetiles','aria-label':'Room code '+S.code.split('').join(' ')},S.code.split('').map(function(ch){return h('span',{class:'tile'},ch)}))),
+    h('p',{class:'note'},'Friends open this game, type this code and tap Join.'),
+    h('div',null,h('button',{class:'btn small',type:'button',onclick:copyCode},'Copy code')),
+    h('div',{class:'label'},'Players'),playersBox);
+  var right=h('section',{class:'panel'},h('h2',null,'How it works'),
+    h('ul',{class:'rules'},
+      h('li',null,'90 seconds of English questions at your own level.'),
+      h('li',null,'Right answer: points, more for a streak. IGCSE questions are worth more points.'),
+      h('li',null,'Wrong answer: you see the right one and your streak resets.'),
+      h('li',null,'Falling behind? You get easier questions so you can catch up.')),
+    startBox);
+  var el=h('div',{class:'lobby'},left,right);
+  function upd(){
+    var g=game();if(!g)return;
+    fill(playersBox,players().map(function(p){
+      return h('div',{class:'prow'},avatar(p.n,p.c,36),h('span',{class:'nmtxt'},p.n),p.isMe?tag('You'):null,p.h?tag('Host'):null);
+    }));
+    if(g.hostIsMe){
+      fill(startBox,h('button',{class:'btn primary big',type:'button',style:'width:100%',onclick:startRound},'Start round'),
+        h('p',{class:'note',style:'margin-top:8px'},'Start when everyone is in the player list.'));
+    }else{
+      fill(startBox,h('p',{class:'waiting'},'Waiting for the host to start…'));
+    }
+  }
+  return {el:el,update:upd};
+};
+
+VIEWS.game=function(){
+  var E={};
+  E.timer=h('div',{class:'timer'});
+  E.barFill=h('i');E.bar=h('div',{class:'bar'},E.barFill);
+  E.score=h('div',{class:'pts'});
+  E.right=h('b');E.wrong=h('b');E.streak=h('b');
+  E.rank=h('p',{class:'rankline'});
+  E.boost=h('div',{class:'boostbar',hidden:true});
+  E.count=h('div',{class:'countnum',hidden:true});
+  E.q=h('div',{class:'q'});
+  E.ansPre=h('span',{class:'pre'});E.ansText=h('span');E.ans=h('div',{class:'ans','aria-label':'Your answer'},E.ansPre,E.ansText,h('span',{class:'caret'}));
+  E.fb=h('div',{class:'fb',role:'status'});
+  E.qcard=h('div',{class:'qcard'},E.count,E.q,E.ans,E.fb);
+  var keyList=['1','2','3','4','5','6','7','8','9','Del','0','Go'];
+  E.keys=h('div',{class:'keys'},keyList.map(function(k){
+    var cls='key'+(k==='Del'?' fn':k==='Go'?' go':'');
+    return h('button',{type:'button',class:cls,'aria-label':k==='Del'?'Backspace':k==='Go'?'Submit answer':k,onclick:function(){if(k==='Del')backspace();else if(k==='Go')submit();else inputDigit(k)}},k);
+  }));
+  E.opts=h('div',{class:'opts',hidden:true});
+  E.lb=h('div',null);
+  E.trackLanes=h('div',{class:'track'});E.laneMap={};E.track=h('div',{class:'trackwrap'},h('div',{class:'track-cap'},h('span',null,'Race track'),h('span',null,'Finish line →')),E.trackLanes);
+  var play=h('div',{class:'playcol'},
+    h('div',{class:'hud'},
+      h('div',{class:'hud-top'},h('div',{class:'timer-wrap'},E.timer),h('div',{class:'scorebox'},h('div',{class:'label'},'Score'),E.score)),
+      E.bar,
+      h('div',{class:'statrow'},h('span',null,'Right ',E.right),h('span',null,'Wrong ',E.wrong),h('span',null,'Streak ',E.streak))),
+    E.track,E.rank,E.boost,E.qcard,E.keys,E.opts);
+  var side=h('aside',{class:'side'},h('h2',null,'Live standings'),E.lb);
+  var el=h('div',{class:'game-grid'},play,side);
+  GV=E;
+  return {el:el,update:drawGame};
+};
+function updateTimer(now){
+  var E=GV;if(!E||!P.G)return;
+  var rem=Math.max(0,P.roundEnd-(now||Date.now()));
+  var secs=Math.ceil(rem/1000);
+  fill(E.timer,String(secs),h('small',null,'s'));
+  E.barFill.style.transform='scaleX('+(rem/(P.G.du*1000))+')';
+  E.bar.classList.toggle('low',secs<=10);
+}
+function drawGame(){
+  var E=GV;if(!E||!P.G)return;
+  var counting=me.phase==='count';
+  E.count.hidden=!counting;E.q.hidden=counting;E.ans.hidden=true;
+  var isMC=!!(P.q&&P.q.opts);
+  E.keys.hidden=isMC;E.opts.hidden=!isMC;
+  E.keys.classList.toggle('off',counting);E.opts.classList.toggle('off',counting);
+  if(counting)E.count.textContent=String(Math.max(1,Math.ceil((P.countEnd-Date.now())/1000)));
+  if(P.q&&!counting&&P.qShown!==P.i){
+    E.q.className='q txt sci';(function(){var g=graphSVG(P.q.txt);fill(E.q,g,g?P.q.txt.replace(/^\[\[[^\]]*\]\]/,''):P.q.txt)})();
+    E.ansPre.textContent=P.q.pre||'';
+    if(P.q.opts)fill(E.opts,P.q.opts.map(function(v,n){return h('button',{type:'button',class:'opt','aria-label':'Answer '+(n+1)+': '+v,onclick:function(){pickOpt(n)}},h('span',{class:'on'},String(n+1)),String(v))}));
+    P.qShown=P.i;
+  }
+  E.ansText.textContent='';
+  if(P.q&&P.q.opts)[].forEach.call(E.opts.children,function(b,n){b.classList.toggle('pickbad',!!P.lock&&P.fbKind==='bad'&&n===P.pick);b.classList.toggle('pickgood',!!P.lock&&n===P.q.ans)});
+  E.qcard.className='qcard'+(P.flash?' '+P.flash:'');
+  E.fb.className='fb'+(P.fbKind?' '+P.fbKind:'');E.fb.textContent=P.fbText;
+  E.score.textContent=String(me.sc);E.right.textContent=String(me.r);E.wrong.textContent=String(me.w);E.streak.textContent=String(me.st);
+  updateTimer();
+  var ps=roundPlayers(P.G);
+  var i=ps.findIndex(function(p){return p.isMe});
+  var line='';
+  if(S.mode==='solo')line=P.best?'Your best: '+P.best+'. Can you beat it?':'Answer as many as you can.';
+  else if(i===0&&ps.length>1){var gp=ps[0].sc-ps[1].sc;line=gp>0?'You lead by '+gp+'.':'You are tied for the lead.'}
+  else if(i>0)line=ordinal(i+1)+' place. '+(ps[0].sc-ps[i].sc)+' behind '+ps[0].n+'.';
+  E.rank.textContent=line;
+  E.boost.hidden=me.lv===0;
+  E.boost.textContent=me.lv===2?'Turbo comeback. Much easier questions now, same points per answer.':'Comeback boost on. Easier questions, same points per answer. Use it to catch up.';
+  fill(E.lb,lbList(liveItems(ps),true));
+  E.track.hidden=S.mode==='solo'&&!P.best;
+  drawTrack(E,ps);
+  if(S.mode==='solo')E.lb.parentNode.hidden=true;
+}
+function drawTrack(E,ps){
+  var items=ps.map(function(p){return {id:String(p.id||p.n),n:p.n,c:p.c,sc:p.sc,isMe:!!p.isMe}});
+  if(S.mode==='solo'){
+    items=[{id:'me',n:S.name,c:S.color,sc:me.sc,isMe:true}];
+    if(P.best)items.push({id:'ghost',n:'Your best',c:7,sc:P.best,isMe:false,ghost:true});
+  }
+  // keep it readable: top 6 plus me
+  var shown=items.slice(0,6);
+  if(!shown.some(function(x){return x.isMe})){var m=items.filter(function(x){return x.isMe})[0];if(m)shown.push(m)}
+  var lead=0;items.forEach(function(x){lead=Math.max(lead,x.sc)});
+  var finish=Math.max(200,lead*1.15);
+  var keep={};
+  shown.forEach(function(x){
+    keep[x.id]=1;
+    var lane=E.laneMap[x.id];
+    if(!lane){
+      var pt=h('span',{class:'pt'});
+      var runner=h('div',{class:'runner'},avatar(x.n,x.c,28),pt);
+      lane=E.laneMap[x.id]={el:h('div',{class:'lane'},runner),runner:runner,pt:pt};
+    }
+    lane.el.className='lane'+(x.isMe?' me':'')+(x.ghost?' ghost':'');
+    var frac=Math.min(1,x.sc/finish);
+    lane.runner.style.left='calc('+(frac*100).toFixed(1)+'% - '+(frac*64).toFixed(0)+'px)';
+    lane.pt.textContent=(x.isMe?'You ':x.n+' ')+x.sc;
+  });
+  Object.keys(E.laneMap).forEach(function(k){if(!keep[k]){E.laneMap[k].el.remove();delete E.laneMap[k]}});
+  // order lanes by current rank
+  shown.forEach(function(x){E.trackLanes.append(E.laneMap[x.id].el)});
+}
+
+function standingsView(watching){
+  var title=h('h2'),sub=h('p',{class:'note'}),box=h('div');
+  var el=h('div',{class:'stack'},h('section',{class:'panel'},title,sub),box);
+  function upd(){
+    var g=game();if(!g)return;
+    var ps=roundPlayers(g);
+    var left=ps.filter(function(p){return !p.fin}).length;
+    if(watching){title.textContent='Round in progress';sub.textContent='You joined mid-round, so you will play the next one. Watch the standings in the meantime.'}
+    else{title.textContent='Time is up';sub.textContent='You got '+me.r+' right and '+me.w+' wrong for '+me.sc+' points. '+(left>0?left+' still playing…':'Waiting for the host to show results…')}
+    fill(box,lbList(liveItems(ps),true));
+  }
+  return {el:el,update:upd};
+}
+VIEWS.wait=function(){return standingsView(false)};
+VIEWS.watch=function(){return standingsView(true)};
+
+VIEWS.results=function(){
+  var el=h('div',{class:'stack'});var lastSig='';
+  function upd(){
+    var g=game();if(!g)return;
+    var solo=S.mode==='solo';
+    var all=players();
+    var sig=JSON.stringify([g.g,S.resTab,me.rd,me.sc,g.hostIsMe,all.map(function(p){return [p.id,p.sc,p.r,p.w,p.base,p.rd,p.fin]})]);
+    if(sig===lastSig)return;lastSig=sig;
+    var round=all.map(function(p){return p.isMe&&me.rd===g.g?Object.assign({},p,{sc:me.sc,r:me.r,w:me.w,bs:me.bs}):p}).filter(function(p){return p.rd===g.g}).sort(cmp);
+    var showSession=!solo&&g.g>1;
+    var tab=showSession?S.resTab:'round';
+    var items;
+    if(tab==='round'){
+      items=round.map(function(p){var t=p.r+p.w;return {isMe:p.isMe,n:p.n,c:p.c,lv:0,tk:p.tk,sg:p.sg,pts:p.sc,meta:p.r+' right · '+p.w+' wrong'+(t?' · '+Math.round(p.r/t*100)+'%':'')}});
+    }else{
+      items=all.map(function(p){var sc=p.base+p.sc,r=p.br+p.r,w=p.bw+p.w;return {isMe:p.isMe,n:p.n,c:p.c,lv:0,tk:p.tk,sg:p.sg,pts:sc,w:w,meta:r+' right · '+w+' wrong'}})
+        .sort(function(a,b){return b.pts-a.pts||a.w-b.w});
+    }
+    var out=[];
+    var top=round[0];
+    if(top){
+      var tie=round.length>1&&round[1].sc===top.sc&&round[1].w===top.w;
+      out.push(h('div',{class:'winner'},avatar(top.n,top.c,56),h('div',null,
+        h('h2',null,solo?(P.newBest?'New personal best':'Round complete'):(tie?'It is a tie at the top':top.n+' wins the round')),
+        h('p',null,solo?me.sc+' points. '+me.r+' right, '+me.w+' wrong.'+(P.best?' Your best: '+P.best+'.':''):top.sc+' points'+(tie?' for '+top.n+' and '+round[1].n+'.':'.')))));
+    }
+    if(showSession){
+      out.push(h('div',{class:'seg',role:'group','aria-label':'Choose standings'},[['round','This round'],['session','Session total']].map(function(o){
+        return h('button',{type:'button',class:'segbtn',style:'min-width:110px','aria-pressed':String(tab===o[0]),onclick:function(){S.resTab=o[0];lastSig='';upd()}},o[1]);
+      })));
+    }
+    if(!solo)out.push(lbList(items,false));
+    var played=round.filter(function(p){return p.r+p.w>0});
+    if(!solo&&played.length>1){
+      var mc=played.slice().sort(function(a,b){return b.r-a.r})[0];
+      var bs=played.slice().sort(function(a,b){return b.bs-a.bs})[0];
+      out.push(h('div',{class:'awards'},
+        h('div',{class:'award'},h('span',{class:'label'},'Most correct'),h('b',null,mc.n+' · '+mc.r)),
+        bs.bs>1?h('div',{class:'award'},h('span',{class:'label'},'Longest streak'),h('b',null,bs.n+' · '+bs.bs)):null));
+    }
+    if(me.rd===g.g&&(me.r+me.w)>0){
+      var miss=Array.from(P.missed.values()).sort(function(x,y){return y.n-x.n}).slice(0,14);
+      var missChips=miss.length?h('div',{class:'mchips'},miss.map(function(m){return h('span',{class:'mchip'},m.full,m.n>1?h('i',null,'×'+m.n):null)})):h('p',{class:'note'},'No misses. Clean round.');
+      out.push(h('section',{class:'panel'},h('h2',null,'Questions to look at again'),h('p',{class:'note'},P.tk.name+' · '+P.sg.name+'. Only the questions you missed this round.'),missChips));
+    }
+    if(P.recorded&&me.rd===g.g)out.push(h('p',{class:'note'},PF.code?(P.newBest?'New personal best! ':'')+'Round saved to your profile.':'Not saved. Make a profile on the home screen to keep your scores.'));
+    if(g.hostIsMe){
+      out.push(h('div',{class:'actions'},
+        h('button',{class:'btn primary big',type:'button',onclick:startRound},solo?'Practice again':'Play again'),
+        h('button',{class:'btn big',type:'button',onclick:function(){if(solo)exitSolo();else hostSet({ph:'lobby'})}},solo?'Back to home':'Back to lobby')));
+    }else{
+      out.push(h('p',{class:'waiting'},'Waiting for the host to start the next round…'));
+    }
+    fill(el,out);
+  }
+  return {el:el,update:upd};
+};
+
+/* ---------- render ---------- */
+function viewKey(){
+  if(S.mode==='home')return S.sub==='profile'?'profile':'home';
+  var g=game();
+  if(!g)return (S.mode==='room'&&S.seen)?'nohost':'finding';
+  if(me.phase==='count'||me.phase==='play')return 'game';
+  if(g.ph==='lobby')return 'lobby';
+  if(g.ph==='results')return 'results';
+  return me.phase==='done'?'wait':'watch';
+}
+function renderTop(){
+  var t=document.getElementById('top');
+  var chips=h('div',{class:'chips'});
+  if(S.mode==='room'){
+    if(!S.conn)chips.append(h('span',{class:'chip warn'},'Reconnecting…'));
+    chips.append(h('button',{class:'chip',type:'button','aria-label':'Copy room code',onclick:copyCode},'Room ',h('b',null,S.code)),
+      h('button',{class:'btn small',type:'button',onclick:function(){leaveRoom()}},'Leave'));
+  }else if(S.mode==='solo'){
+    chips.append(h('span',{class:'chip'},'Practice'),h('button',{class:'btn small',type:'button',onclick:exitSolo},'Exit'));
+  }
+  fill(t,h('div',{class:'brand'},h('a',{href:'../',title:'Back to all games'},'English Mayhem')),chips);
+}
+function render(){
+  AVC[nameKey(S.name)]=S.av;
+  var k=viewKey();
+  renderTop();
+  if(k!==curKey){
+    if(curKey==='game')GV=null;
+    curKey=k;curView=VIEWS[k]();
+    document.getElementById('main').replaceChildren(curView.el);
+  }
+  if(curView&&curView.update)curView.update();
+}
+
+document.addEventListener('keydown',function(e){
+  if(curKey!=='game'||me.phase!=='play'||e.metaKey||e.ctrlKey||e.altKey)return;
+  if(P.q&&P.q.opts){if(/^[1-4]$/.test(e.key)){e.preventDefault();pickOpt(+e.key-1)}}
+  else if(/^[0-9]$/.test(e.key)){e.preventDefault();inputDigit(e.key)}
+  else if(e.key==='Backspace'){e.preventDefault();backspace()}
+  else if(e.key==='Enter'){e.preventDefault();if(!(P.q&&P.q.opts))submit()}
+});
+
+/* ---------- boot ---------- */
+S.name=randomName();
+S.color=rint(COLORS);
+S.av=randomAv();
+var SB=null;
+try{
+  if(window.supabase&&SUPABASE_URL)SB=window.supabase.createClient(SUPABASE_URL,SUPABASE_KEY,{
+    auth:{persistSession:false,autoRefreshToken:false,detectSessionInUrl:false}});
+}catch(e){SB=null}
+S.room=SB?makeRoomApi(SB):null;S.roomState=S.room?'ready':'unavailable';
+PF.sb=SB;PF.dbState=SB?'ready':'unavailable';
+render();
+(async function(){
+  var saved=lsGet('tts-code');
+  if(SB&&saved){var r=await openProfile(saved);if(r==='notfound'||r==='invalid')closeProfile()}
+  refreshProfileUI();
+})();
+})();
+</script>
+</body>
+</html>

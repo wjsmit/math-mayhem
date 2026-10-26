@@ -12,8 +12,9 @@ The site at **https://wjsmit.github.io/math-mayhem/** is a home page with both g
 - `index.html` - the home page ("Mayhem Games") with a button for each game.
 - `maths/index.html` - Math Mayhem (its own Supabase project, schema `tts`).
 - `science/index.html` - Science Mayhem. Copied from the `wjsmit/science-mayhem` repo; edit it here from now on.
+- `english/index.html` - English Mayhem (figures of speech, synonyms, antonyms, punctuation, grammar, mixed). Built on the science engine; question bank is `BANK_TEXT` in the file.
 
-Both games use the SAME Supabase project (`Math Mayhem`): one profile (name, colour, avatar) per student, one class list, one teacher PIN. Maths progress is in `tts.profiles`, science progress in `sci.profiles` (same id). Each student has a maths level and a science topic + stage on the shared class list. The leaderboards stay separate per game. See `database/7_shared_with_science.sql`. (`5_class_lists_finish.sql` is no longer needed: renaming now carries the class link across, and Remove name works.)
+Both games use the SAME Supabase project (`Math Mayhem`): one profile (name, colour, avatar) per student, one class list, one teacher PIN. Maths progress is in `tts.profiles`, science progress in `sci.profiles` and English progress in `eng.profiles` (same id). Each student has a maths level and a science topic + stage and an English topic + stage on the shared class list. The leaderboards stay separate per game. See `database/7_shared_with_science.sql` and `database/8_english.sql`. (`5_class_lists_finish.sql` is no longer needed: renaming now carries the class link across, and Remove name works.)
 
 ## How it is built
 - `index.html` — the whole game in one file. It talks to a Supabase database from the browser using the public key.
