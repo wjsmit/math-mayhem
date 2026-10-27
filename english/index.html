@@ -813,13 +813,14 @@ var STAGES=[
 ];
 var TRACKS=[
   {id:'figures',name:'Figures of speech',short:'Figures of speech',mult:1.1},
-  {id:'synonyms',name:'Synonyms: words with the same meaning',short:'Synonyms',mult:0.9},
-  {id:'antonyms',name:'Antonyms: words with opposite meanings',short:'Antonyms',mult:0.9},
+  {id:'synonyms',name:'Synonyms and antonyms: same and opposite meanings',short:'Synonyms and antonyms',mult:0.9},
   {id:'punct',name:'Punctuation checks',short:'Punctuation',mult:1},
   {id:'grammar',name:'Grammar checks',short:'Grammar',mult:1.1},
   {id:'mixed',name:'Mixed: a bit of everything',short:'Mixed',mult:1.2}
 ];
-var TOPICS=['figures','synonyms','antonyms','punct','grammar'];
+var TOPICS=['figures','synonyms','punct','grammar'];
+/* antonym questions live in their own text block but belong to the combined synonyms level */
+var TOPIC_MERGE={antonyms:'synonyms'};
 var TOPIC_PRE={figures:'fg',synonyms:'sn',antonyms:'an',punct:'pu',grammar:'gr'};
 var BANK_TEXT={
 figures:`
@@ -1190,16 +1191,16 @@ i2|Which of these is a fragment, not a full sentence?|Because the bus was late.|
 var BANK={},BYID={};
 (function(){
   Object.keys(BANK_TEXT).forEach(function(t){
-    var n=0;BANK[t]=[];
+    var n=0,bt=TOPIC_MERGE[t]||t;BANK[bt]=BANK[bt]||[];
     BANK_TEXT[t].split('\n').forEach(function(l){
       l=l.trim();if(!l||l.charAt(0)==='#')return;
       var f=l.split('|');if(f.length!==6)return;
-      n++;var q={id:TOPIC_PRE[t]+n,t:t,st:f[0].charAt(0),d:+f[0].charAt(1),q:f[1],a:f[2],w:f.slice(3)};
-      BANK[t].push(q);BYID[q.id]=q;
+      n++;var q={id:TOPIC_PRE[t]+n,t:bt,st:f[0].charAt(0),d:+f[0].charAt(1),q:f[1],a:f[2],w:f.slice(3)};
+      BANK[bt].push(q);BYID[q.id]=q;
     });
   });
 })();
-function trackIdx(id){for(var i=0;i<TRACKS.length;i++)if(TRACKS[i].id===id)return i;return 0}
+function trackIdx(id){if(id==='antonyms')id='synonyms';for(var i=0;i<TRACKS.length;i++)if(TRACKS[i].id===id)return i;return 0}
 function stageIdx(id){for(var i=0;i<STAGES.length;i++)if(STAGES[i].id===id)return i;return 0}
 function myTrack(){return TRACKS[trackIdx(PF.state==='ready'&&PF.link&&PF.link.track)].id}
 function myStage(){return STAGES[stageIdx(PF.state==='ready'&&PF.link&&PF.link.stage)].id}
