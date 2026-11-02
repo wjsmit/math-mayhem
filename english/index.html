@@ -813,15 +813,25 @@ var STAGES=[
 ];
 var TRACKS=[
   {id:'figures',name:'Figures of speech',short:'Figures of speech',mult:1.1},
-  {id:'synonyms',name:'Synonyms and antonyms: same and opposite meanings',short:'Synonyms and antonyms',mult:0.9},
+  {id:'synonyms',name:'Synonyms: words with the same meaning',short:'Synonyms',mult:0.9},
+  {id:'antonyms',name:'Antonyms: words with opposite meanings',short:'Antonyms',mult:0.9},
   {id:'punct',name:'Punctuation checks',short:'Punctuation',mult:1},
   {id:'grammar',name:'Grammar checks',short:'Grammar',mult:1.1},
+  {id:'spelling',name:'Spelling and commonly confused words',short:'Spelling',mult:1},
+  {id:'vocab',name:'Vocabulary in context',short:'Vocabulary',mult:1},
+  {id:'pos',name:'Parts of speech',short:'Parts of speech',mult:0.9},
+  {id:'tenses',name:'Tenses and verb forms',short:'Tenses',mult:1},
+  {id:'affixes',name:'Prefixes, suffixes and word roots',short:'Word parts',mult:1},
+  {id:'idioms',name:'Idioms and proverbs',short:'Idioms',mult:0.9},
+  {id:'clauses',name:'Sentence types and clauses',short:'Clauses',mult:1.1},
+  {id:'tone',name:'Tone and register',short:'Tone',mult:1.1},
+  {id:'poetry',name:'Poetry and literary devices',short:'Poetry',mult:1.1},
+  {id:'inference',name:'Reading and inference',short:'Inference',mult:1.2},
+  {id:'plurals',name:'Plurals and irregular forms',short:'Plurals',mult:0.9},
   {id:'mixed',name:'Mixed: a bit of everything',short:'Mixed',mult:1.2}
 ];
-var TOPICS=['figures','synonyms','punct','grammar'];
-/* antonym questions live in their own text block but belong to the combined synonyms level */
-var TOPIC_MERGE={antonyms:'synonyms'};
-var TOPIC_PRE={figures:'fg',synonyms:'sn',antonyms:'an',punct:'pu',grammar:'gr'};
+var TOPICS=['figures','synonyms','antonyms','punct','grammar','spelling','vocab','pos','tenses','affixes','idioms','clauses','tone','poetry','inference','plurals'];
+var TOPIC_PRE={figures:'fg',synonyms:'sn',antonyms:'an',punct:'pu',grammar:'gr',spelling:'sp',vocab:'vo',pos:'ps',tenses:'te',affixes:'af',idioms:'id',clauses:'cl',tone:'to',poetry:'po',inference:'in',plurals:'pl'};
 var BANK_TEXT={
 figures:`
 k1|Which figure of speech is "as brave as a lion"?|Simile|Metaphor|Personification|Alliteration
@@ -1185,22 +1195,520 @@ i2|Which sentence uses a split infinitive?|She decided to quickly leave.|She dec
 i2|Which sentence uses the correct modal verb for a strong obligation?|You must wear a seatbelt.|You might wear a seatbelt.|You could wear a seatbelt.|You may wearing a seatbelt.
 i2|Which sentence is grammatically correct?|Each of the players has their own locker.|Each of the players have their own locker.|Each of the players are having their own locker.|Each of the players has theirs own locker.
 i2|Which of these is a fragment, not a full sentence?|Because the bus was late.|The bus was late.|Was the bus late?|The bus was late, so I walked.
+`,
+spelling:`
+k1|Which word is spelled correctly?|because|becuase|becouse|beacuse
+k1|Which word is spelled correctly?|friend|freind|frend|firend
+k1|Which word is spelled correctly?|different|diffrent|diferent|differant
+k1|Which word is spelled correctly?|favourite|favorite|favrite|favourit
+k1|Which word is spelled correctly?|knowledge|knowlege|nowledge|knollege
+k1|Which word is spelled correctly?|necessary|neccessary|necesary|necessery
+k1|Which word is spelled correctly?|separate|seperate|separete|seperete
+k1|Which word is spelled correctly?|beautiful|beutiful|beautifull|beatiful
+k1|Which word is spelled correctly?|February|Febuary|Feburary|Febuery
+k1|Which word is spelled correctly?|library|libary|liberry|libarry
+k1|Which word completes the sentence? "___ going to be late."|They're|Their|There|Thier
+k1|Which word completes the sentence? "Put the books over ___."|there|their|they're|thear
+k1|Which word completes the sentence? "The dog wagged ___ tail."|its|it's|its'|it is
+k1|Which word completes the sentence? "___ coming to my party?"|You're|Your|Youre|Yore
+k1|Which word completes the sentence? "I would like ___ cake."|some|sum|summ|sume
+k2|Which word completes the sentence? "I have ___ much homework."|too|to|two|tue
+k2|Which word completes the sentence? "She will ___ the letter tomorrow."|write|right|rite|wright
+k2|Which word completes the sentence? "We ___ the match."|won|one|wan|wun
+k2|Which word completes the sentence? "I can't ___ the noise any more."|bear|bare|beer|bair
+k2|Which word completes the sentence? "The ___ is shining brightly."|sun|son|sunn|sone
+k2|Which word completes the sentence? "She ___ a loud scream."|heard|herd|hurd|hird
+k2|Which word completes the sentence? "Please ___ quiet."|be|bee|bea|bi
+k2|Which word is spelled correctly?|definitely|definately|definitly|defanitely
+k2|Which word is spelled correctly?|occasion|ocasion|occassion|ocassion
+k2|Which word is spelled correctly?|restaurant|restarant|resturant|restaurent
+k2|Which word is spelled correctly?|government|goverment|governmant|guvernment
+k2|Which word completes the sentence? "Check the weather ___ for tomorrow."|forecast|fourcast|forcast|fourecast
+k2|Which word completes the sentence? "I ___ a sandwich for lunch."|ate|eight|et|ait
+i1|Which word completes the sentence? "The medicine had a bad ___ on him."|effect|affect|efect|affet
+i1|Which word completes the sentence? "Bad weather will ___ the match."|affect|effect|afect|effet
+i1|Which word completes the sentence? "She gave me good ___."|advice|advise|advize|advace
+i1|Which word completes the sentence? "Can you ___ me what to do?"|advise|advice|advize|advyse
+i1|Which word completes the sentence? "Every ___ in the class passed."|student|studant|studint|stoodent
+i1|Which word completes the sentence? "The headteacher is the school ___."|principal|principle|principel|princepal
+i1|Which word completes the sentence? "He has strong moral ___."|principles|principals|principels|princeples
+i1|Which word completes the sentence? "They are ___ to the school."|new|knew|gnu|nue
+i1|Which word is spelled correctly?|accommodation|acommodation|accomodation|accommodasion
+i1|Which word is spelled correctly?|embarrass|embarass|embarras|embarrase
+i1|Which word is spelled correctly?|conscience|consience|conscence|concience
+i1|Which word is spelled correctly?|rhythm|rythm|rhythem|rythem
+i1|Which word completes the sentence? "He ran ___ the bridge."|across|accross|acros|acorss
+i2|Which word completes the sentence? "Her ___ was greatly admired."|conscience|conscious|consience|concious
+i2|Which word completes the sentence? "She was ___ of the danger."|conscious|conscience|concious|consious
+i2|Which word completes the sentence? "I need some ___ paper."|stationery|stationary|stationry|stationerry
+i2|Which word completes the sentence? "The car remained ___ at the lights."|stationary|stationery|stationnary|stationairy
+i2|Which word completes the sentence? "The speaker made a clear ___ to the book."|allusion|illusion|elusion|alusion
+i2|Which word completes the sentence? "The magician created an ___."|illusion|allusion|elusion|ilusion
+i2|Which word completes the sentence? "He refused to ___ to the demands."|accede|exceed|excede|acceed
+i2|Which word completes the sentence? "Profits will ___ expectations."|exceed|accede|excede|acceed
+i2|Which word is spelled correctly?|unnecessary|unneccessary|unecessary|unnecesary
+i2|Which word is spelled correctly?|bureaucracy|beurocracy|bureacracy|buraucracy
+i2|Which word is spelled correctly?|miscellaneous|miscelaneous|miscellanious|misselaneous
+i2|Which word is spelled correctly?|questionnaire|questionaire|questionnare|quesionnaire
+`,
+vocab:`
+k1|In "The enormous elephant towered over us", what does "enormous" mean?|very large|very small|very old|very loud
+k1|In "She was exhausted after the race", what does "exhausted" mean?|very tired|very happy|very hungry|very proud
+k1|In "He gave a swift reply", what does "swift" mean?|quick|slow|rude|long
+k1|In "The room was silent", what does "silent" mean?|without any noise|very crowded|very dark|very cold
+k1|In "We were delighted by the news", what does "delighted" mean?|very pleased|very worried|very angry|very bored
+k1|In "The path was narrow", what does "narrow" mean?|not wide|very long|very steep|very wet
+k1|In "He was reluctant to jump", what does "reluctant" mean?|unwilling|excited|able|ready
+k1|In "The soup was scalding", what does "scalding" mean?|very hot|very cold|very salty|very thick
+k1|In "A tiny beetle crept across the leaf", what does "crept" mean?|moved slowly and quietly|ran fast|jumped high|flew away
+k1|In "She was famished", what does "famished" mean?|extremely hungry|extremely cold|extremely tired|extremely shy
+k1|In "The detective examined the clue", what does "examined" mean?|looked at closely|threw away|hid|forgot
+k2|In "The tourists gazed at the view", what does "gazed" mean?|looked for a long time|looked away|glanced quickly|shouted
+k2|In "The thief was cunning", what does "cunning" mean?|clever in a sneaky way|foolish|friendly|slow
+k2|In "She was bewildered by the instructions", what does "bewildered" mean?|confused|amused|bored|pleased
+k2|In "The old house was deserted", what does "deserted" mean?|empty of people|full of people|newly built|very clean
+k2|In "He made a feeble excuse", what does "feeble" mean?|weak|clever|angry|loud
+k2|In "The teacher's reply was brief", what does "brief" mean?|short|rude|long|kind
+k2|In "They shared a modest meal", what does "modest" mean?|simple and small|huge|expensive|late
+k2|In "The sailors were stranded on the island", what does "stranded" mean?|stuck with no way to leave|lost their bags|very happy|fishing
+k2|In "He is a generous person", what does "generous" mean?|willing to give|always late|very clever|easily scared
+k2|In "The children were mischievous", what does "mischievous" mean?|playfully naughty|very tired|very polite|very quiet
+k2|In "Her answer was ambiguous", what does "ambiguous" mean?|having more than one meaning|completely wrong|very loud|well written
+i1|In "The politician's speech was eloquent", what does "eloquent" mean?|fluent and persuasive|long and boring|angry|hard to hear
+i1|In "He was infamous for his cruelty", what does "infamous" mean?|well known for something bad|very famous and admired|unknown|rich
+i1|In "The scientist made a meticulous record", what does "meticulous" mean?|very careful and exact|rushed|messy|short
+i1|In "Her demeanour was calm", what does "demeanour" mean?|the way a person behaves|her height|her voice|her age
+i1|In "The soldiers showed great valour", what does "valour" mean?|bravery|fear|kindness|laziness
+i1|In "The company will diversify", what does "diversify" mean?|become more varied|become smaller|close down|become famous
+i1|In "The judge was impartial", what does "impartial" mean?|fair and not taking sides|unkind|very strict|very old
+i1|In "The teacher was lenient", what does "lenient" mean?|not strict|very angry|very tall|very clever
+i1|In "His argument was flimsy", what does "flimsy" mean?|weak and unconvincing|strong|long|loud
+i1|In "The island was remote", what does "remote" mean?|far away from other places|crowded|very small|beautiful
+i1|In "She felt a sense of foreboding", what does "foreboding" mean?|a feeling that something bad will happen|great joy|boredom|pride
+i2|In "The report was unequivocal", what does "unequivocal" mean?|clear and leaving no doubt|confusing|brief|biased
+i2|In "He is known for his tenacity", what does "tenacity" mean?|determination|laziness|generosity|shyness
+i2|In "The proposal was audacious", what does "audacious" mean?|boldly daring|dull|well hidden|very cheap
+i2|In "Their relationship was symbiotic", what does "symbiotic" mean?|mutually beneficial|hostile|distant|brief
+i2|In "The author's tone was sardonic", what does "sardonic" mean?|mockingly bitter|cheerful|neutral|nervous
+i2|In "The policy had unintended repercussions", what does "repercussions" mean?|consequences|supporters|origins|rules
+i2|In "He gave a cursory glance", what does "cursory" mean?|quick and not thorough|angry|long and careful|nervous
+i2|In "The evidence was incontrovertible", what does "incontrovertible" mean?|impossible to deny|doubtful|missing|long
+i2|In "The dictator was ruthless", what does "ruthless" mean?|without pity|very kind|very clever|weak
+i2|In "The village was idyllic", what does "idyllic" mean?|peaceful and picturesque|noisy|poor|dangerous
+i2|In "She was a pragmatic leader", what does "pragmatic" mean?|sensible and practical|dreamy|cruel|forgetful
+i2|In "The remark was facetious", what does "facetious" mean?|not meant seriously|very rude|very wise|well planned
+`,
+pos:`
+k1|Which word is a noun in "The cat slept on the sofa"?|sofa|slept|on|the
+k1|Which word is a verb in "Birds sing in the morning"?|sing|Birds|morning|in
+k1|Which word is an adjective in "The blue car stopped"?|blue|car|stopped|The
+k1|Which word is an adverb in "She spoke softly"?|softly|She|spoke|a
+k1|Which word is a pronoun in "She gave him a book"?|him|gave|book|a
+k1|Which word is a preposition in "The keys are under the table"?|under|keys|are|table
+k1|Which word is a conjunction in "I like tea but she likes coffee"?|but|like|tea|she
+k1|What type of word is "happiness"?|noun|verb|adjective|adverb
+k1|What type of word is "quickly"?|adverb|noun|adjective|pronoun
+k1|What type of word is "run"?|verb|noun|adjective|preposition
+k1|What type of word is "they"?|pronoun|verb|adjective|conjunction
+k1|What type of word is "beautiful"?|adjective|adverb|noun|verb
+k2|Which word is a proper noun?|London|city|river|country
+k2|Which word is an abstract noun?|freedom|table|dog|window
+k2|Which word is a collective noun?|flock|sheep|shepherd|field
+k2|Which word is a possessive pronoun in "That book is mine"?|mine|That|book|is
+k2|Which word is an adverb in "He was extremely tall"?|extremely|He|was|tall
+k2|Which word is a preposition in "She walked through the door"?|through|walked|door|She
+k2|Which word is a determiner in "Those apples are ripe"?|Those|apples|are|ripe
+k2|Which word is a modal verb?|must|run|happy|slowly
+k2|Which word is a conjunction in "I stayed in because it rained"?|because|stayed|rained|in
+k2|Which word is an interjection?|Wow|Quickly|Under|Table
+k2|Which word is a comparative adjective?|taller|tall|tallest|tallness
+k2|Which word is a superlative adjective?|fastest|fast|faster|fastly
+i1|Which word is an auxiliary verb in "She has been working hard"?|has|working|hard|She
+i1|Which word is a relative pronoun in "The man who called is my uncle"?|who|man|called|my
+i1|Which word is a subordinating conjunction in "Although it was late, we stayed"?|Although|late|we|stayed
+i1|Which word is a coordinating conjunction?|and|because|although|while
+i1|Which word is an adverb of frequency?|rarely|quickly|here|very
+i1|Which word is an adverb of place in "Put it there"?|there|Put|it|here
+i1|Which word is a reflexive pronoun?|themselves|them|their|they
+i1|What type of word is "although"?|conjunction|preposition|adverb|pronoun
+i1|Which noun is uncountable?|furniture|chair|table|book
+i1|In "The running water was cold", what word class is "running"?|adjective|verb|noun|adverb
+i1|In "Running is good exercise", what word class is "Running"?|noun|adjective|adverb|preposition
+i1|Which word is an intensifier in "It was really cold"?|really|It|was|cold
+i2|In "The government announced the plan", what word class is "government"?|noun|verb|adjective|adverb
+i2|What is the word class of "that" in "I think that he is right"?|conjunction|pronoun|adjective|adverb
+i2|What is the word class of "that" in "That house is old"?|determiner|conjunction|verb|noun
+i2|What is the word class of "light" in "Switch on the light"?|noun|verb|adjective|adverb
+i2|What is the word class of "light" in "It is a light bag"?|adjective|noun|verb|adverb
+i2|What is the word class of "light" in "Light the candle"?|verb|noun|adjective|adverb
+i2|What is a participle?|A verb form used as part of a verb or as an adjective|A word that joins clauses|A word that replaces a noun|A word that describes a verb
+i2|What is a conjunctive adverb?|A word such as "however" that links ideas between clauses|A word that replaces a noun|A word showing possession|A word that names a place
+i2|Which word is a past participle in "The broken window was fixed"?|broken|window|was|The
+i2|Which word is the object in "The girl kicked the ball"?|ball|girl|kicked|The
+i2|Which word is the subject in "Yesterday the manager resigned"?|manager|Yesterday|resigned|the
+`,
+tenses:`
+k1|Which sentence is in the past tense?|I walked to school.|I walk to school.|I will walk to school.|I am walking to school.
+k1|Which sentence is in the present tense?|She plays football.|She played football.|She will play football.|She had played football.
+k1|Which sentence is in the future tense?|We will visit Gran.|We visited Gran.|We visit Gran.|We have visited Gran.
+k1|What is the past tense of "go"?|went|goed|gone|going
+k1|What is the past tense of "eat"?|ate|eated|eaten|eating
+k1|What is the past tense of "swim"?|swam|swimmed|swum|swimming
+k1|What is the past tense of "bring"?|brought|bringed|brang|brung
+k1|What is the past tense of "buy"?|bought|buyed|boughten|buyt
+k1|Which is correct? "Yesterday I ___ a film."|watched|watch|will watch|watching
+k1|Which is correct? "Tomorrow we ___ to the zoo."|will go|went|goes|gone
+k1|Which is correct? "Right now, he ___ his lunch."|is eating|ate|will ate|eaten
+k2|What is the past participle of "write"?|written|wrote|writed|writing
+k2|What is the past participle of "break"?|broken|broke|breaked|breaking
+k2|What is the past participle of "take"?|taken|took|taked|taking
+k2|Which sentence is in the present continuous tense?|They are singing.|They sang.|They sing.|They will sing.
+k2|Which sentence is in the past continuous tense?|She was reading a book.|She is reading a book.|She read a book.|She has read a book.
+k2|Which is correct? "I ___ my homework already."|have done|has done|did done|have did
+k2|Which is correct? "He ___ here since June."|has lived|have lived|lives|live
+k2|Which is correct? "While I ___, the phone rang."|was cooking|cooked|am cooking|cook
+k2|Which is correct? "She ___ to Spain twice."|has been|have been|was been|is been
+k2|Which is correct? "By next year, I ___ school."|will have left|will leave left|have left|had will leave
+i1|Which sentence is in the past perfect tense?|She had left before I arrived.|She has left.|She left.|She was leaving.
+i1|Which sentence is in the future perfect tense?|They will have finished by noon.|They will finish at noon.|They have finished.|They had finished.
+i1|Which sentence is in the present perfect continuous tense?|He has been waiting for an hour.|He waited for an hour.|He is waiting.|He had waited.
+i1|Which sentence is in the past perfect continuous tense?|We had been walking for hours.|We have been walking for hours.|We were walking.|We walked for hours.
+i1|Which is correct? "If I ___ harder, I would have passed."|had worked|have worked|would work|worked have
+i1|Which is correct? "I wish I ___ taller."|were|am|will be|have been
+i1|Which is correct? "She ___ the piano since she was five."|has played|plays|is playing|will play
+i1|Which sentence shifts tense incorrectly?|She opened the door and walks in.|She opened the door and walked in.|She opens the door and walks in.|She had opened the door and walked in.
+i1|Which is correct? "Neither of them ___ the answer."|knows|know|knowing|have known
+i1|Which is correct? "The sun ___ in the east."|rises|rose|rising|has risen yesterday
+i2|Which sentence uses the correct tense for a general truth?|Water boils at 100 degrees Celsius.|Water boiled at 100 degrees Celsius.|Water will boil at 100 degrees Celsius.|Water has boiled at 100 degrees Celsius.
+i2|Which is correct? "By the time he arrived, we ___ for an hour."|had been waiting|have been waiting|were wait|are waiting
+i2|Which is correct? "I would have helped if you ___ me."|had asked|asked|have asked|would ask
+i2|Which is correct? "He suggested that she ___ earlier."|leave|leaves|left to leave|is leaving
+i2|Which sentence uses the historic present for effect?|Napoleon marches into Russia and loses thousands of men.|Napoleon marched into Russia and lost thousands of men.|Napoleon had marched into Russia.|Napoleon will march into Russia.
+i2|What is the term for the verb tense: "I will be working tonight"?|future continuous|future perfect|simple future|present continuous
+i2|Which is correct? "No sooner ___ she sat down than the bell rang."|had|has|did|was
+i2|Which is correct? "Hardly ___ I left when it started to rain."|had|have|did|was
+i2|Which is correct? "I ___ you as soon as I arrive."|will call|would called|will called|am call
+i2|Which verb form is the third conditional?|If I had known, I would have told you.|If I knew, I would tell you.|If I know, I will tell you.|If I had known, I will tell you.
+`,
+affixes:`
+k1|Which prefix means "not" in "unhappy"?|un-|happy|-py|hap-
+k1|What does the prefix "re-" mean, as in "rewrite"?|again|not|before|under
+k1|What does the suffix "-less" mean, as in "careless"?|without|full of|again|before
+k1|What does the suffix "-ful" mean, as in "helpful"?|full of|without|not|again
+k1|Add "un-" to "kind". Which word do you get?|unkind|inkind|dekind|miskind
+k1|Add "-ly" to "slow". Which word do you get?|slowly|slowy|slowely|slowley
+k1|What does the prefix "pre-" mean, as in "preview"?|before|after|again|not
+k1|What does the prefix "mis-" mean, as in "misread"?|wrongly|again|before|large
+k1|Which word means "to fill again"?|refill|unfill|prefill|misfill
+k1|What does the prefix "dis-" mean, as in "disagree"?|not or opposite|again|before|under
+k1|What does the prefix "sub-" mean, as in "submarine"?|under|over|across|before
+k2|What does the prefix "anti-" mean, as in "antiseptic"?|against|before|again|across
+k2|What does the prefix "trans-" mean, as in "transport"?|across|under|against|before
+k2|What does the prefix "inter-" mean, as in "international"?|between|against|under|before
+k2|What does the prefix "super-" mean, as in "supermarket"?|above or beyond|under|against|not
+k2|What does the prefix "semi-" mean, as in "semicircle"?|half|double|against|again
+k2|What does the prefix "auto-" mean, as in "autograph"?|self|against|large|under
+k2|What does the suffix "-able" mean, as in "washable"?|able to be|without|full of|again
+k2|What does the suffix "-ness" do, as in "kindness"?|Turns an adjective into a noun|Turns a noun into a verb|Means not|Means again
+k2|What does the suffix "-ment" do, as in "enjoyment"?|Turns a verb into a noun|Turns a noun into an adverb|Means without|Means before
+k2|Which word has a prefix meaning "not"?|impossible|important|improve|impulse
+k2|Which word contains the root "port", meaning "carry"?|transport|portrait|sport|porch
+i1|What does the root "bio" mean, as in "biology"?|life|earth|water|time
+i1|What does the root "geo" mean, as in "geography"?|earth|life|water|star
+i1|What does the root "chron" mean, as in "chronological"?|time|colour|sound|light
+i1|What does the root "phon" mean, as in "telephone"?|sound|light|far|write
+i1|What does the root "scrib" or "script" mean, as in "describe"?|write|see|hear|carry
+i1|What does the root "vis" or "vid" mean, as in "visible"?|see|hear|carry|speak
+i1|What does the root "dict" mean, as in "dictate"?|say|write|see|walk
+i1|What does the prefix "tele-" mean, as in "telescope"?|far|near|under|self
+i1|What does the prefix "micro-" mean, as in "microscope"?|very small|very large|far|under
+i1|What does the prefix "mal-" mean, as in "malfunction"?|badly|well|again|before
+i1|What does the prefix "bene-" mean, as in "beneficial"?|good or well|bad|again|against
+i2|What does the root "spect" mean, as in "inspect"?|look|speak|walk|carry
+i2|What does the root "ject" mean, as in "reject"?|throw|carry|write|see
+i2|What does the root "rupt" mean, as in "interrupt"?|break|speak|build|carry
+i2|What does the root "anthrop" mean, as in "anthropology"?|human|animal|plant|star
+i2|What does the suffix "-ology" mean, as in "biology"?|the study of|the fear of|the love of|the making of
+i2|What does the suffix "-phobia" mean, as in "claustrophobia"?|fear of|love of|study of|writing about
+i2|What does the prefix "omni-" mean, as in "omnipresent"?|all|none|half|double
+i2|What does the prefix "contra-" mean, as in "contradict"?|against|with|before|again
+i2|What does the root "mort" mean, as in "mortal"?|death|life|time|earth
+i2|What does the root "bene" and "mal" show in "benevolent" and "malevolent"?|Opposite meanings: good and bad|Both mean the same|Both mean again|Both mean across
+`,
+idioms:`
+k1|What does "It is raining cats and dogs" mean?|It is raining very heavily|Animals are falling|It is a gentle drizzle|It has just stopped
+k1|What does "a piece of cake" mean?|very easy|a small treat|a birthday gift|something tasty
+k1|What does "under the weather" mean?|feeling unwell|standing outside|being very cold|being very happy
+k1|What does "break the ice" mean?|start a conversation and ease tension|smash something frozen|feel very cold|end a friendship
+k1|What does "hit the books" mean?|study hard|throw books|break a library rule|buy a book
+k1|What does "let the cat out of the bag" mean?|reveal a secret|free a pet|make a mess|go shopping
+k1|What does "once in a blue moon" mean?|very rarely|every month|at night|never ever
+k1|What does "cost an arm and a leg" mean?|be very expensive|cause an injury|be free|be cheap
+k1|What does "bite off more than you can chew" mean?|take on too much|eat greedily|choke|be very hungry
+k1|What does "the early bird catches the worm" mean?|those who start early have an advantage|birds eat worms|you must wake up at dawn|worms are easy to catch
+k1|What does "a blessing in disguise" mean?|something good that seems bad at first|a costume|a prayer|a surprise party
+k2|What does "spill the beans" mean?|reveal secret information|make a mess|cook dinner|waste food
+k2|What does "burn the midnight oil" mean?|work late into the night|waste fuel|light a lamp|sleep early
+k2|What does "the ball is in your court" mean?|it is your turn to decide or act|you are playing tennis|you have lost|you must leave
+k2|What does "beat around the bush" mean?|avoid the main point|hit a plant|go for a walk|find a path
+k2|What does "pull someone's leg" mean?|tease someone as a joke|hurt someone|help someone|chase someone
+k2|What does "on cloud nine" mean?|extremely happy|flying|very high up|very confused
+k2|What does "the last straw" mean?|the final problem that makes you lose patience|an empty drink|a farm tool|the best choice
+k2|What does "barking up the wrong tree" mean?|following a mistaken idea|chasing a dog|making a noise|being very loud
+k2|What does "kill two birds with one stone" mean?|solve two problems with one action|hurt animals|throw stones|be very lucky
+k2|What does "a penny for your thoughts" mean?|asking what someone is thinking|selling an idea|offering a gift|telling a secret
+k2|Which proverb means that you should not judge by appearances?|Don't judge a book by its cover|A stitch in time saves nine|Actions speak louder than words|Birds of a feather flock together
+i1|What does the proverb "A stitch in time saves nine" mean?|Fixing a problem early prevents bigger ones|Sewing is a useful skill|Nine is a lucky number|Time passes quickly
+i1|What does the proverb "Actions speak louder than words" mean?|What you do matters more than what you say|Loud people are heard|Talking is tiring|Words can be shouted
+i1|What does the proverb "Too many cooks spoil the broth" mean?|Too many people working on a task can ruin it|Soup needs many ingredients|Cooking is hard|Chefs argue
+i1|What does the proverb "Every cloud has a silver lining" mean?|There is something good in every bad situation|Clouds are shiny|Rain brings money|Weather changes often
+i1|What does the proverb "Don't put all your eggs in one basket" mean?|Do not risk everything on one thing|Baskets break|Eggs are fragile|Shop carefully
+i1|What does "to add insult to injury" mean?|make a bad situation worse|hurt someone twice|apologise|call a doctor
+i1|What does "a drop in the ocean" mean?|a very small amount compared to what is needed|a rainy day|a sea creature|a dangerous wave
+i1|What does "the elephant in the room" mean?|an obvious problem nobody wants to discuss|a large animal|a big surprise|a loud guest
+i1|What does "to jump the gun" mean?|to act too soon|to start a race|to be very brave|to shoot
+i1|What does "the tip of the iceberg" mean?|only a small visible part of a much larger problem|a cold place|a sailing mistake|the end of winter
+i2|What does "to turn a blind eye" mean?|deliberately ignore something|be unable to see|close your eyes to sleep|look carefully
+i2|What does "a Pyrrhic victory" mean?|a win that costs so much it feels like a loss|an easy win|a surprising win|a team victory
+i2|What does "to burn one's bridges" mean?|to destroy any chance of going back|to build a path|to start a fire|to cross a river
+i2|What does "the writing is on the wall" mean?|it is clear that something bad will happen|someone has done graffiti|a message is hidden|a test is coming
+i2|What does "to bite the bullet" mean?|to face something unpleasant bravely|to be shot|to eat quickly|to make a mistake
+i2|What does "a double-edged sword" mean?|something with both good and bad effects|a weapon|a risky journey|a clever trick
+i2|What does "to throw in the towel" mean?|to give up|to clean up|to start a race|to dry off
+i2|What does "a red herring" mean?|something that distracts from the real issue|a type of fish|a warning sign|a clue
+i2|What does "to cross the Rubicon" mean?|to pass a point of no return|to cross a river|to start a journey|to make peace
+i2|What does "Achilles' heel" mean?|a person's main weakness|a type of shoe|a famous hero|a strong point
+`,
+clauses:`
+k1|Which is a complete sentence?|The dog barked loudly.|The dog barking.|Barked loudly.|Because the dog barked.
+k1|Which sentence is a statement?|The sky is blue.|Is the sky blue?|Look at the sky!|Please look at the sky.
+k1|Which sentence is a question?|Where is my bag?|My bag is here.|Find my bag.|What a lovely bag!
+k1|Which sentence is a command?|Close the door.|The door is closed.|Did you close the door?|What a big door!
+k1|Which sentence is an exclamation?|What a brilliant goal!|The goal was good.|Did you see the goal?|Watch the goal.
+k1|What is the subject of "The boy kicked the ball"?|The boy|kicked|the ball|The ball
+k1|What is the verb in "Mia painted a picture"?|painted|Mia|picture|a
+k1|Which word joins the two parts? "I was tired, but I kept running."|but|I|was|kept
+k1|Which sentence is a simple sentence?|The sun shone.|The sun shone and the birds sang.|When the sun shone, we left.|The sun shone, so we went out.
+k1|Which sentence has two main clauses joined by "and"?|I made tea and she made toast.|I made tea.|Making tea, I smiled.|When I made tea, she made toast.
+k2|Which sentence is a compound sentence?|I like tea, but she likes coffee.|I like tea.|When I am tired, I like tea.|Liking tea, I sat down.
+k2|Which sentence is a complex sentence?|When it rains, we stay inside.|It rains and we stay inside.|It rains.|It rains, so we stay inside.
+k2|In "Although she was tired, she kept going", which is the main clause?|she kept going|Although she was tired|Although she|was tired
+k2|Which word starts a subordinate clause?|although|and|but|so
+k2|Which sentence contains a relative clause?|The boy who won is my cousin.|The boy won.|The boy won and he smiled.|Winning, the boy smiled.
+k2|What is a main clause?|A clause that makes sense on its own|A clause that cannot stand alone|A word that joins clauses|A list of items
+k2|What is a subordinate clause?|A clause that depends on a main clause|A clause that makes sense on its own|A question|A command
+k2|What is the object in "The chef cooked a delicious meal"?|a delicious meal|The chef|cooked|delicious
+k2|Which is an adverbial phrase of time?|after lunch|the red car|very tall|a happy boy
+i1|In "The book that I borrowed was excellent", what does "that I borrowed" do?|It describes the book|It names the subject|It joins two sentences|It asks a question
+i1|Which sentence has a fronted adverbial?|Later that day, we went home.|We went home.|We went home later that day.|We went home and slept.
+i1|Which sentence uses an embedded clause correctly?|My uncle, who lives in Perth, is visiting.|My uncle is visiting who lives in Perth.|My uncle who is, visiting lives in Perth.|My uncle, who lives, in Perth is visiting.
+i1|Which is a noun clause in "I know that she is honest"?|that she is honest|I know|she|know that
+i1|Which sentence is a compound-complex sentence?|Although it was late, we kept working, and we finished the job.|It was late.|We kept working and finished.|We kept working because it was late.
+i1|What type of clause is "if you hurry"?|adverbial clause of condition|relative clause|noun clause|main clause
+i1|What is an independent clause?|A clause that can stand alone as a sentence|A clause that starts with "because"|A single word|A phrase without a verb
+i1|What is the term for a sentence without a main verb, such as "What a day!"?|minor sentence|complex sentence|compound sentence|simple sentence
+i1|Which sentence contains an appositive phrase?|Mr Lee, our headteacher, spoke first.|Mr Lee spoke first.|Our headteacher spoke after Mr Lee.|Mr Lee spoke and sat.
+i1|Which sentence is in the imperative mood?|Sit down and listen.|He sat down.|Will you sit down?|She sits down.
+i2|Which sentence contains a subordinate clause of concession?|Though he was ill, he went to work.|Because he was ill, he stayed home.|If he is ill, he stays home.|He was ill and stayed home.
+i2|Which sentence uses a participle clause?|Exhausted by the climb, she sat down.|She was exhausted and sat down.|She sat down because she was tired.|She sat down.
+i2|Which sentence contains a non-restrictive relative clause?|My car, which is blue, needs washing.|The car that is blue needs washing.|The blue car needs washing.|Wash the car which I own.
+i2|Which sentence contains a restrictive relative clause?|The students who revised passed.|The students, who revised, passed.|The students passed.|Passing, the students smiled.
+i2|What is a conditional clause?|A clause that states a condition, usually starting with "if" or "unless"|A clause that joins two nouns|A clause that asks a question|A clause that lists items
+i2|In "Having finished, she left", what is "Having finished"?|a perfect participle phrase|a relative clause|a noun clause|a conditional clause
+i2|Which sentence is in the passive voice?|The report was written by the committee.|The committee wrote the report.|The committee is writing the report.|The committee will write the report.
+i2|What is the effect of a short, simple sentence after a long one?|It creates emphasis or tension|It makes writing more formal|It lists facts|It adds detail
+i2|Which sentence uses inversion for emphasis?|Never had she seen such a sight.|She had never seen such a sight.|She never saw such a sight.|Such a sight she saw never.
+i2|Which is a co-ordinating conjunction?|nor|although|unless|whereas
+`,
+tone:`
+k1|Which sentence is more polite?|Could you please pass the salt?|Give me the salt.|Salt. Now.|Pass it, will you?
+k1|Which sentence is more formal?|I would like to request a refund.|I want my money back.|Give me my cash.|Gimme a refund.
+k1|Which sentence is more informal?|Hi mate, what's up?|Good morning, sir.|Dear Sir or Madam,|I trust you are well.
+k1|Which greeting is best for a letter to a headteacher?|Dear Mrs Patel,|Hey Mrs P!|Yo!|Hi mate,
+k1|Which way to end a formal letter to someone you know by name is correct?|Yours sincerely|Yours faithfully|Cheers|Bye for now
+k1|Which way to end a formal letter that starts "Dear Sir or Madam" is correct?|Yours faithfully|Yours sincerely|Love from|See ya
+k1|Which word describes a cheerful tone?|upbeat|gloomy|hostile|bitter
+k1|Which word describes an angry tone?|furious|gentle|cheerful|calm
+k1|Which sentence sounds friendly?|Welcome! We are so glad you are here.|You are here. Sit.|Why are you here?|Leave your bag there.
+k1|Which sentence is suitable for a text to a friend?|See you at 5, can't wait!|I look forward to our meeting at five o'clock.|Kindly confirm your attendance.|Your presence is requested.
+k2|Which tone does "I strongly object to this decision" show?|serious and disapproving|playful|sleepy|excited
+k2|Which word best describes the tone of "Oh, brilliant. Another Monday."?|sarcastic|joyful|admiring|neutral
+k2|Which word best describes a tone of gentle teasing?|playful|hostile|formal|bitter
+k2|Which sentence uses a formal register?|I am writing to enquire about the vacancy.|I'm just asking about the job.|Got any jobs going?|Is there a job?
+k2|Which sentence uses a casual register?|It was totally awesome, mate.|It was most agreeable.|It proved highly satisfactory.|It was a truly memorable occasion.
+k2|Which tone is most suitable for a news report?|neutral and factual|jokey|angry|sentimental
+k2|Which word best describes the tone of a persuasive advert?|enthusiastic|bored|confused|hostile
+k2|Which sentence shows a sympathetic tone?|I am so sorry to hear that.|That is not my problem.|You should have been careful.|Whatever.
+k2|Which word best describes a tone full of regret?|remorseful|boastful|cheerful|aggressive
+k2|Which sentence is better for a school report to parents?|Anna has made excellent progress this term.|Anna's totally smashing it lol.|Anna is ok I guess.|Anna better try harder.
+i1|Which word best describes the tone of "How wonderful of you to arrive just as we finish"?|ironic|grateful|admiring|nervous
+i1|Which word best describes the tone of a eulogy?|solemn|comic|aggressive|sarcastic
+i1|Which word describes a tone of mocking humour?|satirical|sincere|gloomy|respectful
+i1|Which word describes a tone that is calm and not emotional?|detached|passionate|frantic|furious
+i1|Which phrase best creates an urgent tone?|Act now before it is too late!|Take your time.|There is no hurry.|It may be worth a look.
+i1|Which phrase suits an academic essay?|It could be argued that|Basically, I reckon|No way is it true that|Honestly, I think
+i1|Which phrase would be inappropriate in a formal essay?|stuff like that|therefore|in addition|for instance
+i1|Which choice is a more formal word for "get"?|obtain|grab|nab|bag
+i1|Which choice is a more formal word for "show"?|demonstrate|flash|point|pull
+i1|Which choice is a more formal word for "help"?|assist|lend a hand|back up|sort out
+i2|Which word best describes the tone of "One does so hate to be a bother, but..."?|deferential and polite|aggressive|careless|boastful
+i2|Which word best describes the tone of a writer who uses understatement to criticise?|wry|enthusiastic|sentimental|hostile
+i2|What is the effect of using the first person plural, "we", in a speech?|It builds a sense of unity|It sounds more formal|It shows disagreement|It adds statistics
+i2|What is the effect of direct address, "you", in an advert?|It makes the reader feel personally involved|It sounds neutral|It shows detachment|It makes the text scientific
+i2|Which word describes a patronising tone?|condescending|admiring|humble|neutral
+i2|What does an authoritative tone suggest?|confidence and expertise|uncertainty|humour|sadness
+i2|Which word best describes a tone of bitter humour?|caustic|tender|gleeful|wistful
+i2|Which word describes a longing for the past?|nostalgic|apathetic|defiant|exasperated
+i2|Which word best describes an optimistic outlook?|buoyant|resigned|cynical|despondent
+i2|Which word best describes a writer who distrusts others' motives?|cynical|naive|devoted|jovial
+`,
+poetry:`
+k1|What is a stanza?|A group of lines in a poem|A word that rhymes|The title of a poem|A type of rhyme
+k1|What is rhyme?|Words that end with the same sound|Words that start with the same sound|A comparison|A loud noise
+k1|Which pair of words rhymes?|cat and hat|cat and cut|bat and bet|hat and hot
+k1|What is a verse?|A line or group of lines in a poem|A kind of story|A character|A setting
+k1|What is rhythm in a poem?|The pattern of beats in the lines|The meaning of the title|The picture it paints|The number of poems
+k1|What does the poet mean by "the wind whispered"?|The wind made a soft sound|The wind spoke words|The wind was silent|The wind was very strong
+k1|What is a refrain?|A line or phrase repeated in a poem|The last word of a poem|A poem's title|A rhyme at the start
+k1|What is the speaker of a poem?|The voice that tells the poem|The poet's family|The reader|The printer
+k1|What is imagery?|Words that create pictures in the reader's mind|A list of facts|The poem's title|A type of rhyme
+k1|Which line shows alliteration?|Slowly the silver snake slid|The snake was long|A snake is a reptile|Snakes live in grass
+k2|What is a couplet?|Two lines that rhyme one after another|Four lines of poetry|A poem about love|A line with no rhyme
+k2|What is a quatrain?|A stanza of four lines|A stanza of two lines|A poem of fourteen lines|A single line
+k2|What is free verse?|Poetry with no regular rhyme or rhythm|Poetry that always rhymes|A poem about freedom|A short poem
+k2|What is a sonnet?|A poem of fourteen lines|A poem of four lines|A poem of seven lines|A poem with no lines
+k2|What is a haiku?|A Japanese poem of three short lines|A poem of fourteen lines|A poem that always rhymes|A long story poem
+k2|What is the effect of repetition in a poem?|It emphasises an idea|It makes it shorter|It confuses the reader|It lists facts
+k2|What is a ballad?|A poem that tells a story|A poem of one line|A poem about animals|A poem that does not rhyme
+k2|What is onomatopoeia in poetry?|Words that sound like what they describe|Words that rhyme|Comparing using like or as|Repeating the first sound
+k2|What does "the stars were diamonds in the sky" show?|A metaphor|A simile|A rhyme|A couplet
+k2|What is a narrator in a poem?|The voice telling the story|The poet's teacher|The title|The last line
+i1|What is enjambment?|A sentence continuing past the end of a line|A line that ends in a full stop|A rhyming couplet|A repeated line
+i1|What is a caesura?|A pause in the middle of a line|A rhyme at the end of a line|A repeated sound|A long stanza
+i1|What is iambic pentameter?|A line of ten syllables in five unstressed-stressed pairs|A line of five words|A poem of five lines|A line of eight syllables
+i1|What is a volta in a sonnet?|A turn in thought or argument|The first line|The rhyme scheme|The title
+i1|What is the rhyme scheme of this stanza? "light / tree / night / sea"|ABAB|AABB|ABBA|ABCD
+i1|What is the rhyme scheme of this stanza? "day / play / moon / soon"|AABB|ABAB|ABBA|ABCD
+i1|What is meant by the mood of a poem?|The atmosphere or feeling it creates|The number of stanzas|The rhyme scheme|The poet's age
+i1|What is the effect of a short line in a poem?|It can add emphasis or create a pause|It makes the poem rhyme|It makes it longer|It shows the title
+i1|What is an elegy?|A poem of mourning for someone who has died|A poem about love|A funny poem|A poem about nature
+i1|What is an ode?|A poem that praises a person or thing|A poem of sorrow|A short riddle|A story in verse
+i2|What is assonance?|Repetition of vowel sounds in nearby words|Repetition of starting consonants|A rhyme at the line end|A comparison
+i2|What is consonance?|Repetition of consonant sounds within words|Repetition of vowels|A shift in tone|A type of stanza
+i2|What is a sestet?|The last six lines of a sonnet|The first four lines of a sonnet|A six-word poem|A two-line stanza
+i2|What is an octave in a Petrarchan sonnet?|The first eight lines|The last six lines|A set of eight poems|Eight syllables
+i2|What is blank verse?|Unrhymed iambic pentameter|Poetry with no words|Poetry with no rhythm and no rhyme|Poetry with only rhyme
+i2|What is a dramatic monologue?|A poem in which a character speaks to a silent listener|A poem with many voices|A poem with no speaker|A poem about a play
+i2|What is the effect of a half rhyme?|It can create unease or incompleteness|It always sounds cheerful|It makes the poem formal|It shortens the poem
+i2|What is a symbol in poetry?|An image that stands for a larger idea|A rhyme|A line break|A punctuation mark
+i2|What is an extended metaphor?|A metaphor developed over several lines|A very long poem|A comparison using like|A repeated word
+i2|What is the effect of irregular rhythm in a poem?|It can reflect chaos or disturbance|It always suggests joy|It shows a formal tone|It makes the poem rhyme
+`,
+inference:`
+k1|"Sam shivered and pulled his coat tight." What can you infer?|Sam was cold|Sam was hot|Sam was hungry|Sam was proud
+k1|"Mia's eyes lit up and she clapped her hands." What can you infer?|Mia was excited|Mia was angry|Mia was bored|Mia was sleepy
+k1|"The boy stared at his empty plate and sighed." What can you infer?|He was still hungry|He was full|He was very rich|He was lost
+k1|"Dark clouds gathered and the wind began to howl." What is likely to happen next?|A storm|A sunny day|A snowfall|A picnic
+k1|"Tom yawned and rubbed his eyes." What can you infer?|Tom was tired|Tom was angry|Tom was excited|Tom was scared
+k1|"The dog sat by the door, wagging its tail." What can you infer?|The dog wants to go out|The dog is ill|The dog is angry|The dog is asleep
+k1|"She tiptoed down the stairs, holding her breath." What can you infer?|She did not want to be heard|She was running late|She was singing|She was very happy
+k1|"Dad looked at the clock and grabbed his keys." What can you infer?|He was in a hurry|He was relaxed|He was asleep|He was baking
+k1|"Lena slammed the door and stormed off." What can you infer?|She was angry|She was happy|She was calm|She was sleepy
+k1|"The shop had a closed sign and the lights were off." What can you infer?|The shop was shut|The shop was busy|The shop was new|The shop was cheap
+k2|"Ali checked his pockets again and again, his face pale." What can you infer?|He had lost something important|He had won a prize|He was very relaxed|He was hungry
+k2|"The audience rose to their feet, cheering." What can you infer?|They loved the performance|They disliked it|They were leaving|They were asleep
+k2|"Beth stared at the test paper and her pencil hovered above the page." What can you infer?|She was unsure of the answer|She was finished|She was having fun|She was angry
+k2|"The street was empty and the shutters were closed. A newspaper blew by." What mood does this suggest?|deserted and lonely|busy and cheerful|noisy and exciting|warm and friendly
+k2|"The old man smiled at the photograph for a long time." What can you infer?|He had happy memories|He was angry|He was bored|He was in a hurry
+k2|"Her hands were shaking as she opened the letter." What can you infer?|She was nervous|She was calm|She was sleepy|She was bored
+k2|"He dropped his bag, his mouth wide open." What can you infer?|He was shocked|He was bored|He was tired|He was proud
+k2|"By the end of the day, her uniform was muddy and her smile was huge." What can you infer?|She had enjoyed herself|She was ill|She hated the day|She was lost
+k2|"The teacher raised an eyebrow and waited." What can you infer?|The teacher was not convinced|The teacher was delighted|The teacher was asleep|The teacher was lost
+k2|"'I'm fine,' she said, not meeting his eyes." What can you infer?|She was probably not fine|She was very happy|She was angry at him|She was bored
+i1|"The CEO smiled broadly as profits fell by half." What can you infer?|The smile hides his real feelings|He was delighted|He had not read the report|He was asleep
+i1|"The report states that 'some experts agree'." What might a careful reader question?|How many experts, and who they are|The font|The report's length|The date format
+i1|"Although she thanked him, her voice was flat." What is implied?|She was not really grateful|She was very grateful|She was shouting|She was sleeping
+i1|"Without a word, he handed back the unopened letter." What is implied?|He did not want to read it|He had lost it|He was delighted|He wanted to keep it
+i1|Which is a reliable sign that a writer is biased?|One-sided use of emotive language|A long introduction|Many paragraphs|Use of statistics
+i1|What is the difference between fact and opinion?|A fact can be proved; an opinion is a belief|They are the same|A fact is always long|An opinion is always true
+i1|Which sentence is an opinion?|This is the best film of the year.|The film lasts two hours.|The film was released in March.|The film has three actors.
+i1|Which sentence is a fact?|Water freezes at 0 degrees Celsius.|Winter is the nicest season.|Ice cream is delicious.|Maths is boring.
+i1|"There was an audible gasp as the lights went out." What can you infer?|People were surprised or afraid|People were bored|The room was empty|It was daytime
+i1|Why might a writer use a short sentence after a long description?|To create impact or tension|To list facts|To make the writing formal|To avoid describing anything
+i2|"His reply was polite, but it was clear he had stopped listening." What does "but" signal?|A contrast between his manners and his attention|A list|A cause|A time sequence
+i2|"The minister claimed that the plan was 'a resounding success', though no figures were published." What can you infer?|The claim may be unsupported|The plan was definitely a success|Figures were published|The minister was honest
+i2|"The village slept, unaware that the river was rising." What does this create?|Dramatic irony and tension|Humour|A factual report|A happy ending
+i2|Which is the best way to check if a source is reliable?|Check who wrote it and whether it is supported by evidence|Check its length|Check its colour|Check if it is popular
+i2|"She spoke of the past as though it were a lost country." What does this suggest?|She feels nostalgic and cut off from it|She is excited about travel|She is angry at a country|She is reading a map
+i2|"Every window was lit, yet no one came to the door." What is the effect?|It builds suspicion and unease|It shows joy|It lists facts|It shows a busy house
+i2|What does "reading between the lines" mean?|Finding meaning that is implied, not stated|Skipping lines|Reading quickly|Reading aloud
+i2|Which statement is the best summary of a text?|It covers the main ideas briefly in your own words|It copies the first paragraph|It lists every detail|It gives your opinion only
+i2|"Thousands of jobs lost, families in despair." What does the emotive language aim to do?|Make the reader sympathetic or angry|Present neutral facts|Entertain the reader|Make the reader laugh
+i2|"The author never states the narrator's age, but mentions school bells and bedtime." What can you infer?|The narrator is a child|The narrator is elderly|The narrator is a teacher|The narrator is a doctor
+`,
+plurals:`
+k1|What is the plural of "dog"?|dogs|doges|dogies|dog
+k1|What is the plural of "box"?|boxes|boxs|boxies|boxen
+k1|What is the plural of "baby"?|babies|babys|babyes|babis
+k1|What is the plural of "child"?|children|childs|childrens|childes
+k1|What is the plural of "man"?|men|mans|manes|mens
+k1|What is the plural of "foot"?|feet|foots|feets|footes
+k1|What is the plural of "mouse"?|mice|mouses|mices|meese
+k1|What is the plural of "leaf"?|leaves|leafs|leafes|leavs
+k1|What is the plural of "sheep"?|sheep|sheeps|sheepes|shep
+k1|What is the plural of "church"?|churches|churchs|churchies|churchen
+k1|What is the plural of "tooth"?|teeth|tooths|teeths|toothes
+k2|What is the plural of "knife"?|knives|knifes|knifs|knifies
+k2|What is the plural of "wolf"?|wolves|wolfs|wolfes|wolvs
+k2|What is the plural of "hero"?|heroes|heros|heroies|heroz
+k2|What is the plural of "potato"?|potatoes|potatos|potatoies|potatoz
+k2|What is the plural of "piano"?|pianos|pianoes|pianies|pianoz
+k2|What is the plural of "woman"?|women|womans|womens|womanes
+k2|What is the plural of "goose"?|geese|gooses|geeses|goosen
+k2|What is the plural of "fish" when you mean several of the same kind?|fish|fishes|fishs|fishies
+k2|What is the plural of "city"?|cities|citys|cityes|citis
+k2|What is the plural of "day"?|days|daies|dayes|dayz
+k2|What is the plural of "life"?|lives|lifes|lifs|livez
+k2|What is the plural of "echo"?|echoes|echos|echoies|echoz
+i1|What is the plural of "analysis"?|analyses|analysises|analysis|analysies
+i1|What is the plural of "crisis"?|crises|crisises|crisis|crisies
+i1|What is the plural of "phenomenon"?|phenomena|phenomenons|phenomenas|phenomenae
+i1|What is the plural of "criterion"?|criteria|criterions|criterias|criteriae
+i1|What is the plural of "medium" (communication)?|media|mediums|mediae|mediumes
+i1|What is the plural of "bacterium"?|bacteria|bacteriums|bacterias|bacteriae
+i1|What is the plural of "nucleus"?|nuclei|nucleuses|nucleus|nucleis
+i1|What is the plural of "thesis"?|theses|thesises|thesis|thesies
+i1|What is the plural of "mother-in-law"?|mothers-in-law|mother-in-laws|mothers-in-laws|mother-in-lawes
+i2|What is the plural of "hypothesis"?|hypotheses|hypothesises|hypothesis|hypothesies
+i2|What is the plural of "stimulus"?|stimuli|stimuluses|stimulus|stimulis
+i2|What is the plural of "oasis"?|oases|oasises|oasis|oasies
+i2|What is the plural of "radius"?|radii|radiuses|radius|radiis
+i2|What is the plural of "parenthesis"?|parentheses|parenthesises|parenthesis|parenthesies
+i2|What is the plural of "fungus"?|fungi|funguses|fungus|fungis
+i1|What is the plural of "alumnus" (a male former student)?|alumni|alumnuses|alumnus|alumni's
+i1|What is the plural of "basis"?|bases|basises|basis|basiss
+i1|What is the plural of "datum"?|data|datums|datas|datae
+i1|What is the plural of "passer-by"?|passers-by|passer-bys|passers-bys|passer-bies
+i2|What is the plural of "vertex"?|vertices|vertexes|vertexs|vertexies
+i2|What is the plural of "larva"?|larvae|larvas|larvaes|larvi
+i2|What is the plural of "axis"?|axes|axises|axis|axeses
+i2|What is the plural of "bureau"?|bureaux|bureaus|bureauxes|bureaues
 `
 };
 
 var BANK={},BYID={};
 (function(){
   Object.keys(BANK_TEXT).forEach(function(t){
-    var n=0,bt=TOPIC_MERGE[t]||t;BANK[bt]=BANK[bt]||[];
+    var n=0;BANK[t]=[];
     BANK_TEXT[t].split('\n').forEach(function(l){
       l=l.trim();if(!l||l.charAt(0)==='#')return;
       var f=l.split('|');if(f.length!==6)return;
-      n++;var q={id:TOPIC_PRE[t]+n,t:bt,st:f[0].charAt(0),d:+f[0].charAt(1),q:f[1],a:f[2],w:f.slice(3)};
-      BANK[bt].push(q);BYID[q.id]=q;
+      n++;var q={id:TOPIC_PRE[t]+n,t:t,st:f[0].charAt(0),d:+f[0].charAt(1),q:f[1],a:f[2],w:f.slice(3)};
+      BANK[t].push(q);BYID[q.id]=q;
     });
   });
 })();
-function trackIdx(id){if(id==='antonyms')id='synonyms';for(var i=0;i<TRACKS.length;i++)if(TRACKS[i].id===id)return i;return 0}
+function trackIdx(id){for(var i=0;i<TRACKS.length;i++)if(TRACKS[i].id===id)return i;return 0}
 function stageIdx(id){for(var i=0;i<STAGES.length;i++)if(STAGES[i].id===id)return i;return 0}
 function myTrack(){return TRACKS[trackIdx(PF.state==='ready'&&PF.link&&PF.link.track)].id}
 function myStage(){return STAGES[stageIdx(PF.state==='ready'&&PF.link&&PF.link.stage)].id}
