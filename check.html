@@ -1,0 +1,45 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Connection check</title>
+<style>
+body{font-family:system-ui,sans-serif;max-width:560px;margin:0 auto;padding:16px;background:#111827;color:#f3f4f6;line-height:1.45}
+h1{font-size:22px} .row{display:flex;gap:10px;padding:10px 12px;margin:8px 0;border-radius:10px;background:#1f2937}
+.dot{flex:0 0 22px;font-weight:700} .ok{color:#4ade80}.bad{color:#f87171}.wait{color:#fbbf24}
+small{color:#9ca3af;display:block} button{font-size:16px;padding:10px 16px;border-radius:10px;border:0;background:#6366f1;color:#fff;margin-top:8px}
+pre{white-space:pre-wrap;background:#0b1220;padding:10px;border-radius:8px;font-size:13px}
+</style></head><body>
+<h1>Game connection check</h1>
+<p>Open this page on the device that has the problem, wait about 15 seconds, then send a screenshot of it.</p>
+<div id="out"></div>
+<button id="again">Run again</button>
+<pre id="info"></pre>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.117.0/dist/umd/supabase.js"></script>
+<script>
+var URL_='https://gkgoviulsyjqvwlzyiib.supabase.co',KEY='sb_publishable_F4i7QjnrLSZiGYKhv2hOaw_ELREw-1r';
+var out=document.getElementById('out');
+function row(t){var d=document.createElement('div');d.className='row';d.innerHTML='<span class="dot wait">…</span><div><b></b><small></small></div>';d.querySelector('b').textContent=t;out.appendChild(d);
+  return function(ok,msg){var s=d.querySelector('.dot');s.className='dot '+(ok?'ok':'bad');s.textContent=ok?'OK':'X';d.querySelector('small').textContent=msg||''}}
+function run(){
+  out.innerHTML='';
+  document.getElementById('info').textContent='Browser: '+navigator.userAgent+'\nOnline: '+navigator.onLine+'\nTime: '+new Date().toString()+'\nScreen: '+screen.width+'x'+screen.height;
+  var r1=row('1. Game files load');r1(true,'This page loaded.');
+  var r2=row('2. Browser can remember your profile');
+  try{localStorage.setItem('chk','1');var v=localStorage.getItem('chk');localStorage.removeItem('chk');r2(v==='1','Saved and read back.')}catch(e){r2(false,'Browser storage is blocked ('+e.message+'). Turn off private browsing or allow site data.')}
+  var r3=row('3. Game server library loaded');
+  if(!window.supabase){r3(false,'The Supabase library did not load. A school filter may block cdn.jsdelivr.net.');return}
+  r3(true,'Loaded.');
+  var sb=window.supabase.createClient(URL_,KEY);
+  var r4=row('4. Reach the game database (profiles, class, teacher PIN)');
+  var t0=Date.now();
+  sb.rpc('eng_name_available',{p_name:'zz connection check'}).then(function(r){
+    if(r.error)r4(false,'Server answered with an error: '+(r.error.message||r.error.code));else r4(true,'Answered in '+(Date.now()-t0)+' ms.')
+  }).catch(function(e){r4(false,'Could not connect: '+e.message)});
+  var r5=row('5. Live rooms (joining a game with a code)');
+  var ch=sb.channel('check-'+Math.random().toString(36).slice(2),{config:{presence:{key:'c'+Math.random()}}}),done=false;
+  var to=setTimeout(function(){if(!done){done=true;r5(false,'Timed out after 9 seconds. The network is probably blocking live connections (websockets). Try another Wi-Fi or mobile data.');try{sb.removeChannel(ch)}catch(e){}}},9000);
+  ch.subscribe(function(s){if(done)return;
+    if(s==='SUBSCRIBED'){done=true;clearTimeout(to);r5(true,'Connected in '+(Date.now()-t0)+' ms.');try{sb.removeChannel(ch)}catch(e){}}
+    else if(s==='CHANNEL_ERROR'||s==='TIMED_OUT'||s==='CLOSED'){done=true;clearTimeout(to);r5(false,'Live connection failed ('+s+').')}});
+}
+document.getElementById('again').onclick=run;run();
+</script></body></html>
